@@ -1,0 +1,10 @@
+src/
+.agents/
+skills-lock.json
+tsconfig.json
+*.ts.map
+*.d.ts.map
+.eslintrc*
+.prettierrc
+.gitignore
+.npmignore
