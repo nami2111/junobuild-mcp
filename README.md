@@ -2,7 +2,7 @@
 
 > **Unofficial** MCP server for [Juno](https://juno.build). Not affiliated with or endorsed by the Juno team.
 
-Manage satellites, hosting, serverless functions, snapshots and more through any MCP-compatible client.
+Manage satellites, hosting, serverless functions, snapshots and more through any MCP-compatible client. Includes a built-in documentation tool to access Juno's official guides and references.
 
 ## Install
 
@@ -34,6 +34,18 @@ juno login
 
 For non-interactive environments (CI, headless), set the `JUNO_TOKEN` environment variable or use the `--mode` and `--profile` flags available on every tool.
 
+### Documentation Access
+
+The `juno_docs` tool fetches Juno's official documentation on demand, helping agents understand concepts before running commands:
+
+```
+juno_docs({ topic: "datastore" })  → Full markdown from juno.build/docs/build/datastore
+juno_docs({ topic: "hosting" })    → Deployment guide
+juno_docs({ topic: "cli" })        → CLI reference
+```
+
+Available topics: `intro`, `start-a-new-project`, `setup-the-sdk`, `create-a-satellite`, `authentication`, `datastore`, `storage`, `hosting`, `functions`, `analytics`, `cli`, `configuration`, `plugins`, `settings`, `emulator`, `terminology`, `pricing`.
+
 ## Tools
 
 | Domain | Tools |
@@ -46,11 +58,12 @@ For non-interactive environments (CI, headless), set the `JUNO_TOKEN` environmen
 | **Snapshots** | `juno_snapshot_create`, `juno_snapshot_delete`, `juno_snapshot_list`, `juno_snapshot_download`, `juno_snapshot_upload`, `juno_snapshot_restore` |
 | **Modules** | `juno_module_start`, `juno_module_stop`, `juno_module_upgrade`, `juno_module_status` |
 | **Changes** | `juno_changes_list`, `juno_changes_apply`, `juno_changes_reject` |
+| **Docs** | `juno_docs` |
 
 ## Prerequisites
 
 - **Node.js** >= 18
-- **@junobuild/cli** — installed and authenticated
+- **@junobuild/cli** — installed and authenticated (not needed for `juno_version` or `juno_docs`)
 - Juno project with `juno.config.ts/js/json` (for config/hosting operations)
 
 ## Development
