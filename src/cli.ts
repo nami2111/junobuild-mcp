@@ -2,6 +2,12 @@ import { exec } from "node:child_process";
 import type { CliResult, GlobalFlags } from "./types.js";
 import { CLI_PACKAGE, DEFAULT_TIMEOUT } from "./constants.js";
 
+const ANSI_REGEX = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?(?:\x1b\\|\x07)|\r/g;
+
+function stripAnsi(text: string): string {
+  return text.replace(ANSI_REGEX, "").replace(/\r?\n/g, "\n");
+}
+
 function buildFlags(flags?: GlobalFlags): string {
   const parts: string[] = [];
   if (flags?.mode) parts.push(`--mode ${flags.mode}`);
@@ -32,8 +38,8 @@ export async function execCli(
 export function formatResponse(result: CliResult, label?: string): string {
   const parts: string[] = [];
   if (label) parts.push(`## ${label}\n`);
-  if (result.stdout) parts.push(result.stdout.trim());
-  if (result.stderr) parts.push(`\n**Stderr:**\n${result.stderr.trim()}`);
+  if (result.stdout) parts.push(stripAnsi(result.stdout).trim());
+  if (result.stderr) parts.push(`\n**Stderr:**\n${stripAnsi(result.stderr).trim()}`);
   if (result.exitCode !== 0) parts.push(`\n**Exit code:** ${result.exitCode}`);
   const text = parts.join("\n");
   return text.length > 25000 ? text.slice(0, 25000) + "\n...(truncated)" : text;
