@@ -10,6 +10,7 @@ import { registerFunctionsTools } from "./tools/functions.js";
 import { registerSnapshotTools } from "./tools/snapshot.js";
 import { registerModuleTools } from "./tools/modules.js";
 import { registerChangesTools } from "./tools/changes.js";
+import { registerDocsTools } from "./tools/docs.js";
 
 const server = new McpServer({
   name: "junobuild-mcp-server",
@@ -24,6 +25,7 @@ registerFunctionsTools(server);
 registerSnapshotTools(server);
 registerModuleTools(server);
 registerChangesTools(server);
+registerDocsTools(server);
 
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();
