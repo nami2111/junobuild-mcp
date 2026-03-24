@@ -1,5 +1,5 @@
 {
-  "name": "juno-mcp-server",
+  "name": "junobuild-mcp-server",
   "version": "1.0.0",
   "description": "MCP server for Juno (junobuild) - manage satellites, hosting, functions, snapshots and more",
   "license": "MIT",
@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "juno-mcp-server": "dist/index.js"
+    "junobuild-mcp-server": "dist/index.js"
   },
   "files": [
     "dist",

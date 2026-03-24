@@ -12,7 +12,7 @@ import { registerModuleTools } from "./tools/modules.js";
 import { registerChangesTools } from "./tools/changes.js";
 
 const server = new McpServer({
-  name: "juno-mcp-server",
+  name: "junobuild-mcp-server",
   version: "1.0.0"
 });
 

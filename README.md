@@ -1,4 +1,4 @@
-# juno-mcp-server
+# junobuild-mcp-server
 
 > **Unofficial** MCP server for [Juno](https://juno.build). Not affiliated with or endorsed by the Juno team.
 
@@ -7,7 +7,7 @@ Manage satellites, hosting, serverless functions, snapshots and more through any
 ## Install
 
 ```bash
-npm install -g juno-mcp-server
+npm install -g junobuild-mcp-server
 ```
 
 ## Usage
@@ -17,9 +17,9 @@ Add to your MCP client configuration (e.g. Claude Desktop, Cursor):
 ```json
 {
   "mcpServers": {
-    "juno": {
+    "junobuild": {
       "command": "npx",
-      "args": ["-y", "juno-mcp-server"]
+      "args": ["-y", "junobuild-mcp-server"]
     }
   }
 }
