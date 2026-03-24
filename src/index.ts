@@ -14,7 +14,7 @@ import { registerDocsTools } from "./tools/docs.js";
 
 const server = new McpServer({
   name: "junobuild-mcp-server",
-  version: "1.0.0"
+  version: "1.0.2",
 });
 
 registerIdentityTools(server);
