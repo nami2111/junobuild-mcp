@@ -4,15 +4,11 @@
 
 Manage satellites, hosting, serverless functions, snapshots and more through any MCP-compatible client. Includes a built-in documentation tool to access Juno's official guides and references.
 
-## Install
+## Setup
 
-```bash
-npm install -g junobuild-mcp-server
-```
+### 1. Add to your MCP client
 
-## Usage
-
-Add to your MCP client configuration (e.g. Claude Desktop, Cursor):
+No install needed — `npx` handles downloading automatically.
 
 ```json
 {
@@ -25,7 +21,9 @@ Add to your MCP client configuration (e.g. Claude Desktop, Cursor):
 }
 ```
 
-The server requires [`@junobuild/cli`](https://juno.build/docs/reference/cli) to be installed and authenticated:
+### 2. Authenticate the Juno CLI
+
+The server wraps [`@junobuild/cli`](https://juno.build/docs/reference/cli), which must be installed and authenticated:
 
 ```bash
 npm i -g @junobuild/cli
