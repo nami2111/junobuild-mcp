@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.0.5
+
+### Patch Changes
+
+- Remove global install from README, use npx -y only
+
 ## 1.0.4
 
 ### Patch Changes
