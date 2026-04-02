@@ -1,10 +1,10 @@
 import { z } from "zod";
+import { FunctionLanguageEnum } from "./enums.js";
 
 export const emulatorStartSchema = z.object({
-  lang: z.enum(["rust", "rs", "typescript", "ts", "javascript", "mjs"]).optional().describe("Language for building serverless functions"),
+  lang: FunctionLanguageEnum.optional().describe("Language for building serverless functions"),
   cargoPath: z.string().optional().describe("Path to the Rust manifest (Cargo.toml)"),
-  sourcePath: z.string().optional().describe("Path to the TypeScript or JavaScript entry file"),
-  watch: z.boolean().default(false).describe("Rebuild functions automatically when source files change")
+  sourcePath: z.string().optional().describe("Path to the TypeScript or JavaScript entry file")
 }).strict();
 
 export const emulatorStopSchema = z.object({}).strict();

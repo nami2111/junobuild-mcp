@@ -1,6 +1,5 @@
-import { exec } from "node:child_process";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, formatResponse } from "../cli.js";
+import { execCli, execCommand, formatResponse } from "../cli.js";
 import { configInitSchema, configApplySchema, createProjectSchema } from "../schemas/config.js";
 import type { GlobalFlags } from "../types.js";
 
@@ -186,7 +185,8 @@ export function registerConfigTools(server: McpServer): void {
       const args: string[] = [];
       if (params.force) args.push("--force");
       const result = await execCli("config", ["apply", ...args], flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Config Apply") }] };
+      const { text, isError } = formatResponse(result, "Config Apply");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -208,18 +208,10 @@ export function registerConfigTools(server: McpServer): void {
       const args = [params.directory];
       if (params.template) args.push("--template", params.template);
 
-      const result = await new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve) => {
-        const cmd = `${pm} create juno@latest ${args.join(" ")}`;
-        exec(cmd, { timeout: 120_000 }, (error, stdout, stderr) => {
-          resolve({
-            stdout: stdout ?? "",
-            stderr: stderr ?? "",
-            exitCode: error ? 1 : 0
-          });
-        });
-      });
-
-      return { content: [{ type: "text", text: formatResponse(result, "Create Project") }] };
+      const cmd = `${pm} create juno@latest ${args.join(" ")}`;
+      const result = await execCommand(cmd, 120_000);
+      const { text, isError } = formatResponse(result, "Create Project");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 }

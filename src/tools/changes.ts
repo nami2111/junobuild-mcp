@@ -21,7 +21,8 @@ export function registerChangesTools(server: McpServer): void {
       if (params.all) args.push("-a");
       if (params.every) args.push("-e");
       const result = await execCli("changes", ["list", ...args]);
-      return { content: [{ type: "text", text: formatResponse(result, "Changes List") }] };
+      const { text, isError } = formatResponse(result, "Changes List");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -44,7 +45,8 @@ export function registerChangesTools(server: McpServer): void {
       if (params.hash) args.push("--hash", params.hash);
       if (params.keepStaged) args.push("-k");
       const result = await execCli("changes", ["apply", ...args]);
-      return { content: [{ type: "text", text: formatResponse(result, "Changes Apply") }] };
+      const { text, isError } = formatResponse(result, "Changes Apply");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -66,7 +68,8 @@ export function registerChangesTools(server: McpServer): void {
       if (params.hash) args.push("--hash", params.hash);
       if (params.keepStaged) args.push("-k");
       const result = await execCli("changes", ["reject", ...args]);
-      return { content: [{ type: "text", text: formatResponse(result, "Changes Reject") }] };
+      const { text, isError } = formatResponse(result, "Changes Reject");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 }

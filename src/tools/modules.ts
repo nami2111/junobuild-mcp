@@ -22,7 +22,8 @@ export function registerModuleTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
       const result = await execCli("start", args, flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Module Start") }] };
+      const { text, isError } = formatResponse(result, "Module Start");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -43,7 +44,8 @@ export function registerModuleTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
       const result = await execCli("stop", args, flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Module Stop") }] };
+      const { text, isError } = formatResponse(result, "Module Stop");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -68,7 +70,8 @@ export function registerModuleTools(server: McpServer): void {
       if (params.noSnapshot) args.push("--no-snapshot");
       if (params.reset) args.push("-r");
       const result = await execCli("upgrade", args, flags, DEPLOY_TIMEOUT);
-      return { content: [{ type: "text", text: formatResponse(result, "Module Upgrade") }] };
+      const { text, isError } = formatResponse(result, "Module Upgrade");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -88,7 +91,8 @@ export function registerModuleTools(server: McpServer): void {
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const result = await execCli("status", [], flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Module Status") }] };
+      const { text, isError } = formatResponse(result, "Module Status");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 }

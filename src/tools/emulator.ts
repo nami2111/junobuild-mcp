@@ -22,9 +22,9 @@ export function registerEmulatorTools(server: McpServer): void {
       if (params.lang) args.push("-l", params.lang);
       if (params.cargoPath) args.push("--cargo-path", params.cargoPath);
       if (params.sourcePath) args.push("--source-path", params.sourcePath);
-      if (params.watch) args.push("-w");
       const result = await execCli("emulator", ["start", ...args], undefined, EMULATOR_START_TIMEOUT);
-      return { content: [{ type: "text", text: formatResponse(result, "Emulator Start") }] };
+      const { text, isError } = formatResponse(result, "Emulator Start");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -43,7 +43,8 @@ export function registerEmulatorTools(server: McpServer): void {
     },
     async () => {
       const result = await execCli("emulator", ["stop"]);
-      return { content: [{ type: "text", text: formatResponse(result, "Emulator Stop") }] };
+      const { text, isError } = formatResponse(result, "Emulator Stop");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -62,7 +63,8 @@ export function registerEmulatorTools(server: McpServer): void {
     },
     async () => {
       const result = await execCli("emulator", ["clear"]);
-      return { content: [{ type: "text", text: formatResponse(result, "Emulator Clear") }] };
+      const { text, isError } = formatResponse(result, "Emulator Clear");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -82,7 +84,8 @@ export function registerEmulatorTools(server: McpServer): void {
     async (params) => {
       const args = ["--timeout", String(params.timeout)];
       const result = await execCli("emulator", ["wait", ...args], undefined, params.timeout + 5000);
-      return { content: [{ type: "text", text: formatResponse(result, "Emulator Wait") }] };
+      const { text, isError } = formatResponse(result, "Emulator Wait");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 }

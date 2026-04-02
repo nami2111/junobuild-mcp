@@ -29,7 +29,8 @@ export function registerHostingTools(server: McpServer): void {
       if (params.noApply) args.push("--no-apply");
       if (params.config) args.push("--config");
       const result = await execCli("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT);
-      return { content: [{ type: "text", text: formatResponse(result, "Hosting Deploy") }] };
+      const { text, isError } = formatResponse(result, "Hosting Deploy");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -51,7 +52,8 @@ export function registerHostingTools(server: McpServer): void {
       const args: string[] = [];
       if (params.fullPath) args.push("-f", params.fullPath);
       const result = await execCli("hosting", ["clear", ...args], flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Hosting Clear") }] };
+      const { text, isError } = formatResponse(result, "Hosting Clear");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -74,7 +76,8 @@ export function registerHostingTools(server: McpServer): void {
       args.push("--batch", String(params.batch));
       if (params.dryRun) args.push("--dry-run");
       const result = await execCli("hosting", ["prune", ...args], flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Hosting Prune") }] };
+      const { text, isError } = formatResponse(result, "Hosting Prune");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 }

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { GlobalFlagsSchema } from "./common.js";
+import { ModuleTargetEnum } from "./enums.js";
 
-const targetEnum = z.enum(["satellite", "s", "mission-control", "m", "orbiter", "o"]).describe("Module type to snapshot");
+const targetEnum = ModuleTargetEnum.describe("Module type to snapshot");
 
 export const snapshotCreateSchema = z.object({
   target: targetEnum,

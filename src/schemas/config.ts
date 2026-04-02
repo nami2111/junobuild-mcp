@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { GlobalFlagsSchema } from "./common.js";
+import { ConfigFormatEnum, PackageManagerEnum } from "./enums.js";
 
 export const configInitSchema = z.object({
-  format: z.enum(["typescript", "javascript", "json"]).default("typescript")
+  format: ConfigFormatEnum.default("typescript")
     .describe("Config file format"),
   source: z.string().default("dist")
     .describe("Build output directory (e.g. dist, build, out)"),
@@ -24,5 +25,5 @@ export const configApplySchema = z.object({
 export const createProjectSchema = z.object({
   directory: z.string().describe("Directory name for the new project"),
   template: z.string().optional().describe("Template to use (e.g. react, svelte, vue, next)"),
-  packageManager: z.enum(["npm", "yarn", "pnpm"]).default("npm").describe("Package manager to use")
+  packageManager: PackageManagerEnum.default("npm").describe("Package manager to use")
 }).strict();

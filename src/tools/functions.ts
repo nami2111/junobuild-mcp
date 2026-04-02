@@ -23,9 +23,9 @@ export function registerFunctionsTools(server: McpServer): void {
       if (params.lang) args.push("-l", params.lang);
       if (params.cargoPath) args.push("--cargo-path", params.cargoPath);
       if (params.sourcePath) args.push("--source-path", params.sourcePath);
-      if (params.watch) args.push("-w");
       const result = await execCli("functions", ["build", ...args]);
-      return { content: [{ type: "text", text: formatResponse(result, "Functions Build") }] };
+      const { text, isError } = formatResponse(result, "Functions Build");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -46,7 +46,8 @@ export function registerFunctionsTools(server: McpServer): void {
       const args: string[] = [];
       if (params.lang) args.push("-l", params.lang);
       const result = await execCli("functions", ["eject", ...args]);
-      return { content: [{ type: "text", text: formatResponse(result, "Functions Eject") }] };
+      const { text, isError } = formatResponse(result, "Functions Eject");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -70,7 +71,8 @@ export function registerFunctionsTools(server: McpServer): void {
       if (params.noApply) args.push("--no-apply");
       if (params.keepStaged) args.push("-k");
       const result = await execCli("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT);
-      return { content: [{ type: "text", text: formatResponse(result, "Functions Publish") }] };
+      const { text, isError } = formatResponse(result, "Functions Publish");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -91,13 +93,13 @@ export function registerFunctionsTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args: string[] = [];
       if (params.src) args.push("-s", params.src);
-      if (params.cdn) args.push("--cdn");
       if (params.cdnPath) args.push("--cdn-path", params.cdnPath);
       if (params.clearChunks) args.push("--clear-chunks");
       if (params.noSnapshot) args.push("--no-snapshot");
       if (params.reset) args.push("-r");
       const result = await execCli("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT);
-      return { content: [{ type: "text", text: formatResponse(result, "Functions Upgrade") }] };
+      const { text, isError } = formatResponse(result, "Functions Upgrade");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 }

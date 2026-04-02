@@ -29,7 +29,8 @@ export function registerSnapshotTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
       const result = await execCli("snapshot", ["create", ...args], flags, DEPLOY_TIMEOUT);
-      return { content: [{ type: "text", text: formatResponse(result, "Snapshot Create") }] };
+      const { text, isError } = formatResponse(result, "Snapshot Create");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -50,7 +51,8 @@ export function registerSnapshotTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
       const result = await execCli("snapshot", ["delete", ...args], flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Snapshot Delete") }] };
+      const { text, isError } = formatResponse(result, "Snapshot Delete");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -71,7 +73,8 @@ export function registerSnapshotTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
       const result = await execCli("snapshot", ["list", ...args], flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Snapshot List") }] };
+      const { text, isError } = formatResponse(result, "Snapshot List");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -92,7 +95,8 @@ export function registerSnapshotTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
       const result = await execCli("snapshot", ["download", ...args], flags, DEPLOY_TIMEOUT);
-      return { content: [{ type: "text", text: formatResponse(result, "Snapshot Download") }] };
+      const { text, isError } = formatResponse(result, "Snapshot Download");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -114,7 +118,8 @@ export function registerSnapshotTools(server: McpServer): void {
       const args = ["--dir", params.dir, "-t", params.target];
       if (params.targetId) args.push("--target-id", params.targetId);
       const result = await execCli("snapshot", ["upload", ...args], flags, DEPLOY_TIMEOUT);
-      return { content: [{ type: "text", text: formatResponse(result, "Snapshot Upload") }] };
+      const { text, isError } = formatResponse(result, "Snapshot Upload");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -135,7 +140,8 @@ export function registerSnapshotTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
       const result = await execCli("snapshot", ["restore", ...args], flags, DEPLOY_TIMEOUT);
-      return { content: [{ type: "text", text: formatResponse(result, "Snapshot Restore") }] };
+      const { text, isError } = formatResponse(result, "Snapshot Restore");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 }

@@ -21,7 +21,8 @@ export function registerIdentityTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args: string[] = [];
       const result = await execCli("whoami", args, flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Who Am I") }] };
+      const { text, isError } = formatResponse(result, "Who Am I");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -40,7 +41,8 @@ export function registerIdentityTools(server: McpServer): void {
     },
     async () => {
       const result = await execCli("--version", []);
-      return { content: [{ type: "text", text: formatResponse(result, "Version") }] };
+      const { text, isError } = formatResponse(result, "Version");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -63,7 +65,8 @@ export function registerIdentityTools(server: McpServer): void {
       if (params.browser) args.push("-b", params.browser);
       if (params.console) args.push("-c");
       const result = await execCli("open", args, flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Open") }] };
+      const { text, isError } = formatResponse(result, "Open");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 
@@ -84,7 +87,8 @@ export function registerIdentityTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-s", params.src];
       const result = await execCli("run", args, flags);
-      return { content: [{ type: "text", text: formatResponse(result, "Run Script") }] };
+      const { text, isError } = formatResponse(result, "Run Script");
+      return { content: [{ type: "text", text }], isError };
     }
   );
 }
