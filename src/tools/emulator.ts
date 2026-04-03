@@ -23,6 +23,16 @@ export function registerEmulatorTools(server: McpServer): void {
       if (params.cargoPath) args.push("--cargo-path", params.cargoPath);
       if (params.sourcePath) args.push("--source-path", params.sourcePath);
       const result = await execCli("emulator", ["start", ...args], undefined, EMULATOR_START_TIMEOUT);
+
+      if (result.exitCode === 0 && params.wait) {
+        const waitArgs = ["--timeout", String(params.timeout)];
+        const waitResult = await execCli("emulator", ["wait", ...waitArgs], undefined, params.timeout + 5000);
+        if (waitResult.exitCode !== 0) {
+          return { content: [{ type: "text", text: formatResponse(waitResult, "Emulator Start + Wait").text }], isError: true };
+        }
+        return { content: [{ type: "text", text: formatResponse({ ...result, stdout: `${result.stdout}\n\nEmulator started and ready.` }, "Emulator Start + Wait").text }], isError: false };
+      }
+
       const { text, isError } = formatResponse(result, "Emulator Start");
       return { content: [{ type: "text", text }], isError };
     }
