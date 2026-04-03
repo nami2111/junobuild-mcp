@@ -182,21 +182,17 @@
 
 ---
 
-### 14. No composite/atomic operations
+### 14. ✅ No composite/atomic operations
 
-**Problem:** Common workflows require multiple tool calls that should be atomic:
-- Deploy + prune + config apply (currently 3 separate calls)
-- Snapshot + upgrade (currently 2 separate calls, though upgrade has `--no-snapshot`)
-- Emulator start + wait (currently 2 separate calls)
+**Status:** IMPLEMENTED
 
-**Fix:**
-- Add composite tools that bundle common workflows:
-  - `juno_hosting_deploy_full` — deploy with prune and optional config apply
-  - `juno_module_upgrade_safe` — snapshot then upgrade
-  - `juno_emulator_start_ready` — start then wait
-- Or: enhance existing tools with additional boolean flags that trigger follow-up actions.
-
-**Files affected:** New or existing tool files
+**What was done:**
+- Added `wait: boolean` and `timeout` params to `emulatorStartSchema`
+- When `wait: true`, automatically runs `emulator wait` after `emulator start` succeeds
+- Other composite workflows already covered by existing flags:
+  - Deploy + prune → `hostingDeploySchema.prune` flag
+  - Deploy + config → `hostingDeploySchema.config` flag
+  - Snapshot + upgrade → `moduleUpgradeSchema.noSnapshot` flag (default creates snapshot)
 
 ---
 
@@ -220,7 +216,7 @@
 | Critical | 3 | 3 ✅ | 0 |
 | High | 4 | 4 ✅ | 0 |
 | Medium | 5 | 5 ✅ | 0 |
-| Low | 3 | 2 ✅ | 1 (#14 Composite ops) |
+| Low | 3 | 3 ✅ | 0 |
 
 **15 of 15 items implemented.** All items complete.
 
