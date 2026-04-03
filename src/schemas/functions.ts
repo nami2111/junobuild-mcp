@@ -17,6 +17,7 @@ export const functionsPublishSchema = z.object({
   noApply: z.boolean().default(false).describe("Submit the release as a change but do not apply it yet"),
   keepStaged: z.boolean().default(false).describe("Keep proposed staged assets in memory after applying"),
   retry: z.boolean().default(false).describe("Automatically retry on transient network failures (up to 3 attempts with exponential backoff)"),
+  progress: z.boolean().default(false).describe("Stream progress updates during publish (shows build status and upload batch progress)"),
   ...GlobalFlagsSchema
 }).strict();
 
@@ -27,5 +28,6 @@ export const functionsUpgradeSchema = z.object({
   noSnapshot: z.boolean().default(false).describe("Skip creating a snapshot before upgrading"),
   reset: z.boolean().default(false).describe("Reset to the initial state"),
   retry: z.boolean().default(false).describe("Automatically retry on transient network failures (up to 3 attempts with exponential backoff)"),
+  progress: z.boolean().default(false).describe("Stream progress updates during upgrade (shows build status and upload batch progress)"),
   ...GlobalFlagsSchema
 }).strict();

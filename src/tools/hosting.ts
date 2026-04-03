@@ -1,8 +1,21 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, execWithRetry, formatResponse } from "../cli.js";
+import { execCli, execWithRetry, execWithStreaming, formatResponse, type ProgressCallback } from "../cli.js";
 import { hostingDeploySchema, hostingClearSchema, hostingPruneSchema } from "../schemas/hosting.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
+
+function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
+  const e = extra as { _meta?: Record<string, unknown>; sendNotification: (n: unknown) => Promise<void> };
+  const token = e._meta?.progressToken as string | number | undefined;
+  if (!token) return undefined;
+
+  return (progress: number, message: string) => {
+    e.sendNotification({
+      method: "notifications/progress",
+      params: { progressToken: token, progress, total: 100, message }
+    }).catch(() => {});
+  };
+}
 
 export function registerHostingTools(server: McpServer): void {
   server.registerTool(
@@ -18,7 +31,7 @@ export function registerHostingTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => {
+    async (params, extra) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args: string[] = [];
       args.push("--batch", String(params.batch));
@@ -28,9 +41,18 @@ export function registerHostingTools(server: McpServer): void {
       if (params.keepStaged) args.push("-k");
       if (params.noApply) args.push("--no-apply");
       if (params.config) args.push("--config");
-      const result = params.retry
-        ? await execWithRetry("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT)
-        : await execCli("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT);
+
+      let result: Awaited<ReturnType<typeof execCli>>;
+      const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
+
+      if (onProgress) {
+        result = await execWithStreaming("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT, onProgress);
+      } else if (params.retry) {
+        result = await execWithRetry("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT);
+      } else {
+        result = await execCli("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT);
+      }
+
       const { text, isError } = formatResponse(result, "Hosting Deploy");
       return { content: [{ type: "text", text }], isError };
     }

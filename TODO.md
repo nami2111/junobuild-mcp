@@ -37,16 +37,24 @@
 
 ## High Priority
 
-### 4. No streaming/progress feedback for long-running operations
+### 4. ✅ No streaming/progress feedback for long-running operations
 
-**Problem:** Deploy, publish, and upgrade operations can take several minutes. The MCP SDK supports progress tokens (`_meta.progressToken`) but none of the tools use them. The LLM client gets zero feedback until the operation completes or times out.
+**Status:** IMPLEMENTED
 
-**Fix:**
-- Accept the `progressToken` from the MCP request `_meta` field.
-- For operations that support it, parse CLI output for progress indicators (percentage, file counts, etc.) and emit `server.sendProgress()` calls.
-- At minimum, emit periodic heartbeat progress messages (e.g. "Deploy in progress...") every N seconds for operations exceeding a threshold.
-
-**Files affected:** `src/cli.ts`, `src/tools/hosting.ts`, `src/tools/functions.ts`, `src/tools/snapshot.ts`, `src/tools/modules.ts`
+**What was done:**
+- Added `execWithStreaming()` in `src/cli.ts` using `child_process.spawn()` for line-by-line output streaming
+- Parses `[X/Y]` batch progress pattern (Initializing/Uploading/Committing per batch)
+- Calculates progress percentage: `(completedSteps / totalSteps) * 100` where totalSteps = Y * 3
+- Emits single "Building..." message at start of build phase
+- Strips Unicode spinner chars and repeated 'z' noise from CLI output
+- Sends progress via MCP `notifications/progress` using `sendNotification` with `progressToken`
+- Graceful degradation: if no progress token, falls back to normal buffered behavior
+- Added `progress: boolean` param to 5 tool schemas:
+  - `hostingDeploySchema`
+  - `functionsPublishSchema`
+  - `functionsUpgradeSchema`
+  - `moduleUpgradeSchema`
+  - `snapshotUploadSchema`
 
 ---
 
@@ -210,11 +218,11 @@
 | Priority | Total | Implemented | Remaining |
 |----------|-------|-------------|-----------|
 | Critical | 3 | 3 ✅ | 0 |
-| High | 4 | 3 ✅ | 1 (#4 Progress feedback) |
+| High | 4 | 4 ✅ | 0 |
 | Medium | 5 | 5 ✅ | 0 |
 | Low | 3 | 2 ✅ | 1 (#14 Composite ops) |
 
-**14 of 15 items implemented.** 1 remains as a future improvement.
+**15 of 15 items implemented.** All items complete.
 
 ## Changelog
 
@@ -232,7 +240,7 @@
 - **#13** — Server version read from `package.json` at runtime
 - **#15** — Docs tool uses in-memory cache with 1-hour TTL
 - **#8** — Added `execWithRetry()` with exponential backoff, added `retry` param to 5 network-dependent tools
+- **#4** — Added `execWithStreaming()` with `[X/Y]` progress parsing, added `progress` param to 5 long-running tools
 
 ### Remaining
-- **#4** — Progress feedback for long-running operations
 - **#14** — Composite/atomic operations

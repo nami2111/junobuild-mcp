@@ -1,8 +1,21 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, execWithRetry, formatResponse } from "../cli.js";
+import { execCli, execWithRetry, execWithStreaming, formatResponse, type ProgressCallback } from "../cli.js";
 import { moduleStartSchema, moduleStopSchema, moduleUpgradeSchema, moduleStatusSchema } from "../schemas/modules.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
+
+function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
+  const e = extra as { _meta?: Record<string, unknown>; sendNotification: (n: unknown) => Promise<void> };
+  const token = e._meta?.progressToken as string | number | undefined;
+  if (!token) return undefined;
+
+  return (progress: number, message: string) => {
+    e.sendNotification({
+      method: "notifications/progress",
+      params: { progressToken: token, progress, total: 100, message }
+    }).catch(() => {});
+  };
+}
 
 export function registerModuleTools(server: McpServer): void {
   server.registerTool(
@@ -62,16 +75,25 @@ export function registerModuleTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => {
+    async (params, extra) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
       if (params.src) args.push("-s", params.src);
       if (params.clearChunks) args.push("--clear-chunks");
       if (params.noSnapshot) args.push("--no-snapshot");
       if (params.reset) args.push("-r");
-      const result = params.retry
-        ? await execWithRetry("upgrade", args, flags, DEPLOY_TIMEOUT)
-        : await execCli("upgrade", args, flags, DEPLOY_TIMEOUT);
+
+      let result: Awaited<ReturnType<typeof execCli>>;
+      const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
+
+      if (onProgress) {
+        result = await execWithStreaming("upgrade", args, flags, DEPLOY_TIMEOUT, onProgress);
+      } else if (params.retry) {
+        result = await execWithRetry("upgrade", args, flags, DEPLOY_TIMEOUT);
+      } else {
+        result = await execCli("upgrade", args, flags, DEPLOY_TIMEOUT);
+      }
+
       const { text, isError } = formatResponse(result, "Module Upgrade");
       return { content: [{ type: "text", text }], isError };
     }

@@ -29,6 +29,7 @@ export const snapshotUploadSchema = z.object({
   target: targetEnum,
   targetId: z.string().optional().describe("The module ID of a specific target to upload the snapshot to"),
   retry: z.boolean().default(false).describe("Automatically retry on transient network failures (up to 3 attempts with exponential backoff)"),
+  progress: z.boolean().default(false).describe("Stream progress updates during upload (shows upload batch progress)"),
   ...GlobalFlagsSchema
 }).strict();
 

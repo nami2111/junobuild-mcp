@@ -10,6 +10,7 @@ export const hostingDeploySchema = z.object({
   noApply: z.boolean().default(false).describe("Submit deployment as a change but do not apply it yet"),
   config: z.boolean().default(false).describe("Apply configuration after deployment succeeds"),
   retry: z.boolean().default(false).describe("Automatically retry on transient network failures (up to 3 attempts with exponential backoff)"),
+  progress: z.boolean().default(false).describe("Stream progress updates during deployment (shows build status and upload batch progress)"),
   ...GlobalFlagsSchema
 }).strict();
 

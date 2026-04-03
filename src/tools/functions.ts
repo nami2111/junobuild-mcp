@@ -1,15 +1,28 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, execWithRetry, formatResponse } from "../cli.js";
+import { execCli, execWithRetry, execWithStreaming, formatResponse, type ProgressCallback } from "../cli.js";
 import { functionsBuildSchema, functionsEjectSchema, functionsPublishSchema, functionsUpgradeSchema } from "../schemas/functions.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
+
+function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
+  const e = extra as { _meta?: Record<string, unknown>; sendNotification: (n: unknown) => Promise<void> };
+  const token = e._meta?.progressToken as string | number | undefined;
+  if (!token) return undefined;
+
+  return (progress: number, message: string) => {
+    e.sendNotification({
+      method: "notifications/progress",
+      params: { progressToken: token, progress, total: 100, message }
+    }).catch(() => {});
+  };
+}
 
 export function registerFunctionsTools(server: McpServer): void {
   server.registerTool(
     "juno_functions_build",
     {
       title: "Juno Functions Build",
-      description: "Build your serverless functions. Supports Rust, TypeScript, and JavaScript. The CLI auto-detects the language if not specified. Use watch mode to rebuild on file changes.",
+      description: "Build your serverless functions. Supports Rust, TypeScript, and JavaScript. The CLI auto-detects the language if not specified.",
       inputSchema: functionsBuildSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -64,15 +77,24 @@ export function registerFunctionsTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => {
+    async (params, extra) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args: string[] = [];
       if (params.src) args.push("-s", params.src);
       if (params.noApply) args.push("--no-apply");
       if (params.keepStaged) args.push("-k");
-      const result = params.retry
-        ? await execWithRetry("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT)
-        : await execCli("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT);
+
+      let result: Awaited<ReturnType<typeof execCli>>;
+      const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
+
+      if (onProgress) {
+        result = await execWithStreaming("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT, onProgress);
+      } else if (params.retry) {
+        result = await execWithRetry("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT);
+      } else {
+        result = await execCli("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT);
+      }
+
       const { text, isError } = formatResponse(result, "Functions Publish");
       return { content: [{ type: "text", text }], isError };
     }
@@ -91,7 +113,7 @@ export function registerFunctionsTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => {
+    async (params, extra) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args: string[] = [];
       if (params.src) args.push("-s", params.src);
@@ -99,9 +121,18 @@ export function registerFunctionsTools(server: McpServer): void {
       if (params.clearChunks) args.push("--clear-chunks");
       if (params.noSnapshot) args.push("--no-snapshot");
       if (params.reset) args.push("-r");
-      const result = params.retry
-        ? await execWithRetry("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT)
-        : await execCli("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT);
+
+      let result: Awaited<ReturnType<typeof execCli>>;
+      const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
+
+      if (onProgress) {
+        result = await execWithStreaming("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT, onProgress);
+      } else if (params.retry) {
+        result = await execWithRetry("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT);
+      } else {
+        result = await execCli("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT);
+      }
+
       const { text, isError } = formatResponse(result, "Functions Upgrade");
       return { content: [{ type: "text", text }], isError };
     }
