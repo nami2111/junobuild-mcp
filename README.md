@@ -4,6 +4,16 @@
 
 Manage satellites, hosting, serverless functions, snapshots and more through any MCP-compatible client. Includes a built-in documentation tool to access Juno's official guides and references.
 
+## Features
+
+- **28 tools** across 9 domains — full CLI coverage for satellites, hosting, functions, snapshots, modules, changes, and more
+- **Progress streaming** — long-running operations (deploy, publish, upgrade) emit real-time progress updates via MCP progress notifications
+- **Automatic retry** — network-dependent operations can retry on transient failures with exponential backoff
+- **CLI binary caching** — resolves `juno` binary path once, eliminating npx overhead on every call
+- **Smart error handling** — all tools propagate `isError` based on CLI exit codes, with clean error messages
+- **Config file writing** — `juno_config_init` can write config files directly to disk
+- **Docs caching** — documentation responses cached for 1 hour to reduce latency
+
 ## Setup
 
 ### 1. Add to your MCP client
@@ -34,7 +44,7 @@ For non-interactive environments (CI, headless), set the `JUNO_TOKEN` environmen
 
 ### Documentation Access
 
-The `juno_docs` tool fetches Juno's official documentation on demand, helping agents understand concepts before running commands:
+The `juno_docs` tool fetches Juno's official documentation on demand, with responses cached for 1 hour:
 
 ```
 juno_docs({ topic: "datastore" })  → Full markdown from juno.build/docs/build/datastore
@@ -57,6 +67,17 @@ Available topics: `intro`, `start-a-new-project`, `setup-the-sdk`, `create-a-sat
 | **Modules** | `juno_module_start`, `juno_module_stop`, `juno_module_upgrade`, `juno_module_status` |
 | **Changes** | `juno_changes_list`, `juno_changes_apply`, `juno_changes_reject` |
 | **Docs** | `juno_docs` |
+
+## Key Parameters
+
+Several tools support optional parameters for enhanced reliability and UX:
+
+| Parameter | Type | Tools | Description |
+|-----------|------|-------|-------------|
+| `retry` | `boolean` | deploy, publish, upgrade, snapshot upload | Automatically retry on transient network failures (up to 3 attempts with exponential backoff: 1s → 2s → 4s) |
+| `progress` | `boolean` | deploy, publish, upgrade, snapshot upload | Stream real-time progress updates during long-running operations (build status + upload batch progress) |
+| `writeFile` | `boolean` | `juno_config_init` | Write the config file directly to disk instead of returning text for preview |
+| `wait` | `boolean` | `juno_emulator_start` | Wait until the emulator is fully ready before returning |
 
 ## Prerequisites
 
