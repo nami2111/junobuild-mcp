@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, formatResponse } from "../cli.js";
+import { execCli, execWithRetry, formatResponse } from "../cli.js";
 import { hostingDeploySchema, hostingClearSchema, hostingPruneSchema } from "../schemas/hosting.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
@@ -28,7 +28,9 @@ export function registerHostingTools(server: McpServer): void {
       if (params.keepStaged) args.push("-k");
       if (params.noApply) args.push("--no-apply");
       if (params.config) args.push("--config");
-      const result = await execCli("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT);
+      const result = params.retry
+        ? await execWithRetry("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT)
+        : await execCli("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Hosting Deploy");
       return { content: [{ type: "text", text }], isError };
     }

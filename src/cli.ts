@@ -66,6 +66,57 @@ export async function execCommand(
   });
 }
 
+const TRANSIENT_PATTERNS = [
+  "timeout",
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "socket hang up",
+  "network",
+  "rate limit",
+  "429",
+  "502",
+  "503",
+  "504"
+];
+
+function isTransientError(result: CliResult): boolean {
+  if (result.exitCode === 0) return false;
+  const output = `${result.stdout} ${result.stderr}`.toLowerCase();
+  return TRANSIENT_PATTERNS.some((pattern) => output.includes(pattern));
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function execWithRetry(
+  command: string,
+  args: string[] = [],
+  flags?: GlobalFlags,
+  timeout: number = DEFAULT_TIMEOUT,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<CliResult> {
+  let lastResult: CliResult | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      await sleep(delay);
+    }
+
+    lastResult = await execCli(command, args, flags, timeout);
+
+    if (lastResult.exitCode === 0 || !isTransientError(lastResult)) {
+      return lastResult;
+    }
+  }
+
+  return lastResult!;
+}
+
 export function formatResponse(result: CliResult, label?: string): { text: string; isError: boolean } {
   const parts: string[] = [];
   if (label) parts.push(`## ${label}\n`);

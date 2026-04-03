@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, formatResponse } from "../cli.js";
+import { execCli, execWithRetry, formatResponse } from "../cli.js";
 import { functionsBuildSchema, functionsEjectSchema, functionsPublishSchema, functionsUpgradeSchema } from "../schemas/functions.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
@@ -70,7 +70,9 @@ export function registerFunctionsTools(server: McpServer): void {
       if (params.src) args.push("-s", params.src);
       if (params.noApply) args.push("--no-apply");
       if (params.keepStaged) args.push("-k");
-      const result = await execCli("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT);
+      const result = params.retry
+        ? await execWithRetry("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT)
+        : await execCli("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Functions Publish");
       return { content: [{ type: "text", text }], isError };
     }
@@ -97,7 +99,9 @@ export function registerFunctionsTools(server: McpServer): void {
       if (params.clearChunks) args.push("--clear-chunks");
       if (params.noSnapshot) args.push("--no-snapshot");
       if (params.reset) args.push("-r");
-      const result = await execCli("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT);
+      const result = params.retry
+        ? await execWithRetry("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT)
+        : await execCli("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Functions Upgrade");
       return { content: [{ type: "text", text }], isError };
     }

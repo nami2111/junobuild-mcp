@@ -92,17 +92,21 @@
 
 ## Medium Priority
 
-### 8. No retry logic for network-dependent operations
+### 8. ✅ No retry logic for network-dependent operations
 
-**Problem:** Deploy, publish, upgrade, and snapshot operations depend on network connectivity to the Internet Computer. Transient failures (network blips, rate limits, IC congestion) cause permanent failures with no retry.
+**Status:** IMPLEMENTED
 
-**Fix:**
-- Add a configurable retry wrapper around `execCli()` for operations tagged as "network-dependent".
-- Use exponential backoff (e.g. 1s, 2s, 4s) with a max of 3 retries.
-- Only retry on specific failure patterns (network errors, timeouts), not on validation errors or authentication failures.
-- Expose a `retry` parameter on the relevant tool schemas.
-
-**Files affected:** `src/cli.ts`, relevant tool files
+**What was done:**
+- Added `execWithRetry()` helper in `src/cli.ts` with configurable retries and exponential backoff
+- Detects transient errors by matching output against patterns: timeout, ETIMEDOUT, ECONNRESET, ECONNREFUSED, ENOTFOUND, socket hang up, network, rate limit, 429, 502, 503, 504
+- Does NOT retry on auth failures, validation errors, or other permanent failures
+- Backoff: 1s → 2s → 4s (base 1s, exponential, max 3 retries)
+- Added `retry: boolean` param to 5 network-dependent schemas:
+  - `hostingDeploySchema`
+  - `functionsPublishSchema`
+  - `functionsUpgradeSchema`
+  - `moduleUpgradeSchema`
+  - `snapshotUploadSchema`
 
 ---
 
@@ -210,7 +214,7 @@
 | Medium | 5 | 5 ✅ | 0 |
 | Low | 3 | 2 ✅ | 1 (#14 Composite ops) |
 
-**13 of 15 items implemented.** 2 remain as future improvements.
+**14 of 15 items implemented.** 1 remains as a future improvement.
 
 ## Changelog
 
@@ -227,8 +231,8 @@
 - **#12** — Added `writeFile` param to write config directly, refactored generators to template strings
 - **#13** — Server version read from `package.json` at runtime
 - **#15** — Docs tool uses in-memory cache with 1-hour TTL
+- **#8** — Added `execWithRetry()` with exponential backoff, added `retry` param to 5 network-dependent tools
 
 ### Remaining
 - **#4** — Progress feedback for long-running operations
-- **#8** — Retry logic for network-dependent operations
 - **#14** — Composite/atomic operations

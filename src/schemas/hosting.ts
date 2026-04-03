@@ -9,6 +9,7 @@ export const hostingDeploySchema = z.object({
   keepStaged: z.boolean().default(false).describe("Keep proposed staged assets in memory after applying"),
   noApply: z.boolean().default(false).describe("Submit deployment as a change but do not apply it yet"),
   config: z.boolean().default(false).describe("Apply configuration after deployment succeeds"),
+  retry: z.boolean().default(false).describe("Automatically retry on transient network failures (up to 3 attempts with exponential backoff)"),
   ...GlobalFlagsSchema
 }).strict();
 

@@ -16,6 +16,7 @@ export const functionsPublishSchema = z.object({
   src: z.string().optional().describe("Path to a specific local gzipped WASM file to publish"),
   noApply: z.boolean().default(false).describe("Submit the release as a change but do not apply it yet"),
   keepStaged: z.boolean().default(false).describe("Keep proposed staged assets in memory after applying"),
+  retry: z.boolean().default(false).describe("Automatically retry on transient network failures (up to 3 attempts with exponential backoff)"),
   ...GlobalFlagsSchema
 }).strict();
 
@@ -25,5 +26,6 @@ export const functionsUpgradeSchema = z.object({
   clearChunks: z.boolean().default(false).describe("Clear previously uploaded WASM chunks"),
   noSnapshot: z.boolean().default(false).describe("Skip creating a snapshot before upgrading"),
   reset: z.boolean().default(false).describe("Reset to the initial state"),
+  retry: z.boolean().default(false).describe("Automatically retry on transient network failures (up to 3 attempts with exponential backoff)"),
   ...GlobalFlagsSchema
 }).strict();

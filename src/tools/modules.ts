@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, formatResponse } from "../cli.js";
+import { execCli, execWithRetry, formatResponse } from "../cli.js";
 import { moduleStartSchema, moduleStopSchema, moduleUpgradeSchema, moduleStatusSchema } from "../schemas/modules.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
@@ -69,7 +69,9 @@ export function registerModuleTools(server: McpServer): void {
       if (params.clearChunks) args.push("--clear-chunks");
       if (params.noSnapshot) args.push("--no-snapshot");
       if (params.reset) args.push("-r");
-      const result = await execCli("upgrade", args, flags, DEPLOY_TIMEOUT);
+      const result = params.retry
+        ? await execWithRetry("upgrade", args, flags, DEPLOY_TIMEOUT)
+        : await execCli("upgrade", args, flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Module Upgrade");
       return { content: [{ type: "text", text }], isError };
     }

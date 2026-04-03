@@ -28,6 +28,7 @@ export const snapshotUploadSchema = z.object({
   dir: z.string().describe("Path to the snapshot directory containing metadata.json and chunks"),
   target: targetEnum,
   targetId: z.string().optional().describe("The module ID of a specific target to upload the snapshot to"),
+  retry: z.boolean().default(false).describe("Automatically retry on transient network failures (up to 3 attempts with exponential backoff)"),
   ...GlobalFlagsSchema
 }).strict();
 

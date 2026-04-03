@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, formatResponse } from "../cli.js";
+import { execCli, execWithRetry, formatResponse } from "../cli.js";
 import {
   snapshotCreateSchema,
   snapshotDeleteSchema,
@@ -117,7 +117,9 @@ export function registerSnapshotTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["--dir", params.dir, "-t", params.target];
       if (params.targetId) args.push("--target-id", params.targetId);
-      const result = await execCli("snapshot", ["upload", ...args], flags, DEPLOY_TIMEOUT);
+      const result = params.retry
+        ? await execWithRetry("snapshot", ["upload", ...args], flags, DEPLOY_TIMEOUT)
+        : await execCli("snapshot", ["upload", ...args], flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Snapshot Upload");
       return { content: [{ type: "text", text }], isError };
     }
