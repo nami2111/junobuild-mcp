@@ -12,5 +12,5 @@ export const emulatorStopSchema = z.object({}).strict();
 export const emulatorClearSchema = z.object({}).strict();
 
 export const emulatorWaitSchema = z.object({
-  timeout: z.number().int().min(1000).max(600_000).default(120_000).describe("Timeout in ms for the emulator to be ready")
+  timeout: z.number().int().min(1000).max(600_000).default(120_000).describe("Timeout in ms for the emulator to be ready (1000-600000)")
 }).strict();

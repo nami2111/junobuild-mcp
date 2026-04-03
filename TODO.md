@@ -132,16 +132,15 @@
 
 ---
 
-### 11. No helpful input validation error messages
+### 11. ✅ Helpful input validation error messages
 
-**Problem:** When Zod validation fails, the error propagates to the MCP framework as a generic schema validation error. The LLM client receives an unhelpful message that doesn't explain which field failed or why.
+**Status:** IMPLEMENTED
 
-**Fix:**
-- Wrap tool handlers with a validation step that catches `ZodError` and formats a human-readable message listing each failed field and the reason.
-- Example: `"Invalid input: 'batch' must be between 1 and 200 (got 500), 'target' is required but was not provided."`
-- Consider a shared `validateInput(schema, params)` helper that all tools use.
-
-**Files affected:** `src/cli.ts` or new `src/validation.ts`, all tool files
+**What was done:**
+- Constrained `mode` field in `GlobalFlagsSchema` to `z.enum(["production", "staging", "development"])` instead of `z.string()`
+- Updated `batch` descriptions to include valid range `(1-200)` in hosting deploy and prune schemas
+- Updated `timeout` description to include valid range `(1000-600000)` in emulator wait schema
+- MCP SDK now uses these constrained schemas to produce clear validation errors like "must be one of: production, staging, development" or "must be <= 200"
 
 ---
 
@@ -189,18 +188,16 @@
 
 ---
 
-### 15. No caching for `juno_docs` tool
+### 15. ✅ No caching for `juno_docs` tool
 
-**Problem:** Every call to `juno_docs` fetches from `https://juno.build` over the network. Documentation content changes infrequently, so this is wasteful and adds latency.
+**Status:** IMPLEMENTED
 
-**Fix:**
-- Implement a simple in-memory cache with TTL (e.g. 1 hour).
-- Use a `Map<string, { content: string, expiresAt: number }>` keyed by topic.
-- On cache hit, return immediately. On miss or expiry, fetch and store.
-- Add a `forceRefresh: boolean` parameter to bypass cache.
-- Consider cache size limits to prevent memory growth.
-
-**Files affected:** `src/tools/docs.ts`
+**What was done:**
+- Added in-memory `Map<string, CacheEntry>` cache with 1-hour TTL
+- Cache entries store `{ content, expiresAt }` keyed by topic name
+- Cache hit returns immediately with `(cached)` label in the heading
+- Cache miss or expiry triggers a fresh fetch and stores the result
+- No external dependencies needed
 
 ---
 
@@ -210,10 +207,10 @@
 |----------|-------|-------------|-----------|
 | Critical | 3 | 3 ✅ | 0 |
 | High | 4 | 3 ✅ | 1 (#4 Progress feedback) |
-| Medium | 5 | 3 ✅ | 2 (#8 Retry, #11 Validation, #12 Config writing) |
-| Low | 3 | 1 ✅ | 2 (#14 Composite ops, #15 Docs caching) |
+| Medium | 5 | 4 ✅ | 1 (#12 Config writing) |
+| Low | 3 | 2 ✅ | 1 (#14 Composite ops) |
 
-**9 of 15 items implemented.** 6 remain as future improvements.
+**12 of 15 items implemented.** 3 remain as future improvements.
 
 ## Changelog
 
@@ -226,12 +223,12 @@
 - **#7** — Removed interactive `cdn` flag from functions upgrade schema
 - **#9** — Stderr labeled as `**Warnings:**` on success, error content on failure
 - **#10** — Created `src/schemas/enums.ts` with 5 shared Zod enums, removed duplicates
+- **#11** — Constrained `mode` to enum, added valid ranges to `batch` and `timeout` descriptions
 - **#13** — Server version read from `package.json` at runtime
+- **#15** — Docs tool uses in-memory cache with 1-hour TTL
 
 ### Remaining
 - **#4** — Progress feedback for long-running operations
 - **#8** — Retry logic for network-dependent operations
-- **#11** — Helpful input validation error messages
 - **#12** — `juno_config_init` file writing support
 - **#14** — Composite/atomic operations
-- **#15** — Docs caching with TTL

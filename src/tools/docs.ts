@@ -4,6 +4,14 @@ import type { TopicKey } from "../schemas/docs.js";
 import { CHARACTER_LIMIT } from "../constants.js";
 
 const BASE_URL = "https://juno.build";
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+interface CacheEntry {
+  content: string;
+  expiresAt: number;
+}
+
+const docCache = new Map<string, CacheEntry>();
 
 export function registerDocsTools(server: McpServer): void {
   server.registerTool(
@@ -23,6 +31,16 @@ export function registerDocsTools(server: McpServer): void {
       const path = TOPICS[params.topic as TopicKey];
       const url = `${BASE_URL}${path}`;
 
+      const cached = docCache.get(params.topic);
+      if (cached && cached.expiresAt > Date.now()) {
+        return {
+          content: [{
+            type: "text",
+            text: `# Juno Docs: ${params.topic} (cached)\n\n${cached.content}`
+          }]
+        };
+      }
+
       try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -39,6 +57,11 @@ export function registerDocsTools(server: McpServer): void {
         if (text.length > CHARACTER_LIMIT) {
           text = text.slice(0, CHARACTER_LIMIT) + "\n...(truncated)";
         }
+
+        docCache.set(params.topic, {
+          content: text,
+          expiresAt: Date.now() + CACHE_TTL_MS
+        });
 
         return {
           content: [{
