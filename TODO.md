@@ -144,17 +144,17 @@
 
 ---
 
-### 12. `juno_config_init` requires LLM to write files manually
+### 12. ✅ `juno_config_init` requires LLM to write files manually
 
-**Problem:** The tool returns config text with instructions like "Save this as `juno.config.ts` in your project root." This relies on the LLM correctly writing the file content, which introduces risk of formatting errors, wrong filenames, or missed steps.
+**Status:** IMPLEMENTED
 
-**Fix:**
-- Add a `writeFile: boolean` parameter (default `false`) that, when true, writes the config file directly using `node:fs`.
-- Or: create a separate `juno_config_write` tool that takes the generated config content and a target path.
-- Add a `dryRun: boolean` parameter to preview without writing.
-- Validate the generated config by running `juno config apply --force` after writing (optional).
-
-**Files affected:** `src/schemas/config.ts`, `src/tools/config.ts`
+**What was done:**
+- Added `writeFile: boolean` param (default `false`) — when true, writes config file directly to disk using `node:fs/promises`
+- Added `path: string` param for custom output path (defaults to `juno.config.ts/js/json`)
+- Creates parent directories with `mkdir` recursive flag
+- Default behavior (`writeFile: false`) unchanged — returns config content for preview
+- Refactored config generators from line-by-line builder to template strings, fixing trailing comma issues in multi-env + orbiter configs
+- Updated `readOnlyHint` annotation to `false` since the tool can now write to disk
 
 ---
 
@@ -207,10 +207,10 @@
 |----------|-------|-------------|-----------|
 | Critical | 3 | 3 ✅ | 0 |
 | High | 4 | 3 ✅ | 1 (#4 Progress feedback) |
-| Medium | 5 | 4 ✅ | 1 (#12 Config writing) |
+| Medium | 5 | 5 ✅ | 0 |
 | Low | 3 | 2 ✅ | 1 (#14 Composite ops) |
 
-**12 of 15 items implemented.** 3 remain as future improvements.
+**13 of 15 items implemented.** 2 remain as future improvements.
 
 ## Changelog
 
@@ -224,11 +224,11 @@
 - **#9** — Stderr labeled as `**Warnings:**` on success, error content on failure
 - **#10** — Created `src/schemas/enums.ts` with 5 shared Zod enums, removed duplicates
 - **#11** — Constrained `mode` to enum, added valid ranges to `batch` and `timeout` descriptions
+- **#12** — Added `writeFile` param to write config directly, refactored generators to template strings
 - **#13** — Server version read from `package.json` at runtime
 - **#15** — Docs tool uses in-memory cache with 1-hour TTL
 
 ### Remaining
 - **#4** — Progress feedback for long-running operations
 - **#8** — Retry logic for network-dependent operations
-- **#12** — `juno_config_init` file writing support
 - **#14** — Composite/atomic operations

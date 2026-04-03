@@ -14,7 +14,11 @@ export const configInitSchema = z.object({
   stagingSatelliteId: z.string().optional()
     .describe("Staging satellite ID (required if multiEnv is true)"),
   orbiterId: z.string().optional()
-    .describe("Optional Orbiter ID for analytics")
+    .describe("Optional Orbiter ID for analytics"),
+  writeFile: z.boolean().default(false)
+    .describe("Write the config file directly to disk instead of returning content for preview"),
+  path: z.string().optional()
+    .describe("Custom file path for the config (defaults to juno.config.ts/js/json in project root)")
 }).strict();
 
 export const configApplySchema = z.object({
