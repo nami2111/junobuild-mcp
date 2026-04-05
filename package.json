@@ -42,6 +42,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepublishOnly": "npm run build",
     "changeset": "changeset",
     "version": "changeset version",
@@ -58,6 +60,7 @@
     "@changesets/cli": "^2.27.12",
     "@types/node": "^25.5.0",
     "tsx": "^4.19.2",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   }
 }
