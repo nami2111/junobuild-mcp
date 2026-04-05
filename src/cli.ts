@@ -73,6 +73,72 @@ export async function execCommand(
   });
 }
 
+export async function execCommandNonInteractive(
+  cmd: string,
+  timeout: number = DEFAULT_TIMEOUT,
+  cwd?: string,
+  stdinAnswers?: string[]
+): Promise<CliResult> {
+  return new Promise<CliResult>((resolve) => {
+    const [cmdPart, ...cmdArgs] = cmd.split(" ");
+    const child = spawn(cmdPart, cmdArgs, {
+      timeout,
+      stdio: stdinAnswers ? ["pipe", "pipe", "pipe"] : ["ignore", "pipe", "pipe"],
+      cwd,
+      env: { ...process.env, FORCE_COLOR: "0", CI: "1" }
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    const timeoutId = setTimeout(() => {
+      child.kill("SIGTERM");
+    }, timeout);
+
+    if (stdinAnswers && child.stdin && stdinAnswers.length > 0) {
+      let answerIndex = 0;
+      const sendNextAnswer = () => {
+        if (answerIndex < stdinAnswers.length && child.stdin) {
+          child.stdin.write(stdinAnswers[answerIndex] + "\n");
+          answerIndex++;
+          if (answerIndex < stdinAnswers.length) {
+            setTimeout(sendNextAnswer, 3000);
+          } else {
+            child.stdin.end();
+          }
+        }
+      };
+      setTimeout(sendNextAnswer, 5000);
+    }
+
+    child.stdout?.on("data", (data: Buffer) => {
+      stdout += stripAnsi(data.toString());
+    });
+
+    child.stderr?.on("data", (data: Buffer) => {
+      stderr += stripAnsi(data.toString());
+    });
+
+    child.on("close", (code) => {
+      clearTimeout(timeoutId);
+      resolve({
+        stdout,
+        stderr,
+        exitCode: code ?? 1
+      });
+    });
+
+    child.on("error", (error) => {
+      clearTimeout(timeoutId);
+      resolve({
+        stdout,
+        stderr: `${stderr}\n${error.message}`,
+        exitCode: 1
+      });
+    });
+  });
+}
+
 const TRANSIENT_PATTERNS = [
   "timeout",
   "ETIMEDOUT",

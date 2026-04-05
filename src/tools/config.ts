@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, execCommand, formatResponse } from "../cli.js";
+import { execCli, execCommandNonInteractive, formatResponse } from "../cli.js";
 import { configInitSchema, configApplySchema, createProjectSchema } from "../schemas/config.js";
 import type { GlobalFlags } from "../types.js";
 
@@ -202,12 +202,24 @@ export function registerConfigTools(server: McpServer): void {
       }
     },
     async (params) => {
-      const pm = params.packageManager;
       const args = [params.directory];
       if (params.template) args.push("--template", params.template);
 
-      const cmd = `${pm} create juno@latest ${args.join(" ")}`;
-      const result = await execCommand(cmd, 120_000);
+      const cmd = `npx create-juno@latest ${args.join(" ")}`;
+
+      const answers: string[] = [];
+      answers.push("no");
+      answers.push("no");
+
+      if (params.template) {
+        const serverlessLabels = { rust: "Rust", typescript: "TypeScript", none: "None" };
+        answers.push(serverlessLabels[params.serverlessFunctions]);
+        answers.push(params.githubAction ? "yes" : "no");
+      }
+
+      answers.push("no");
+
+      const result = await execCommandNonInteractive(cmd, 300_000, undefined, answers);
       const { text, isError } = formatResponse(result, "Create Project");
       return { content: [{ type: "text", text }], isError };
     }
