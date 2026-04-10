@@ -6,7 +6,7 @@ Manage satellites, hosting, serverless functions, snapshots and more through any
 
 ## Features
 
-- **28 tools** across 9 domains — full CLI coverage for satellites, hosting, functions, snapshots, modules, changes, and more
+- **32 tools** across 9 domains — full CLI coverage for satellites, hosting, functions, snapshots, modules, changes, and more
 - **Progress streaming** — long-running operations (deploy, publish, upgrade) emit real-time progress updates via MCP progress notifications
 - **Automatic retry** — network-dependent operations can retry on transient failures with exponential backoff
 - **CLI binary caching** — resolves `juno` binary path once, eliminating npx overhead on every call
