@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.1.3
+
+### Patch Changes
+
+- add prettier, eslint, and update codebase and test file
+
 ## 1.1.2
 
 ### Patch Changes
