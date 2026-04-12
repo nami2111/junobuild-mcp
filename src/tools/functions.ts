@@ -1,11 +1,25 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, execWithRetry, execWithStreaming, formatResponse, type ProgressCallback } from "../cli.js";
-import { functionsBuildSchema, functionsEjectSchema, functionsPublishSchema, functionsUpgradeSchema } from "../schemas/functions.js";
+import {
+  execCli,
+  execWithRetry,
+  execWithStreaming,
+  formatResponse,
+  type ProgressCallback
+} from "../cli.js";
+import {
+  functionsBuildSchema,
+  functionsEjectSchema,
+  functionsPublishSchema,
+  functionsUpgradeSchema
+} from "../schemas/functions.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
 function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
-  const e = extra as { _meta?: Record<string, unknown>; sendNotification: (n: unknown) => Promise<void> };
+  const e = extra as {
+    _meta?: Record<string, unknown>;
+    sendNotification: (n: unknown) => Promise<void>;
+  };
   const token = e._meta?.progressToken as string | number | undefined;
   if (!token) return undefined;
 
@@ -22,7 +36,8 @@ export function registerFunctionsTools(server: McpServer): void {
     "juno_functions_build",
     {
       title: "Juno Functions Build",
-      description: "Build your serverless functions. Supports Rust, TypeScript, and JavaScript. The CLI auto-detects the language if not specified.",
+      description:
+        "Build your serverless functions. Supports Rust, TypeScript, and JavaScript. The CLI auto-detects the language if not specified.",
       inputSchema: functionsBuildSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -46,7 +61,8 @@ export function registerFunctionsTools(server: McpServer): void {
     "juno_functions_eject",
     {
       title: "Juno Functions Eject",
-      description: "Generate the required files to begin developing serverless functions in your project. Scaffolds boilerplate for Rust, TypeScript, or JavaScript functions. Alias: `juno functions init`.",
+      description:
+        "Generate the required files to begin developing serverless functions in your project. Scaffolds boilerplate for Rust, TypeScript, or JavaScript functions. Alias: `juno functions init`.",
       inputSchema: functionsEjectSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -68,7 +84,8 @@ export function registerFunctionsTools(server: McpServer): void {
     "juno_functions_publish",
     {
       title: "Juno Functions Publish",
-      description: "Publish a new version of your serverless functions to the satellite. Optionally submit as a pending change without applying, or provide a custom WASM file path.",
+      description:
+        "Publish a new version of your serverless functions to the satellite. Optionally submit as a pending change without applying, or provide a custom WASM file path.",
       inputSchema: functionsPublishSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -88,7 +105,13 @@ export function registerFunctionsTools(server: McpServer): void {
       const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
 
       if (onProgress) {
-        result = await execWithStreaming("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT, onProgress);
+        result = await execWithStreaming(
+          "functions",
+          ["publish", ...args],
+          flags,
+          DEPLOY_TIMEOUT,
+          onProgress
+        );
       } else if (params.retry) {
         result = await execWithRetry("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT);
       } else {
@@ -104,7 +127,8 @@ export function registerFunctionsTools(server: McpServer): void {
     "juno_functions_upgrade",
     {
       title: "Juno Functions Upgrade",
-      description: "Upgrade your satellite's serverless functions. Can use a local WASM file, select from CDN releases, or use the default local build output. Optionally create a snapshot before upgrading.",
+      description:
+        "Upgrade your satellite's serverless functions. Can use a local WASM file, select from CDN releases, or use the default local build output. Optionally create a snapshot before upgrading.",
       inputSchema: functionsUpgradeSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -126,7 +150,13 @@ export function registerFunctionsTools(server: McpServer): void {
       const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
 
       if (onProgress) {
-        result = await execWithStreaming("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT, onProgress);
+        result = await execWithStreaming(
+          "functions",
+          ["upgrade", ...args],
+          flags,
+          DEPLOY_TIMEOUT,
+          onProgress
+        );
       } else if (params.retry) {
         result = await execWithRetry("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT);
       } else {

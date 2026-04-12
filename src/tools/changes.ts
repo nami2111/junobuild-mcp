@@ -7,7 +7,8 @@ export function registerChangesTools(server: McpServer): void {
     "juno_changes_list",
     {
       title: "Juno Changes List",
-      description: "List all submitted or applied changes to your module. By default shows only submitted (pending) changes. Use --all for full history and --every to include all statuses.",
+      description:
+        "List all submitted or applied changes to your module. By default shows only submitted (pending) changes. Use --all for full history and --every to include all statuses.",
       inputSchema: changesListSchema.shape,
       annotations: {
         readOnlyHint: true,
@@ -30,7 +31,8 @@ export function registerChangesTools(server: McpServer): void {
     "juno_changes_apply",
     {
       title: "Juno Changes Apply",
-      description: "Apply a submitted change by its ID. Optionally create a snapshot before applying and verify the change hash for integrity.",
+      description:
+        "Apply a submitted change by its ID. Optionally create a snapshot before applying and verify the change hash for integrity.",
       inputSchema: changesApplySchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -54,7 +56,8 @@ export function registerChangesTools(server: McpServer): void {
     "juno_changes_reject",
     {
       title: "Juno Changes Reject",
-      description: "Reject a submitted change by its ID. This prevents the change from being applied. Optionally verify the change hash for integrity.",
+      description:
+        "Reject a submitted change by its ID. This prevents the change from being applied. Optionally verify the change hash for integrity.",
       inputSchema: changesRejectSchema.shape,
       annotations: {
         readOnlyHint: false,

@@ -1,6 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { execCli, formatResponse } from "../cli.js";
-import { whoamiSchema, versionSchema, openSatelliteSchema, runScriptSchema } from "../schemas/identity.js";
+import {
+  whoamiSchema,
+  versionSchema,
+  openSatelliteSchema,
+  runScriptSchema
+} from "../schemas/identity.js";
 import type { GlobalFlags } from "../types.js";
 
 export function registerIdentityTools(server: McpServer): void {
@@ -8,7 +13,8 @@ export function registerIdentityTools(server: McpServer): void {
     "juno_whoami",
     {
       title: "Juno Who Am I",
-      description: "Display your current profile, access key, and links to your satellite. Shows the authenticated identity and associated modules.",
+      description:
+        "Display your current profile, access key, and links to your satellite. Shows the authenticated identity and associated modules.",
       inputSchema: whoamiSchema.shape,
       annotations: {
         readOnlyHint: true,
@@ -30,7 +36,8 @@ export function registerIdentityTools(server: McpServer): void {
     "juno_version",
     {
       title: "Juno Version",
-      description: "Show the current versions of the Juno CLI and emulator (if running). Use --version flag.",
+      description:
+        "Show the current versions of the Juno CLI and emulator (if running). Use --version flag.",
       inputSchema: versionSchema.shape,
       annotations: {
         readOnlyHint: true,
@@ -50,7 +57,8 @@ export function registerIdentityTools(server: McpServer): void {
     "juno_open",
     {
       title: "Juno Open Satellite",
-      description: "Open your satellite in the browser or console. Useful for quickly viewing the deployed app or management console.",
+      description:
+        "Open your satellite in the browser or console. Useful for quickly viewing the deployed app or management console.",
       inputSchema: openSatelliteSchema.shape,
       annotations: {
         readOnlyHint: true,
@@ -74,7 +82,8 @@ export function registerIdentityTools(server: McpServer): void {
     "juno_run",
     {
       title: "Juno Run Script",
-      description: "Run a custom JavaScript or TypeScript script in the CLI context. The script has access to the authenticated Juno environment.",
+      description:
+        "Run a custom JavaScript or TypeScript script in the CLI context. The script has access to the authenticated Juno environment.",
       inputSchema: runScriptSchema.shape,
       annotations: {
         readOnlyHint: false,

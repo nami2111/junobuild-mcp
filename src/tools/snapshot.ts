@@ -1,5 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, execWithRetry, execWithStreaming, formatResponse, type ProgressCallback } from "../cli.js";
+import {
+  execCli,
+  execWithRetry,
+  execWithStreaming,
+  formatResponse,
+  type ProgressCallback
+} from "../cli.js";
 import {
   snapshotCreateSchema,
   snapshotDeleteSchema,
@@ -12,7 +18,10 @@ import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
 function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
-  const e = extra as { _meta?: Record<string, unknown>; sendNotification: (n: unknown) => Promise<void> };
+  const e = extra as {
+    _meta?: Record<string, unknown>;
+    sendNotification: (n: unknown) => Promise<void>;
+  };
   const token = e._meta?.progressToken as string | number | undefined;
   if (!token) return undefined;
 
@@ -29,7 +38,8 @@ export function registerSnapshotTools(server: McpServer): void {
     "juno_snapshot_create",
     {
       title: "Juno Snapshot Create",
-      description: "Create a snapshot of your module's current state. Snapshots capture the full state and can be used for backup or migration. Target can be satellite (s), mission-control (m), or orbiter (o).",
+      description:
+        "Create a snapshot of your module's current state. Snapshots capture the full state and can be used for backup or migration. Target can be satellite (s), mission-control (m), or orbiter (o).",
       inputSchema: snapshotCreateSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -51,7 +61,8 @@ export function registerSnapshotTools(server: McpServer): void {
     "juno_snapshot_delete",
     {
       title: "Juno Snapshot Delete",
-      description: "Delete an existing snapshot. This permanently removes the snapshot and cannot be undone.",
+      description:
+        "Delete an existing snapshot. This permanently removes the snapshot and cannot be undone.",
       inputSchema: snapshotDeleteSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -73,7 +84,8 @@ export function registerSnapshotTools(server: McpServer): void {
     "juno_snapshot_list",
     {
       title: "Juno Snapshot List",
-      description: "List all existing snapshots for a module type. Shows snapshot IDs, creation dates, and sizes. Target can be satellite (s), mission-control (m), or orbiter (o).",
+      description:
+        "List all existing snapshots for a module type. Shows snapshot IDs, creation dates, and sizes. Target can be satellite (s), mission-control (m), or orbiter (o).",
       inputSchema: snapshotListSchema.shape,
       annotations: {
         readOnlyHint: true,
@@ -95,7 +107,8 @@ export function registerSnapshotTools(server: McpServer): void {
     "juno_snapshot_download",
     {
       title: "Juno Snapshot Download",
-      description: "Download a snapshot to offline files on your local machine. Useful for backup or transferring state between environments.",
+      description:
+        "Download a snapshot to offline files on your local machine. Useful for backup or transferring state between environments.",
       inputSchema: snapshotDownloadSchema.shape,
       annotations: {
         readOnlyHint: true,
@@ -117,7 +130,8 @@ export function registerSnapshotTools(server: McpServer): void {
     "juno_snapshot_upload",
     {
       title: "Juno Snapshot Upload",
-      description: "Upload a snapshot from offline files. Provide the directory path containing metadata.json and chunks, and the target module type.",
+      description:
+        "Upload a snapshot from offline files. Provide the directory path containing metadata.json and chunks, and the target module type.",
       inputSchema: snapshotUploadSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -135,7 +149,13 @@ export function registerSnapshotTools(server: McpServer): void {
       const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
 
       if (onProgress) {
-        result = await execWithStreaming("snapshot", ["upload", ...args], flags, DEPLOY_TIMEOUT, onProgress);
+        result = await execWithStreaming(
+          "snapshot",
+          ["upload", ...args],
+          flags,
+          DEPLOY_TIMEOUT,
+          onProgress
+        );
       } else if (params.retry) {
         result = await execWithRetry("snapshot", ["upload", ...args], flags, DEPLOY_TIMEOUT);
       } else {
@@ -151,7 +171,8 @@ export function registerSnapshotTools(server: McpServer): void {
     "juno_snapshot_restore",
     {
       title: "Juno Snapshot Restore",
-      description: "Restore a module to a previously created snapshot state. This will overwrite the current state with the snapshot data.",
+      description:
+        "Restore a module to a previously created snapshot state. This will overwrite the current state with the snapshot data.",
       inputSchema: snapshotRestoreSchema.shape,
       annotations: {
         readOnlyHint: false,

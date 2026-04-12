@@ -19,7 +19,7 @@ const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
 
 const server = new McpServer({
   name: "junobuild-mcp-server",
-  version: pkg.version as string,
+  version: pkg.version as string
 });
 
 registerIdentityTools(server);

@@ -1,11 +1,20 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, execWithRetry, execWithStreaming, formatResponse, type ProgressCallback } from "../cli.js";
+import {
+  execCli,
+  execWithRetry,
+  execWithStreaming,
+  formatResponse,
+  type ProgressCallback
+} from "../cli.js";
 import { hostingDeploySchema, hostingClearSchema, hostingPruneSchema } from "../schemas/hosting.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
 function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
-  const e = extra as { _meta?: Record<string, unknown>; sendNotification: (n: unknown) => Promise<void> };
+  const e = extra as {
+    _meta?: Record<string, unknown>;
+    sendNotification: (n: unknown) => Promise<void>;
+  };
   const token = e._meta?.progressToken as string | number | undefined;
   if (!token) return undefined;
 
@@ -22,7 +31,8 @@ export function registerHostingTools(server: McpServer): void {
     "juno_hosting_deploy",
     {
       title: "Juno Hosting Deploy",
-      description: "Deploy your app's frontend files to your satellite. Reads from the `source` directory defined in juno.config and uploads all assets. Supports batch parallelism, clearing before deploy, and pruning stale files after.",
+      description:
+        "Deploy your app's frontend files to your satellite. Reads from the `source` directory defined in juno.config and uploads all assets. Supports batch parallelism, clearing before deploy, and pruning stale files after.",
       inputSchema: hostingDeploySchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -46,7 +56,13 @@ export function registerHostingTools(server: McpServer): void {
       const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
 
       if (onProgress) {
-        result = await execWithStreaming("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT, onProgress);
+        result = await execWithStreaming(
+          "hosting",
+          ["deploy", ...args],
+          flags,
+          DEPLOY_TIMEOUT,
+          onProgress
+        );
       } else if (params.retry) {
         result = await execWithRetry("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT);
       } else {
@@ -62,7 +78,8 @@ export function registerHostingTools(server: McpServer): void {
     "juno_hosting_clear",
     {
       title: "Juno Hosting Clear",
-      description: "Remove frontend files (JS, HTML, CSS, etc.) from your satellite. This does NOT remove user-uploaded files from custom collections — only the deployed app assets.",
+      description:
+        "Remove frontend files (JS, HTML, CSS, etc.) from your satellite. This does NOT remove user-uploaded files from custom collections — only the deployed app assets.",
       inputSchema: hostingClearSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -85,7 +102,8 @@ export function registerHostingTools(server: McpServer): void {
     "juno_hosting_prune",
     {
       title: "Juno Hosting Prune",
-      description: "Remove stale frontend files from your satellite that are no longer in your build output. Use --dry-run to preview which files would be deleted without actually deleting them.",
+      description:
+        "Remove stale frontend files from your satellite that are no longer in your build output. Use --dry-run to preview which files would be deleted without actually deleting them.",
       inputSchema: hostingPruneSchema.shape,
       annotations: {
         readOnlyHint: false,

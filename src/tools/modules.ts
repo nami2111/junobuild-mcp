@@ -1,11 +1,25 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, execWithRetry, execWithStreaming, formatResponse, type ProgressCallback } from "../cli.js";
-import { moduleStartSchema, moduleStopSchema, moduleUpgradeSchema, moduleStatusSchema } from "../schemas/modules.js";
+import {
+  execCli,
+  execWithRetry,
+  execWithStreaming,
+  formatResponse,
+  type ProgressCallback
+} from "../cli.js";
+import {
+  moduleStartSchema,
+  moduleStopSchema,
+  moduleUpgradeSchema,
+  moduleStatusSchema
+} from "../schemas/modules.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
 function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
-  const e = extra as { _meta?: Record<string, unknown>; sendNotification: (n: unknown) => Promise<void> };
+  const e = extra as {
+    _meta?: Record<string, unknown>;
+    sendNotification: (n: unknown) => Promise<void>;
+  };
   const token = e._meta?.progressToken as string | number | undefined;
   if (!token) return undefined;
 
@@ -22,7 +36,8 @@ export function registerModuleTools(server: McpServer): void {
     "juno_module_start",
     {
       title: "Juno Module Start",
-      description: "Start a stopped module. Target can be satellite (s), mission-control (m), or orbiter (o). Starting a module makes it available for requests.",
+      description:
+        "Start a stopped module. Target can be satellite (s), mission-control (m), or orbiter (o). Starting a module makes it available for requests.",
       inputSchema: moduleStartSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -44,7 +59,8 @@ export function registerModuleTools(server: McpServer): void {
     "juno_module_stop",
     {
       title: "Juno Module Stop",
-      description: "Stop a running module. Target can be satellite (s), mission-control (m), or orbiter (o). Stopping a module makes it unavailable for requests.",
+      description:
+        "Stop a running module. Target can be satellite (s), mission-control (m), or orbiter (o). Stopping a module makes it unavailable for requests.",
       inputSchema: moduleStopSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -66,7 +82,8 @@ export function registerModuleTools(server: McpServer): void {
     "juno_module_upgrade",
     {
       title: "Juno Module Upgrade",
-      description: "Upgrade a module to a new version. Target can be satellite (s), mission-control (m), or orbiter (o). Optionally provide a custom WASM file. A snapshot is created before upgrading unless --no-snapshot is set.",
+      description:
+        "Upgrade a module to a new version. Target can be satellite (s), mission-control (m), or orbiter (o). Optionally provide a custom WASM file. A snapshot is created before upgrading unless --no-snapshot is set.",
       inputSchema: moduleUpgradeSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -103,7 +120,8 @@ export function registerModuleTools(server: McpServer): void {
     "juno_module_status",
     {
       title: "Juno Module Status",
-      description: "Check the status of all modules (satellites, mission control, orbiter). Shows running state, cycles balance, memory usage, and version info.",
+      description:
+        "Check the status of all modules (satellites, mission control, orbiter). Shows running state, cycles balance, memory usage, and version info.",
       inputSchema: moduleStatusSchema.shape,
       annotations: {
         readOnlyHint: true,

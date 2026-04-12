@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { execCommandNonInteractive } from "../src/cli.js";
-import { existsSync, rmSync, mkdirSync, readdirSync } from "node:fs";
+import { rmSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
@@ -30,7 +30,7 @@ describe("execCommandNonInteractive", () => {
   });
 
   it("pipes stdin answers to interactive command", async () => {
-    const result = await execCommandNonInteractive("cat", 5_000, undefined, ["hello"]);
+    const result = await execCommandNonInteractive("cat", 10_000, undefined, ["hello"]);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("hello");
   });

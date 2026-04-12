@@ -16,7 +16,7 @@ interface ConfigInitParams {
   path?: string;
 }
 
-function generateTypeScriptConfig(params: ConfigInitParams): string {
+function buildConfigOptionsSnippet(params: ConfigInitParams): string {
   const satelliteBlock = params.multiEnv
     ? `  satellite: {
     ids: {
@@ -45,46 +45,22 @@ function generateTypeScriptConfig(params: ConfigInitParams): string {
   const parts = [satelliteBlock];
   if (orbiterBlock) parts.push(orbiterBlock);
 
+  return parts.join(",\n");
+}
+
+function generateTypeScriptConfig(params: ConfigInitParams): string {
   return `import { defineConfig } from "@junobuild/config";
 
 export default defineConfig({
-${parts.join(",\n")}
+${buildConfigOptionsSnippet(params)}
 });`;
 }
 
 function generateJavaScriptConfig(params: ConfigInitParams): string {
-  const satelliteBlock = params.multiEnv
-    ? `  satellite: {
-    ids: {
-      production: "${params.satelliteId}",
-      staging: "${params.stagingSatelliteId ?? "bbbbb-ccccc-ddddd-eeeee-cai"}"
-    },
-    source: "${params.source}"
-  }`
-    : `  satellite: {
-    id: "${params.satelliteId}",
-    source: "${params.source}"
-  }`;
-
-  const orbiterBlock = params.orbiterId
-    ? params.multiEnv
-      ? `  orbiter: {
-    ids: {
-      production: "${params.orbiterId}"
-    }
-  }`
-      : `  orbiter: {
-    id: "${params.orbiterId}"
-  }`
-    : null;
-
-  const parts = [satelliteBlock];
-  if (orbiterBlock) parts.push(orbiterBlock);
-
   return `const { defineConfig } = require("@junobuild/config");
 
 module.exports = defineConfig({
-${parts.join(",\n")}
+${buildConfigOptionsSnippet(params)}
 });`;
 }
 
@@ -115,7 +91,11 @@ function generateJsonConfig(params: ConfigInitParams): string {
   return JSON.stringify(config, null, 2);
 }
 
-function generateConfigContent(params: ConfigInitParams): { content: string; ext: string; lang: string } {
+function generateConfigContent(params: ConfigInitParams): {
+  content: string;
+  ext: string;
+  lang: string;
+} {
   switch (params.format) {
     case "typescript":
       return { content: generateTypeScriptConfig(params), ext: "ts", lang: "typescript" };
@@ -131,7 +111,8 @@ export function registerConfigTools(server: McpServer): void {
     "juno_config_init",
     {
       title: "Juno Config Init",
-      description: "Generate a juno.config file (TypeScript, JavaScript, or JSON). By default returns config content for preview. Set writeFile to true to write the file directly to disk. Then run juno_config_apply to push the config to your satellite.",
+      description:
+        "Generate a juno.config file (TypeScript, JavaScript, or JSON). By default returns config content for preview. Set writeFile to true to write the file directly to disk. Then run juno_config_apply to push the config to your satellite.",
       inputSchema: configInitSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -152,10 +133,12 @@ export function registerConfigTools(server: McpServer): void {
         await writeFile(filename, content, "utf-8");
 
         return {
-          content: [{
-            type: "text",
-            text: `Config written to ${filename}\n\nRun \`juno config apply\` to apply the configuration to your satellite.\n\n**Note:** Replace the placeholder satellite ID with your actual ID from the [Juno Console](https://console.juno.build).`
-          }]
+          content: [
+            {
+              type: "text",
+              text: `Config written to ${filename}\n\nRun \`juno config apply\` to apply the configuration to your satellite.\n\n**Note:** Replace the placeholder satellite ID with your actual ID from the [Juno Console](https://console.juno.build).`
+            }
+          ]
         };
       }
 
@@ -169,7 +152,8 @@ export function registerConfigTools(server: McpServer): void {
     "juno_config_apply",
     {
       title: "Juno Config Apply",
-      description: "Apply the current juno.config file to your satellite. This is required after modifying settings like storage headers, datastore rules, authentication config, or collection definitions.",
+      description:
+        "Apply the current juno.config file to your satellite. This is required after modifying settings like storage headers, datastore rules, authentication config, or collection definitions.",
       inputSchema: configApplySchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -192,7 +176,8 @@ export function registerConfigTools(server: McpServer): void {
     "juno_create_project",
     {
       title: "Juno Create Project",
-      description: "Scaffold a new Juno project using `npm create juno@latest`. Creates a project directory with a chosen frontend framework template and Juno SDK pre-configured.",
+      description:
+        "Scaffold a new Juno project using `npm create juno@latest`. Creates a project directory with a chosen frontend framework template and Juno SDK pre-configured.",
       inputSchema: createProjectSchema.shape,
       annotations: {
         readOnlyHint: false,

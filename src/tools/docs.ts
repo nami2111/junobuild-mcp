@@ -18,7 +18,8 @@ export function registerDocsTools(server: McpServer): void {
     "juno_docs",
     {
       title: "Juno Documentation",
-      description: "Fetch Juno documentation from juno.build. Provides detailed guides on authentication, datastore, storage, hosting, serverless functions, CLI usage, configuration, and more. Use this to learn how Juno works before running CLI commands.",
+      description:
+        "Fetch Juno documentation from juno.build. Provides detailed guides on authentication, datastore, storage, hosting, serverless functions, CLI usage, configuration, and more. Use this to learn how Juno works before running CLI commands.",
       inputSchema: junoDocsSchema.shape,
       annotations: {
         readOnlyHint: true,
@@ -34,10 +35,12 @@ export function registerDocsTools(server: McpServer): void {
       const cached = docCache.get(params.topic);
       if (cached && cached.expiresAt > Date.now()) {
         return {
-          content: [{
-            type: "text",
-            text: `# Juno Docs: ${params.topic} (cached)\n\n${cached.content}`
-          }]
+          content: [
+            {
+              type: "text",
+              text: `# Juno Docs: ${params.topic} (cached)\n\n${cached.content}`
+            }
+          ]
         };
       }
 
@@ -45,10 +48,12 @@ export function registerDocsTools(server: McpServer): void {
         const response = await fetch(url);
         if (!response.ok) {
           return {
-            content: [{
-              type: "text",
-              text: `Failed to fetch documentation for "${params.topic}" from ${url} (HTTP ${response.status})`
-            }],
+            content: [
+              {
+                type: "text",
+                text: `Failed to fetch documentation for "${params.topic}" from ${url} (HTTP ${response.status})`
+              }
+            ],
             isError: true
           };
         }
@@ -64,18 +69,22 @@ export function registerDocsTools(server: McpServer): void {
         });
 
         return {
-          content: [{
-            type: "text",
-            text: `# Juno Docs: ${params.topic}\n\n${text}`
-          }]
+          content: [
+            {
+              type: "text",
+              text: `# Juno Docs: ${params.topic}\n\n${text}`
+            }
+          ]
         };
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         return {
-          content: [{
-            type: "text",
-            text: `Failed to fetch documentation: ${message}`
-          }],
+          content: [
+            {
+              type: "text",
+              text: `Failed to fetch documentation: ${message}`
+            }
+          ],
           isError: true
         };
       }

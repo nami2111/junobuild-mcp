@@ -1,10 +1,12 @@
 import { exec } from "node:child_process";
 import { spawn } from "node:child_process";
+import { createInterface } from "node:readline";
 import type { CliResult, GlobalFlags } from "./types.js";
 import { CLI_PACKAGE, DEFAULT_TIMEOUT, CHARACTER_LIMIT } from "./constants.js";
 
+// eslint-disable-next-line no-control-regex
 const ANSI_REGEX = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?(?:\x1b\\|\x07)|\r/g;
-const UNICODE_SPINNERS = /[\u2800-\u28FF\u2713\u2717\u25FC\u25C0\u2728\uD83D\uDCE6]/g;
+const UNICODE_SPINNERS = /[\u2800-\u28FF\u2713\u2717\u25FC\u25C0\u2728\u{1F4E6}]/gu;
 const REPEATED_Z = /^z{2,}$/m;
 
 function stripAnsi(text: string): string {
@@ -111,13 +113,19 @@ export async function execCommandNonInteractive(
       setTimeout(sendNextAnswer, 5000);
     }
 
-    child.stdout?.on("data", (data: Buffer) => {
-      stdout += stripAnsi(data.toString());
-    });
+    if (child.stdout) {
+      const rlStdout = createInterface({ input: child.stdout, terminal: false });
+      rlStdout.on("line", (line) => {
+        stdout += stripAnsi(line) + "\n";
+      });
+    }
 
-    child.stderr?.on("data", (data: Buffer) => {
-      stderr += stripAnsi(data.toString());
-    });
+    if (child.stderr) {
+      const rlStderr = createInterface({ input: child.stderr, terminal: false });
+      rlStderr.on("line", (line) => {
+        stderr += stripAnsi(line) + "\n";
+      });
+    }
 
     child.on("close", (code) => {
       clearTimeout(timeoutId);
@@ -244,14 +252,15 @@ export async function execWithStreaming(
       child.kill("SIGTERM");
     }, timeout);
 
-    child.stdout?.on("data", (data: Buffer) => {
-      const text = stripAnsi(stripProgressChars(data.toString()));
-      stdout += text;
+    if (child.stdout) {
+      const rlStdout = createInterface({ input: child.stdout, terminal: false });
+      rlStdout.on("line", (line) => {
+        const text = stripAnsi(stripProgressChars(line));
+        if (text) stdout += text + "\n";
 
-      if (onProgress) {
-        for (const line of text.split("\n")) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
+        if (onProgress) {
+          const trimmed = text.trim();
+          if (!trimmed) return;
 
           const parsed = parseProgress(trimmed);
           if (parsed) {
@@ -261,13 +270,16 @@ export async function execWithStreaming(
             onProgress(0, "Building...");
           }
         }
-      }
-    });
+      });
+    }
 
-    child.stderr?.on("data", (data: Buffer) => {
-      const text = stripAnsi(stripProgressChars(data.toString()));
-      stderr += text;
-    });
+    if (child.stderr) {
+      const rlStderr = createInterface({ input: child.stderr, terminal: false });
+      rlStderr.on("line", (line) => {
+        const text = stripAnsi(stripProgressChars(line));
+        if (text) stderr += text + "\n";
+      });
+    }
 
     child.on("close", (code) => {
       clearTimeout(timeoutId);
@@ -289,7 +301,10 @@ export async function execWithStreaming(
   });
 }
 
-export function formatResponse(result: CliResult, label?: string): { text: string; isError: boolean } {
+export function formatResponse(
+  result: CliResult,
+  label?: string
+): { text: string; isError: boolean } {
   const parts: string[] = [];
   if (label) parts.push(`## ${label}\n`);
 
@@ -310,7 +325,8 @@ export function formatResponse(result: CliResult, label?: string): { text: strin
 
   const text = parts.join("\n");
   return {
-    text: text.length > CHARACTER_LIMIT ? text.slice(0, CHARACTER_LIMIT) + "\n...(truncated)" : text,
+    text:
+      text.length > CHARACTER_LIMIT ? text.slice(0, CHARACTER_LIMIT) + "\n...(truncated)" : text,
     isError: result.exitCode !== 0
   };
 }
