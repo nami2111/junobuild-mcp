@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.1.4
+
+### Patch Changes
+
+- Increase timeouts for long-running operations
+
 ## 1.1.3
 
 ### Patch Changes
