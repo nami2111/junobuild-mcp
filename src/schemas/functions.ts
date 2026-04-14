@@ -6,7 +6,11 @@ export const functionsBuildSchema = z
   .object({
     lang: FunctionLanguageEnum.optional().describe("Language for building serverless functions"),
     cargoPath: z.string().optional().describe("Path to the Rust manifest (Cargo.toml)"),
-    sourcePath: z.string().optional().describe("Path to the TypeScript or JavaScript entry file")
+    sourcePath: z.string().optional().describe("Path to the TypeScript or JavaScript entry file"),
+    watch: z
+      .boolean()
+      .default(false)
+      .describe("Rebuild your functions automatically when source files change")
   })
   .strict();
 
@@ -45,6 +49,10 @@ export const functionsPublishSchema = globalFlagsBase
 export const functionsUpgradeSchema = globalFlagsBase
   .extend({
     src: z.string().optional().describe("Path to a specific local gzipped WASM file"),
+    cdn: z
+      .boolean()
+      .default(false)
+      .describe("Select a previously published WASM file from the CDN (interactive)"),
     cdnPath: z.string().optional().describe("Use a specific published WASM file from the CDN"),
     clearChunks: z.boolean().default(false).describe("Clear previously uploaded WASM chunks"),
     noSnapshot: z.boolean().default(false).describe("Skip creating a snapshot before upgrading"),

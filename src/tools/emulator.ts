@@ -28,6 +28,7 @@ export function registerEmulatorTools(server: McpServer): void {
       if (params.lang) args.push("-l", params.lang);
       if (params.cargoPath) args.push("--cargo-path", params.cargoPath);
       if (params.sourcePath) args.push("--source-path", params.sourcePath);
+      if (params.watch) args.push("--watch");
       const result = await execCli(
         "emulator",
         ["start", ...args],

@@ -6,6 +6,10 @@ export const emulatorStartSchema = z
     lang: FunctionLanguageEnum.optional().describe("Language for building serverless functions"),
     cargoPath: z.string().optional().describe("Path to the Rust manifest (Cargo.toml)"),
     sourcePath: z.string().optional().describe("Path to the TypeScript or JavaScript entry file"),
+    watch: z
+      .boolean()
+      .default(false)
+      .describe("Rebuild your functions automatically when source files change"),
     wait: z.boolean().default(false).describe("Wait until the emulator is ready before returning"),
     timeout: z
       .number()

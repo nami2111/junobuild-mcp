@@ -51,6 +51,7 @@ export function registerFunctionsTools(server: McpServer): void {
       if (params.lang) args.push("-l", params.lang);
       if (params.cargoPath) args.push("--cargo-path", params.cargoPath);
       if (params.sourcePath) args.push("--source-path", params.sourcePath);
+      if (params.watch) args.push("--watch");
       const result = await execCli("functions", ["build", ...args]);
       const { text, isError } = formatResponse(result, "Functions Build");
       return { content: [{ type: "text", text }], isError };
@@ -141,6 +142,7 @@ export function registerFunctionsTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args: string[] = [];
       if (params.src) args.push("-s", params.src);
+      if (params.cdn) args.push("--cdn");
       if (params.cdnPath) args.push("--cdn-path", params.cdnPath);
       if (params.clearChunks) args.push("--clear-chunks");
       if (params.noSnapshot) args.push("--no-snapshot");
