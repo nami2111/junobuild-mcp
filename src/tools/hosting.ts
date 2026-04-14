@@ -92,7 +92,7 @@ export function registerHostingTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args: string[] = [];
       if (params.fullPath) args.push("-f", params.fullPath);
-      const result = await execCli("hosting", ["clear", ...args], flags);
+      const result = await execCli("hosting", ["clear", ...args], flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Hosting Clear");
       return { content: [{ type: "text", text }], isError };
     }
@@ -117,7 +117,7 @@ export function registerHostingTools(server: McpServer): void {
       const args: string[] = [];
       args.push("--batch", String(params.batch));
       if (params.dryRun) args.push("--dry-run");
-      const result = await execCli("hosting", ["prune", ...args], flags);
+      const result = await execCli("hosting", ["prune", ...args], flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Hosting Prune");
       return { content: [{ type: "text", text }], isError };
     }

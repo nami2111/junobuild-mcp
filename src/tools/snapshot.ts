@@ -74,7 +74,7 @@ export function registerSnapshotTools(server: McpServer): void {
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
-      const result = await execCli("snapshot", ["delete", ...args], flags);
+      const result = await execCli("snapshot", ["delete", ...args], flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Snapshot Delete");
       return { content: [{ type: "text", text }], isError };
     }

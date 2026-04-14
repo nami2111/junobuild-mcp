@@ -49,7 +49,7 @@ export function registerModuleTools(server: McpServer): void {
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
-      const result = await execCli("start", args, flags);
+      const result = await execCli("start", args, flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Module Start");
       return { content: [{ type: "text", text }], isError };
     }
@@ -72,7 +72,7 @@ export function registerModuleTools(server: McpServer): void {
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args = ["-t", params.target];
-      const result = await execCli("stop", args, flags);
+      const result = await execCli("stop", args, flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Module Stop");
       return { content: [{ type: "text", text }], isError };
     }

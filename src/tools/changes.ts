@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { execCli, formatResponse } from "../cli.js";
 import { changesListSchema, changesApplySchema, changesRejectSchema } from "../schemas/changes.js";
+import { DEPLOY_TIMEOUT } from "../constants.js";
 
 export function registerChangesTools(server: McpServer): void {
   server.registerTool(
@@ -46,7 +47,7 @@ export function registerChangesTools(server: McpServer): void {
       if (params.snapshot) args.push("--snapshot");
       if (params.hash) args.push("--hash", params.hash);
       if (params.keepStaged) args.push("-k");
-      const result = await execCli("changes", ["apply", ...args]);
+      const result = await execCli("changes", ["apply", ...args], undefined, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Changes Apply");
       return { content: [{ type: "text", text }], isError };
     }
@@ -70,7 +71,7 @@ export function registerChangesTools(server: McpServer): void {
       const args = ["-i", params.id];
       if (params.hash) args.push("--hash", params.hash);
       if (params.keepStaged) args.push("-k");
-      const result = await execCli("changes", ["reject", ...args]);
+      const result = await execCli("changes", ["reject", ...args], undefined, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Changes Reject");
       return { content: [{ type: "text", text }], isError };
     }

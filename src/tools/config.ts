@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { execCli, execCommandNonInteractive, formatResponse } from "../cli.js";
 import { configInitSchema, configApplySchema, createProjectSchema } from "../schemas/config.js";
+import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
 interface ConfigInitParams {
@@ -166,7 +167,7 @@ export function registerConfigTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args: string[] = [];
       if (params.force) args.push("--force");
-      const result = await execCli("config", ["apply", ...args], flags);
+      const result = await execCli("config", ["apply", ...args], flags, DEPLOY_TIMEOUT);
       const { text, isError } = formatResponse(result, "Config Apply");
       return { content: [{ type: "text", text }], isError };
     }
