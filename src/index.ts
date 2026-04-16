@@ -7,10 +7,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { registerIdentityTools } from "./tools/identity.js";
 import { registerConfigTools } from "./tools/config.js";
 import { registerHostingTools } from "./tools/hosting.js";
-import { registerEmulatorTools } from "./tools/emulator.js";
 import { registerFunctionsTools } from "./tools/functions.js";
-import { registerSnapshotTools } from "./tools/snapshot.js";
-import { registerModuleTools } from "./tools/modules.js";
 import { registerChangesTools } from "./tools/changes.js";
 import { registerDocsTools } from "./tools/docs.js";
 
@@ -25,10 +22,7 @@ const server = new McpServer({
 registerIdentityTools(server);
 registerConfigTools(server);
 registerHostingTools(server);
-registerEmulatorTools(server);
 registerFunctionsTools(server);
-registerSnapshotTools(server);
-registerModuleTools(server);
 registerChangesTools(server);
 registerDocsTools(server);
 
