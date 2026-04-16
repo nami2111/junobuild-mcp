@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.5
+
+### Patch Changes
+
+- Reduce MCP server scope by removing emulator, modules, and snapshots
+
 ## 1.2.4
 
 ### Patch Changes
