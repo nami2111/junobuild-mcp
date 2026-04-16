@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.1
+
+### Patch Changes
+
+- Refactor juno_create_project to use Vite for non-interactive project
+
 ## 1.2.0
 
 ### Minor Changes
