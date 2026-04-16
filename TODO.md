@@ -1,242 +1,372 @@
-# TODO — Issues & Improvements
+# TODO — Docs Tool Redesign: Fetch from GitHub Repo
 
-> **Status:** Items marked ✅ have been implemented. Remaining items are still open.
-
-## Critical
-
-### 1. ✅ Silent failures — `execCli()` never rejects, tools never check `exitCode`
-
-**Status:** IMPLEMENTED
-
-**What was done:**
-- `formatResponse()` now returns `{ text: string; isError: boolean }` instead of just `string`
-- All 28 tool handlers updated to destructure and propagate `isError` to the MCP client
-- Error output now prominently shows `**Error (exit code N)**` at the top
-- Stderr is labeled as `**Warnings:**` on success, shown as error content on failure
+> **Status:** ✅ IMPLEMENTED — Fetching from GitHub with 159 topics
 
 ---
 
-### 2. ✅ `juno_create_project` bypasses shared `execCli()` utility
+## Summary
 
-**Status:** IMPLEMENTED
+Redesign `juno_docs` tool to:
 
-**What was done:**
-- Extracted `execCommand()` helper in `src/cli.ts` that handles exec, ANSI stripping, buffer config
-- `execCli()` now delegates to `execCommand()` internally
-- `juno_create_project` updated to use `execCommand()` instead of raw `child_process.exec`
-
----
-
-### 3. ✅ `juno_docs` fetches raw HTML instead of markdown
-
-**Status:** VERIFIED OK — No changes needed
-
-**Finding:** The `.md` URLs (e.g. `https://juno.build/docs/build/datastore.md`) return raw markdown content directly. The current implementation is correct.
+1. **Fetch from GitHub** instead of `juno.build` website
+2. **Match folder hierarchy exactly** for topic naming (underscore separator)
+3. **Include ALL 140+ topics** from the complete docs repo
+4. **No backward compatibility** — new topic keys only
 
 ---
 
-## High Priority
+## Current State
 
-### 4. ✅ No streaming/progress feedback for long-running operations
+### Source Comparison
 
-**Status:** IMPLEMENTED
+| Aspect          | Current                        | New                                                          |
+| --------------- | ------------------------------ | ------------------------------------------------------------ |
+| Base URL        | `https://juno.build`           | `https://raw.githubusercontent.com/junobuild/docs/main/docs` |
+| Topic count     | 17 topics                      | 140+ topics                                                  |
+| Topic keys      | Flat naming (`authentication`) | Hierarchical (`build_authentication`)                        |
+| File extensions | `.md` only                     | `.md` and `.mdx`                                             |
 
-**What was done:**
-- Added `execWithStreaming()` in `src/cli.ts` using `child_process.spawn()` for line-by-line output streaming
-- Parses `[X/Y]` batch progress pattern (Initializing/Uploading/Committing per batch)
-- Calculates progress percentage: `(completedSteps / totalSteps) * 100` where totalSteps = Y * 3
-- Emits single "Building..." message at start of build phase
-- Strips Unicode spinner chars and repeated 'z' noise from CLI output
-- Sends progress via MCP `notifications/progress` using `sendNotification` with `progressToken`
-- Graceful degradation: if no progress token, falls back to normal buffered behavior
-- Added `progress: boolean` param to 5 tool schemas:
-  - `hostingDeploySchema`
-  - `functionsPublishSchema`
-  - `functionsUpgradeSchema`
-  - `moduleUpgradeSchema`
-  - `snapshotUploadSchema`
+### Current TOPICS in `src/schemas/docs.ts`
 
----
-
-### 5. ✅ `npx @junobuild/cli` on every invocation adds 2-5s overhead
-
-**Status:** IMPLEMENTED
-
-**What was done:**
-- Added `resolveCliPath()` function that tries `which juno` first, falls back to `npx @junobuild/cli`
-- Result is cached in a module-level variable (`cachedCliPath`) after first resolution
-- Subsequent calls use the cached path, eliminating npx overhead
-
----
-
-### 6. ✅ `watch` mode flags will hang MCP calls indefinitely
-
-**Status:** IMPLEMENTED
-
-**What was done:**
-- Removed `watch` parameter from `functionsBuildSchema` and `emulatorStartSchema`
-- Removed `if (params.watch) args.push("-w")` from both tool handlers
-- Watch mode is a developer workflow, not appropriate for MCP context
+```typescript
+export const TOPICS = {
+  intro: "/docs/intro.md",
+  "start-a-new-project": "/docs/start-a-new-project.md",
+  "setup-the-sdk": "/docs/setup-the-sdk.md",
+  "create-a-satellite": "/docs/create-a-satellite.md",
+  authentication: "/docs/build/authentication.md",
+  datastore: "/docs/build/datastore.md",
+  storage: "/docs/build/storage.md",
+  hosting: "/docs/build/hosting.md",
+  functions: "/docs/build/functions.md",
+  analytics: "/docs/build/analytics.md",
+  cli: "/docs/reference/cli.md",
+  configuration: "/docs/reference/configuration.md",
+  plugins: "/docs/reference/plugins.md",
+  settings: "/docs/reference/settings.md",
+  emulator: "/docs/reference/emulator.md",
+  terminology: "/docs/terminology.md",
+  pricing: "/docs/pricing.md"
+} as const;
+```
 
 ---
 
-### 7. ✅ Interactive CLI flags will hang in non-interactive MCP context
+## New Implementation Plan
 
-**Status:** IMPLEMENTED
+### 1. Update Base URL
 
-**What was done:**
-- Removed `cdn: boolean` from `functionsUpgradeSchema` (the interactive flag)
-- Kept `cdnPath: string` (the non-interactive alternative for specifying a CDN path directly)
-- Removed `if (params.cdn) args.push("--cdn")` from the upgrade handler
+**File:** `src/tools/docs.ts`
 
-**Fix:**
-- Remove the `cdn` boolean flag entirely.
-- Replace with a new read-only tool `juno_functions_list_cdn` that returns available WASM versions, then use the existing `cdnPath` string parameter to select one.
-- Audit all other tools for similar interactive flags.
+```typescript
+// Before
+const BASE_URL = "https://juno.build";
 
-**Files affected:** `src/schemas/functions.ts`, `src/tools/functions.ts`
+// After
+const BASE_URL = "https://raw.githubusercontent.com/junobuild/docs/main/docs";
+```
+
+### 2. Handle File Extensions
+
+The GitHub repo uses both `.md` and `.mdx` extensions. The fetch logic needs to:
+
+1. Try the path as-is first (some files are `.md`)
+2. If 404, try swapping extension (`.mdx` → `.md` or vice versa)
+
+**Implementation:**
+
+```typescript
+async function fetchDoc(path: string): Promise<string> {
+  // Try original path
+  let url = `${BASE_URL}${path}`;
+  let response = await fetch(url);
+
+  // If 404, try alternate extension
+  if (!response.ok) {
+    const alternate = path.endsWith(".mdx")
+      ? path.replace(/\.mdx$/, ".md")
+      : path.replace(/\.md$/, ".mdx");
+    url = `${BASE_URL}${alternate}`;
+    response = await fetch(url);
+  }
+
+  return response.text();
+}
+```
+
+### 3. New TOPICS Mapping (140+ topics)
+
+**File:** `src/schemas/docs.ts`
+
+Complete mapping matching GitHub folder structure exactly:
+
+| Topic Key                                    | GitHub Path                                       |
+| -------------------------------------------- | ------------------------------------------------- |
+| **ROOT (8)**                                 |                                                   |
+| intro                                        | /intro.mdx                                        |
+| start_a_new_project                          | /start-a-new-project.mdx                          |
+| setup_the_sdk                                | /setup-the-sdk.mdx                                |
+| create_a_satellite                           | /create-a-satellite.mdx                           |
+| terminology                                  | /terminology.mdx                                  |
+| pricing                                      | /pricing.md                                       |
+| faq                                          | /faq.md                                           |
+| troubleshooting                              | /troubleshooting.md                               |
+| **BUILD - Authentication (8)**               |                                                   |
+| build_authentication                         | /build/authentication/index.md                    |
+| build_authentication_google                  | /build/authentication/google.mdx                  |
+| build_authentication_github                  | /build/authentication/github.mdx                  |
+| build_authentication_internet_identity       | /build/authentication/internet-identity.md        |
+| build_authentication_passkeys                | /build/authentication/passkeys.md                 |
+| build_authentication_management              | /build/authentication/management.md               |
+| build_authentication_utilities               | /build/authentication/utilities.md                |
+| build_authentication_dev                     | /build/authentication/dev.md                      |
+| **BUILD - Datastore (3)**                    |                                                   |
+| build_datastore                              | /build/datastore/index.mdx                        |
+| build_datastore_collections                  | /build/datastore/collections.md                   |
+| build_datastore_development                  | /build/datastore/development.mdx                  |
+| **BUILD - Storage (3)**                      |                                                   |
+| build_storage                                | /build/storage/index.mdx                          |
+| build_storage_collections                    | /build/storage/collections.md                     |
+| build_storage_development                    | /build/storage/development.mdx                    |
+| **BUILD - Hosting (3)**                      |                                                   |
+| build_hosting                                | /build/hosting/index.md                           |
+| build_hosting_configuration                  | /build/hosting/configuration.mdx                  |
+| build_hosting_development                    | /build/hosting/development.md                     |
+| **BUILD - Functions (6)**                    |                                                   |
+| build_functions                              | /build/functions/index.md                         |
+| build_functions_development                  | /build/functions/development/index.mdx            |
+| build_functions_development_rust             | /build/functions/development/rust.mdx             |
+| build_functions_development_typescript       | /build/functions/development/typescript.mdx       |
+| build_functions_lifecycle                    | /build/functions/lifecycle.md                     |
+| build_functions_logs                         | /build/functions/logs.md                          |
+| **BUILD - Analytics (3)**                    |                                                   |
+| build_analytics                              | /build/analytics/index.md                         |
+| build_analytics_setup                        | /build/analytics/setup.mdx                        |
+| build_analytics_development                  | /build/analytics/development.md                   |
+| **BUILD - Components (16)**                  |                                                   |
+| build_components_analytics                   | /build/components/analytics.mdx                   |
+| build_components_apply_configuration         | /build/components/apply_configuration.mdx         |
+| build_components_assertions                  | /build/components/assertions.mdx                  |
+| build_components_certified_reads             | /build/components/certified-reads.md              |
+| build_components_client_side                 | /build/components/client-side.mdx                 |
+| build_components_datastore_storage           | /build/components/datastore-storage.md            |
+| build_components_encoding                    | /build/components/encoding.mdx                    |
+| build_components_http_headers                | /build/components/http-headers.mdx                |
+| build_components_iframe                      | /build/components/iframe.mdx                      |
+| build_components_ignore_files                | /build/components/ignore-files.mdx                |
+| build_components_nodejs_usage                | /build/components/nodejs-usage.md                 |
+| build_components_precompress                 | /build/components/precompress.mdx                 |
+| build_components_redirects                   | /build/components/redirects.mdx                   |
+| build_components_rewrites                    | /build/components/rewrites.mdx                    |
+| build_components_source                      | /build/components/source.mdx                      |
+| build_components_source_examples             | /build/components/source-examples.mdx             |
+| **REFERENCE - CLI (38)**                     |                                                   |
+| reference_cli                                | /reference/cli.mdx                                |
+| reference_cli_changes                        | /reference/cli/changes.md                         |
+| reference_cli_changes_apply                  | /reference/cli/changes-apply.md                   |
+| reference_cli_changes_list                   | /reference/cli/changes-list.md                    |
+| reference_cli_changes_reject                 | /reference/cli/changes-reject.md                  |
+| reference_cli_config                         | /reference/cli/config.md                          |
+| reference_cli_config_apply                   | /reference/cli/config-apply.md                    |
+| reference_cli_config_init                    | /reference/cli/config-init.md                     |
+| reference_cli_emulator                       | /reference/cli/emulator.md                        |
+| reference_cli_emulator_start                 | /reference/cli/emulator-start.md                  |
+| reference_cli_emulator_wait                  | /reference/cli/emulator-wait.md                   |
+| reference_cli_functions                      | /reference/cli/functions.md                       |
+| reference_cli_functions_build                | /reference/cli/functions-build.md                 |
+| reference_cli_functions_changes              | /reference/cli/functions-changes.md               |
+| reference_cli_functions_eject                | /reference/cli/functions-eject.md                 |
+| reference_cli_functions_publish              | /reference/cli/functions-publish.md               |
+| reference_cli_functions_upgrade              | /reference/cli/functions-upgrade.md               |
+| reference_cli_hosting                        | /reference/cli/hosting.md                         |
+| reference_cli_hosting_clear                  | /reference/cli/hosting-clear.md                   |
+| reference_cli_hosting_deploy                 | /reference/cli/hosting-deploy.md                  |
+| reference_cli_hosting_prune                  | /reference/cli/hosting-prune.md                   |
+| reference_cli_login                          | /reference/cli/login.md                           |
+| reference_cli_logout                         | /reference/cli/logout.md                          |
+| reference_cli_open                           | /reference/cli/open.md                            |
+| reference_cli_run                            | /reference/cli/run.md                             |
+| reference_cli_snapshot                       | /reference/cli/snapshot.md                        |
+| reference_cli_snapshot_upload                | /reference/cli/snapshot-upload.md                 |
+| reference_cli_start                          | /reference/cli/start.md                           |
+| reference_cli_status                         | /reference/cli/status.md                          |
+| reference_cli_stop                           | /reference/cli/stop.md                            |
+| reference_cli_upgrade                        | /reference/cli/upgrade.md                         |
+| reference_cli_version                        | /reference/cli/version.md                         |
+| reference_cli_whoami                         | /reference/cli/whoami.md                          |
+| **REFERENCE - Emulator (3)**                 |                                                   |
+| reference_emulator                           | /reference/emulator/infrastructure.md             |
+| reference_emulator_satellite                 | /reference emulator/satellite.md                  |
+| reference_emulator_skylab                    | /reference emulator/skylab.md                     |
+| **REFERENCE - Functions (14)**               |                                                   |
+| reference_functions                          | /reference/functions/components/ic-cdk.md         |
+| reference_functions_sdk                      | /reference/functions/components/sdk.mdx           |
+| reference_functions_utils                    | /reference/functions/components/utils.md          |
+| reference_functions_rust                     | /reference/functions/rust/ic-cdk.mdx              |
+| reference_functions_rust_sdk                 | /reference/functions/rust/sdk.mdx                 |
+| reference_functions_rust_utils               | /reference/functions/rust/utils.mdx               |
+| reference_functions_rust_crate_versions      | /reference/functions/rust/crate-versions.md       |
+| reference_functions_typescript               | /reference/functions/typescript/ic-cdk.mdx        |
+| reference_functions_typescript_sdk           | /reference/functions/typescript/sdk.mdx           |
+| reference_functions_typescript_utils         | /reference/functions/typescript/utils.mdx         |
+| reference_functions_typescript_canisters     | /reference/functions/typescript/canisters.mdx     |
+| reference_functions_typescript_schema        | /reference/functions/typescript/schema.md         |
+| reference_functions_typescript_node          | /reference/functions/typescript/node.md           |
+| **REFERENCE - Other (3)**                    |                                                   |
+| reference_configuration                      | /reference/configuration.mdx                      |
+| reference_settings                           | /reference/settings.md                            |
+| reference_plugins                            | /reference/plugins.mdx                            |
+| **GUIDES (37)**                              |                                                   |
+| guides_local_development                     | /guides/local-development.mdx                     |
+| guides_manual_deployment                     | /guides/manual-deployment.mdx                     |
+| guides_e2e                                   | /guides/e2e.md                                    |
+| guides_ai                                    | /guides/ai.md                                     |
+| guides_typescript                            | /guides/typescript.mdx                            |
+| guides_nodejs                                | /guides/nodejs.mdx                                |
+| guides_rust                                  | /guides/rust.mdx                                  |
+| guides_github_actions                        | /guides/github-actions/index.mdx                  |
+| guides_github_actions_deploy_frontend        | /guides/github-actions/deploy-frontend.mdx        |
+| guides_github_actions_publish_functions      | /guides/github-actions/publish-functions.mdx      |
+| guides_github_actions_upgrade_functions      | /guides/github-actions/upgrade-functions.mdx      |
+| guides_react                                 | /guides/react/build.mdx                           |
+| guides_react_deploy                          | /guides/react/deploy.mdx                          |
+| guides_nextjs                                | /guides/nextjs/build.mdx                          |
+| guides_nextjs_deploy                         | /guides/nextjs/deploy.mdx                         |
+| guides_angular                               | /guides/angular/build.mdx                         |
+| guides_angular_deploy                        | /guides/angular/deploy.mdx                        |
+| guides_astro                                 | /guides/astro/build.mdx                           |
+| guides_astro_deploy                          | /guides/astro/deploy.mdx                          |
+| guides_sveltekit                             | /guides/sveltekit/build.mdx                       |
+| guides_sveltekit_deploy                      | /guides/sveltekit/deploy.mdx                      |
+| guides_vue                                   | /guides/vue/build.mdx                             |
+| guides_vue_deploy                            | /guides/vue/deploy.mdx                            |
+| guides_docusaurus                            | /guides/docusaurus/deploy.mdx                     |
+| **MANAGEMENT (2)**                           |                                                   |
+| management_monitoring                        | /management/monitoring.md                         |
+| management_snapshots                         | /management/snapshots.md                          |
+| **MISCELLANEOUS (8)**                        |                                                   |
+| miscellaneous_access_keys                    | /miscellaneous/access-keys.md                     |
+| miscellaneous_architecture                   | /miscellaneous/architecture.md                    |
+| miscellaneous_best_practices                 | /miscellaneous/best-practices.md                  |
+| miscellaneous_infrastructure                 | /miscellaneous/infrastructure.md                  |
+| miscellaneous_memory                         | /miscellaneous/memory.md                          |
+| miscellaneous_wallet                         | /miscellaneous/wallet.mdx                         |
+| miscellaneous_workarounds                    | /miscellaneous/workarounds.md                     |
+| miscellaneous_provisioning_options           | /miscellaneous/provisioning-options.mdx           |
+| **COMPARISON (5)**                           |                                                   |
+| comparison_vs_heroku                         | /comparison/vs-heroku.md                          |
+| comparison_vs_netlify                        | /comparison/vs-netlify.md                         |
+| comparison_vs_railway                        | /comparison/vs-railway.md                         |
+| comparison_vs_self_hosting                   | /comparison/vs-self-hosting.md                    |
+| comparison_vs_vercel                         | /comparison/vs-vercel.md                          |
+| **COMPONENTS (Infrastructure) (4)**          |                                                   |
+| components_core                              | /components/core.mdx                              |
+| components_bash                              | /components/bash.mdx                              |
+| components_cycles                            | /components/cycles.md                             |
+| components_subnets                           | /components/subnets.md                            |
+| **EXAMPLES (26)**                            |                                                   |
+| examples_frontend_react_typescript           | /examples/frontend/react-typescript.mdx           |
+| examples_frontend_react_javascript           | /examples/frontend/react-javascript.mdx           |
+| examples_frontend_nextjs                     | /examples/frontend/nextjs.mdx                     |
+| examples_frontend_angular                    | /examples/frontend/angular.mdx                    |
+| examples_frontend_sveltekit                  | /examples/frontend/sveltekit.mdx                  |
+| examples_frontend_vue                        | /examples/frontend/vue.mdx                        |
+| examples_frontend_vanilla_javascript         | /examples/frontend/vanilla-javascript.mdx         |
+| examples_functions_rust                      | /examples/functions/rust/assertion.mdx            |
+| examples_functions_rust_canister_calls       | /examples/functions/rust/canister-calls.mdx       |
+| examples_functions_rust_generating_assets    | /examples/functions/rust/generating-assets.mdx    |
+| examples_functions_rust_mutating_docs        | /examples/functions/rust/mutating-docs.mdx        |
+| examples_functions_typescript                | /examples/functions/typescript/assertion.mdx      |
+| examples_functions_typescript_canister_calls | /examples/functions/typescript/canister-calls.mdx |
+| examples_functions_typescript_mutating_docs  | /examples/functions/typescript/mutating-docs.mdx  |
 
 ---
 
-## Medium Priority
+## Implementation Tasks
 
-### 8. ✅ No retry logic for network-dependent operations
+### Task 1: Update `src/schemas/docs.ts`
 
-**Status:** IMPLEMENTED
+- [ ] Replace TOPICS object with full 140+ topic mapping
+- [ ] Update TopicKey type to include all new keys
+- [ ] Use proper Zod enum pattern
 
-**What was done:**
-- Added `execWithRetry()` helper in `src/cli.ts` with configurable retries and exponential backoff
-- Detects transient errors by matching output against patterns: timeout, ETIMEDOUT, ECONNRESET, ECONNREFUSED, ENOTFOUND, socket hang up, network, rate limit, 429, 502, 503, 504
-- Does NOT retry on auth failures, validation errors, or other permanent failures
-- Backoff: 1s → 2s → 4s (base 1s, exponential, max 3 retries)
-- Added `retry: boolean` param to 5 network-dependent schemas:
-  - `hostingDeploySchema`
-  - `functionsPublishSchema`
-  - `functionsUpgradeSchema`
-  - `moduleUpgradeSchema`
-  - `snapshotUploadSchema`
+### Task 2: Update `src/tools/docs.ts`
 
----
+- [ ] Change BASE_URL to GitHub raw content URL
+- [ ] Add extension fallback logic (try .mdx → .md)
+- [ ] Preserve caching logic
+- [ ] Update description text
 
-### 9. ✅ `formatResponse()` surfaces stderr as errors even for non-error output
+### Task 3: Build & Verify
 
-**Status:** IMPLEMENTED
-
-**What was done:**
-- On success (`exitCode === 0`): stderr is labeled as `**Warnings:**` so the LLM knows these are non-fatal
-- On failure (`exitCode !== 0`): stderr is shown as the primary error content
-- Known harmless patterns are not filtered yet (future improvement)
+- [ ] Run `npm run build`
+- [ ] Test with `node dist/index.js`
+- [ ] Verify a few topics fetch correctly
+- [ ] Test extension fallback works
 
 ---
 
-### 10. ✅ Enum/schema duplication across files
+## Files Affected
 
-**Status:** IMPLEMENTED
-
-**What was done:**
-- Created `src/schemas/enums.ts` with shared Zod enums:
-  - `FunctionLanguageEnum` — used by functions.ts, emulator.ts
-  - `ModuleTargetEnum` — used by snapshot.ts, modules.ts
-  - `PackageManagerEnum` — used by config.ts
-  - `ConfigFormatEnum` — used by config.ts
-  - `BrowserEnum` — used by identity.ts
-- Removed unused `FunctionLanguage`, `ModuleTarget`, and `Mode` const enums from `constants.ts`
+| File                  | Change                               |
+| --------------------- | ------------------------------------ |
+| `src/schemas/docs.ts` | Replace TOPICS (17 → 140+ topics)    |
+| `src/tools/docs.ts`   | Update BASE_URL, add extension logic |
 
 ---
 
-### 11. ✅ Helpful input validation error messages
+## Verification Commands
 
-**Status:** IMPLEMENTED
+```bash
+# Build
+npm run build
 
-**What was done:**
-- Constrained `mode` field in `GlobalFlagsSchema` to `z.enum(["production", "staging", "development"])` instead of `z.string()`
-- Updated `batch` descriptions to include valid range `(1-200)` in hosting deploy and prune schemas
-- Updated `timeout` description to include valid range `(1000-600000)` in emulator wait schema
-- MCP SDK now uses these constrained schemas to produce clear validation errors like "must be one of: production, staging, development" or "must be <= 200"
+# Start server (test mode)
+node dist/index.js
 
----
-
-### 12. ✅ `juno_config_init` requires LLM to write files manually
-
-**Status:** IMPLEMENTED
-
-**What was done:**
-- Added `writeFile: boolean` param (default `false`) — when true, writes config file directly to disk using `node:fs/promises`
-- Added `path: string` param for custom output path (defaults to `juno.config.ts/js/json`)
-- Creates parent directories with `mkdir` recursive flag
-- Default behavior (`writeFile: false`) unchanged — returns config content for preview
-- Refactored config generators from line-by-line builder to template strings, fixing trailing comma issues in multi-env + orbiter configs
-- Updated `readOnlyHint` annotation to `false` since the tool can now write to disk
+# Test topics via MCP client
+# juno_docs topic="build_authentication"
+# juno_docs topic="reference_cli_functions_build"
+# juno_docs topic="guides_local_development"
+```
 
 ---
 
-## Low Priority
+## Notes
 
-### 13. ✅ Server version hardcoded instead of read from package.json
-
-**Status:** IMPLEMENTED
-
-**What was done:**
-- `src/index.ts` now reads version from `package.json` at runtime using `readFileSync` and `fileURLToPath`
-- No more manual version updates needed on releases
+1. **No backward compatibility** — old topic keys like `authentication` are NOT mapped
+2. **Topic keys match GitHub exactly** — underscores replaced for dashes in filenames
+3. **Extension handling** — some topics use `.mdx`, some use `.md`, tool tries both
+4. **Caching preserved** — 1-hour TTL cache continues to work
 
 ---
-
-### 14. ✅ No composite/atomic operations
-
-**Status:** IMPLEMENTED
-
-**What was done:**
-- Added `wait: boolean` and `timeout` params to `emulatorStartSchema`
-- When `wait: true`, automatically runs `emulator wait` after `emulator start` succeeds
-- Other composite workflows already covered by existing flags:
-  - Deploy + prune → `hostingDeploySchema.prune` flag
-  - Deploy + config → `hostingDeploySchema.config` flag
-  - Snapshot + upgrade → `moduleUpgradeSchema.noSnapshot` flag (default creates snapshot)
-
----
-
-### 15. ✅ No caching for `juno_docs` tool
-
-**Status:** IMPLEMENTED
-
-**What was done:**
-- Added in-memory `Map<string, CacheEntry>` cache with 1-hour TTL
-- Cache entries store `{ content, expiresAt }` keyed by topic name
-- Cache hit returns immediately with `(cached)` label in the heading
-- Cache miss or expiry triggers a fresh fetch and stores the result
-- No external dependencies needed
-
----
-
-## Summary by Priority
-
-| Priority | Total | Implemented | Remaining |
-|----------|-------|-------------|-----------|
-| Critical | 3 | 3 ✅ | 0 |
-| High | 4 | 4 ✅ | 0 |
-| Medium | 5 | 5 ✅ | 0 |
-| Low | 3 | 3 ✅ | 0 |
-
-**15 of 15 items implemented.** All items complete.
 
 ## Changelog
 
-### Implemented
-- **#1** — All 28 tools now properly propagate `isError` based on CLI exit code
-- **#2** — `juno_create_project` uses shared `execCommand()` helper
-- **#3** — Verified docs tool works correctly (raw markdown URLs)
-- **#5** — CLI binary path resolved once and cached (`which juno` → fallback to `npx`)
-- **#6** — Removed `watch` mode from functions and emulator schemas
-- **#7** — Removed interactive `cdn` flag from functions upgrade schema
-- **#9** — Stderr labeled as `**Warnings:**` on success, error content on failure
-- **#10** — Created `src/schemas/enums.ts` with 5 shared Zod enums, removed duplicates
-- **#11** — Constrained `mode` to enum, added valid ranges to `batch` and `timeout` descriptions
-- **#12** — Added `writeFile` param to write config directly, refactored generators to template strings
-- **#13** — Server version read from `package.json` at runtime
-- **#15** — Docs tool uses in-memory cache with 1-hour TTL
-- **#8** — Added `execWithRetry()` with exponential backoff, added `retry` param to 5 network-dependent tools
-- **#4** — Added `execWithStreaming()` with `[X/Y]` progress parsing, added `progress` param to 5 long-running tools
+### Before
 
-### Remaining
-- **#14** — Composite/atomic operations
+- Base URL: `https://juno.build`
+- Topics: 17 (flat naming)
+- Source: Juno website
+
+### After
+
+- Base URL: `https://raw.githubusercontent.com/junobuild/docs/main/docs`
+- Topics: 159 (hierarchical naming)
+- Source: GitHub repository (markdown/mdx source files)
+
+---
+
+## Implementation Complete
+
+**Files modified:**
+
+- `src/schemas/docs.ts` — 159 topics with full GitHub path mapping
+- `src/tools/docs.ts` — Updated BASE_URL, extension fallback logic
+
+**Verification:**
+
+- Build: ✅ `npm run build` passes
+- Topic count: ✅ 159 topics
+- Server starts: ✅ No errors
+- Fetch test: ✅ Working (tested build_authentication, guides_local_development)
