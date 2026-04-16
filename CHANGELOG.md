@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.4
+
+### Patch Changes
+
+- Remove serverlessFunctions and githubAction options from createProject schema
+
 ## 1.2.3
 
 ### Patch Changes
