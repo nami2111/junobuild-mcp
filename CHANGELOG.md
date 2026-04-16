@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.0
+
+### Minor Changes
+
+- Docs Tool Redesign: Fetch from GitHub Repo
+
 ## 1.1.4
 
 ### Patch Changes
