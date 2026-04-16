@@ -1,6 +1,6 @@
 {
   "name": "junobuild-mcp-server",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "MCP server for Juno (junobuild) - manage satellites, hosting, functions, snapshots and more",
   "license": "MIT",
   "type": "module",

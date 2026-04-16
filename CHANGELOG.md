@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.3
+
+### Patch Changes
+
+- Add detailed next steps to config tool output messages
+
 ## 1.2.2
 
 ### Patch Changes
