@@ -138,13 +138,13 @@ export function registerConfigTools(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: `Config written to ${filename}\n\nRun \`juno config apply\` to apply the configuration to your satellite.\n\n**Note:** Replace the placeholder satellite ID with your actual ID from the [Juno Console](https://console.juno.build).`
+              text: `Config written to ${filename}\n\n## Next Steps\n\n1. Replace the placeholder satellite ID (\`aaaaa-bbbbb-ccccc-ddddd-cai\`) with your actual satellite ID from [Juno Console](https://console.juno.build)\n2. Run \`juno config apply\` to apply the configuration\n3. Run \`juno hosting deploy\` to deploy your static site\n\n**Note for authenticated deployments:** Set \`JUNO_TOKEN\` env var or use \`juno login\` in a browser first, then use the MCP tool with \`mode\` and \`profile\` parameters.`
             }
           ]
         };
       }
 
-      const text = `## Juno Config (${ext.toUpperCase()})\n\nSave this as \`${filename}\` in your project root:\n\n\`\`\`${ext === "json" ? "json" : ext}\n${content}\n\`\`\`\n\nThen run \`juno config apply\` to apply the configuration to your satellite.\n\n**Note:** Replace the placeholder satellite ID with your actual ID from the [Juno Console](https://console.juno.build).`;
+      const text = `## Juno Config (${ext.toUpperCase()})\n\nSave this as \`${filename}\` in your project root:\n\n\`\`\`${ext === "json" ? "json" : ext}\n${content}\n\`\`\`\n\n## Next Steps\n\n1. Replace the placeholder satellite ID with your actual satellite ID from [Juno Console](https://console.juno.build)\n2. Run \`juno config apply\` to apply the configuration\n3. Run \`juno hosting deploy\` to deploy\n\n**Authenticated deployments:** Set \`JUNO_TOKEN\` env var or use \`juno login\` in browser, then use MCP tool with \`mode\` and \`profile\` params.`;
 
       return { content: [{ type: "text", text }] };
     }
@@ -254,11 +254,13 @@ export default {
         await writeFile(`${configDir}/juno.config.ts`, configContent);
 
         let output = `Project "${dir}" created with ${template} template.\n`;
-        output += `\nNext steps:\n`;
-        output += `1. cd ${dir}\n`;
-        output += `2. ${pm} install\n`;
+        output += `\n## Next Steps\n`;
+        output += `1. cd ${dir} && ${pm} install\n`;
+        output += `2. Replace placeholder satellite ID in juno.config.ts with your real ID\n`;
         output += `3. ${pm} run dev\n`;
-        output += `4. juno init  # in another terminal\n`;
+        output += `4. juno emulator start  # in another terminal\n`;
+        output += `5. juno hosting deploy --mode development\n`;
+        output += `\nFor production: ${pm} run build && juno hosting deploy\n`;
 
         return {
           content: [{ type: "text", text: output }]
