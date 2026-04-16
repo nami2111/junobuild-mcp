@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.2
+
+### Patch Changes
+
+- Handle missing analytics plugin for static sites
+
 ## 1.2.1
 
 ### Patch Changes
