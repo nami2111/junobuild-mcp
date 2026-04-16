@@ -1,7 +1,8 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { execSync } from "node:child_process";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, execCommandNonInteractive, formatResponse } from "../cli.js";
+import { execCli, formatResponse } from "../cli.js";
 import { configInitSchema, configApplySchema, createProjectSchema } from "../schemas/config.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
@@ -178,7 +179,7 @@ export function registerConfigTools(server: McpServer): void {
     {
       title: "Juno Create Project",
       description:
-        "Scaffold a new Juno project using `npm create juno@latest`. Creates a project directory with a chosen frontend framework template and Juno SDK pre-configured.",
+        "Scaffold a new Juno project. Uses Vite to create the frontend, then adds Juno SDK and config. Does NOT use the interactive create-juno CLI.",
       inputSchema: createProjectSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -188,26 +189,83 @@ export function registerConfigTools(server: McpServer): void {
       }
     },
     async (params) => {
-      const args = [params.directory];
-      if (params.template) args.push("--template", params.template);
+      try {
+        const { execCommand } = await import("../cli.js");
+        const dir = params.directory;
+        const template = params.template || "react-ts-starter";
+        const pm = params.packageManager;
 
-      const cmd = `npx create-juno@latest ${args.join(" ")}`;
+        const TEMPLATE_MAP: Record<string, string> = {
+          "react-ts-starter": "react --template-ts",
+          "react-javascript": "react",
+          "nextjs-starter": "next",
+          "sveltekit-starter": "svelte",
+          "angular-starter": "angular",
+          "vue-starter": "vue"
+        };
 
-      const answers: string[] = [];
-      answers.push("no");
-      answers.push("no");
+        const viteTemplate = TEMPLATE_MAP[template] || "react --template-ts";
+        const sourceDir = `src-${Date.now()}`;
 
-      if (params.template) {
-        const serverlessLabels = { rust: "Rust", typescript: "TypeScript", none: "None" };
-        answers.push(serverlessLabels[params.serverlessFunctions]);
-        answers.push(params.githubAction ? "yes" : "no");
+        let result = await execCommand(
+          `npm create vite@latest ${sourceDir} -- --template ${viteTemplate}`,
+          120_000
+        );
+
+        if (result.exitCode !== 0) {
+          return {
+            content: [{ type: "text", text: result.stderr || result.stdout }],
+            isError: true
+          };
+        }
+
+        const moveCmd = `mv ${sourceDir} ${dir}`;
+        await new Promise<void>((resolve) => {
+          import("node:child_process").then(({ exec }) => {
+            exec(moveCmd, () => resolve());
+          });
+        });
+
+        const packageJsonPath = `${dir}/package.json`;
+        const { readFile, writeFile, mkdir } = await import("node:fs/promises");
+
+        const pkg = JSON.parse(await readFile(packageJsonPath, "utf-8"));
+        pkg.name = dir;
+        await writeFile(packageJsonPath, JSON.stringify(pkg, null, 2));
+
+        const deps = ["@junobuild/core", "@junobuild/plugin-analytics"];
+        for (const dep of deps) {
+          execSync(`${pm} add ${dep}`, { cwd: dir });
+        }
+
+        const configContent = `import type { SatelliteConfig } from "@junobuild/config";
+
+export default {
+  satellite: {
+    source: "dist"
+  }
+} satisfies SatelliteConfig;
+`;
+        const configDir = `${dir}`;
+        await writeFile(`${configDir}/juno.config.ts`, configContent);
+
+        let output = `Project "${dir}" created with ${template} template.\n`;
+        output += `\nNext steps:\n`;
+        output += `1. cd ${dir}\n`;
+        output += `2. ${pm} install\n`;
+        output += `3. ${pm} run dev\n`;
+        output += `4. juno init  # in another terminal\n`;
+
+        return {
+          content: [{ type: "text", text: output }]
+        };
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          content: [{ type: "text", text: `Failed to create project: ${message}` }],
+          isError: true
+        };
       }
-
-      answers.push("no");
-
-      const result = await execCommandNonInteractive(cmd, 300_000, undefined, answers);
-      const { text, isError } = formatResponse(result, "Create Project");
-      return { content: [{ type: "text", text }], isError };
     }
   );
 }

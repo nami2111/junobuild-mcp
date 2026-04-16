@@ -42,6 +42,14 @@ juno login
 
 For non-interactive environments (CI, headless), set the `JUNO_TOKEN` environment variable or use the `--mode` and `--profile` flags available on every tool.
 
+**Note:** The `juno_create_project` tool does NOT use the interactive `create-juno` CLI. Instead it:
+
+1. Scaffolds a Vite project (React, Next.js, Svelte, Angular, or Vue)
+2. Installs `@junobuild/core` and `@junobuild/plugin-analytics`
+3. Creates a `juno.config.ts` file
+
+This allows fully non-interactive project creation.
+
 ### Documentation Access
 
 The `juno_docs` tool fetches documentation directly from the [GitHub repo](https://github.com/junobuild/docs/tree/main/docs), with responses cached for 1 hour:
