@@ -45,13 +45,10 @@ export const createProjectSchema = z
       .string()
       .optional()
       .describe(
-        "Template key to use (e.g. react-ts-starter, nextjs-starter, sveltekit-starter). See https://github.com/junobuild/create-juno for available templates."
+        "Template key to use (e.g. react-ts-starter, nextjs-starter, sveltekit-starter). Defaults to react-ts-starter."
       ),
-    packageManager: PackageManagerEnum.default("npm").describe("Package manager to use"),
-    serverlessFunctions: z
-      .enum(["rust", "typescript", "none"])
-      .default("none")
-      .describe("Include serverless functions: 'rust', 'typescript', or 'none'"),
-    githubAction: z.boolean().default(false).describe("Set up a GitHub Action for deployment")
+    packageManager: PackageManagerEnum.default("npm")
+      .optional()
+      .describe("Package manager to use (npm, yarn, pnpm)")
   })
   .strict();
