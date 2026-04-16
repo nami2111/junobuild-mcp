@@ -44,40 +44,41 @@ For non-interactive environments (CI, headless), set the `JUNO_TOKEN` environmen
 
 ### Documentation Access
 
-The `juno_docs` tool fetches Juno's official documentation on demand, with responses cached for 1 hour:
+The `juno_docs` tool fetches documentation directly from the [GitHub repo](https://github.com/junobuild/docs/tree/main/docs), with responses cached for 1 hour:
 
 ```
-juno_docs({ topic: "datastore" })  → Full markdown from juno.build/docs/build/datastore
-juno_docs({ topic: "hosting" })    → Deployment guide
-juno_docs({ topic: "cli" })        → CLI reference
+juno_docs({ topic: "build_datastore" })        → Datastore guide
+juno_docs({ topic: "build_authentication" })   → Authentication overview
+juno_docs({ topic: "reference_cli" })        → CLI reference
+juno_docs({ topic: "guides_local_development" }) → Local development guide
 ```
 
-Available topics: `intro`, `start-a-new-project`, `setup-the-sdk`, `create-a-satellite`, `authentication`, `datastore`, `storage`, `hosting`, `functions`, `analytics`, `cli`, `configuration`, `plugins`, `settings`, `emulator`, `terminology`, `pricing`.
+Topic keys use underscore naming matching folder hierarchy: `build_<feature>`, `reference_cli_<command>`, `guides_<framework>`. Full list: see [TODO.md](./TODO.md) for all 159 topics.
 
 ## Tools
 
-| Domain | Tools |
-|--------|-------|
-| **Identity** | `juno_whoami`, `juno_version`, `juno_open`, `juno_run` |
-| **Config** | `juno_config_init`, `juno_config_apply`, `juno_create_project` |
-| **Hosting** | `juno_hosting_deploy`, `juno_hosting_clear`, `juno_hosting_prune` |
-| **Emulator** | `juno_emulator_start`, `juno_emulator_stop`, `juno_emulator_clear`, `juno_emulator_wait` |
-| **Functions** | `juno_functions_build`, `juno_functions_eject`, `juno_functions_publish`, `juno_functions_upgrade` |
+| Domain        | Tools                                                                                                                                           |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Identity**  | `juno_whoami`, `juno_version`, `juno_open`, `juno_run`                                                                                          |
+| **Config**    | `juno_config_init`, `juno_config_apply`, `juno_create_project`                                                                                  |
+| **Hosting**   | `juno_hosting_deploy`, `juno_hosting_clear`, `juno_hosting_prune`                                                                               |
+| **Emulator**  | `juno_emulator_start`, `juno_emulator_stop`, `juno_emulator_clear`, `juno_emulator_wait`                                                        |
+| **Functions** | `juno_functions_build`, `juno_functions_eject`, `juno_functions_publish`, `juno_functions_upgrade`                                              |
 | **Snapshots** | `juno_snapshot_create`, `juno_snapshot_delete`, `juno_snapshot_list`, `juno_snapshot_download`, `juno_snapshot_upload`, `juno_snapshot_restore` |
-| **Modules** | `juno_module_start`, `juno_module_stop`, `juno_module_upgrade`, `juno_module_status` |
-| **Changes** | `juno_changes_list`, `juno_changes_apply`, `juno_changes_reject` |
-| **Docs** | `juno_docs` |
+| **Modules**   | `juno_module_start`, `juno_module_stop`, `juno_module_upgrade`, `juno_module_status`                                                            |
+| **Changes**   | `juno_changes_list`, `juno_changes_apply`, `juno_changes_reject`                                                                                |
+| **Docs**      | `juno_docs`                                                                                                                                     |
 
 ## Key Parameters
 
 Several tools support optional parameters for enhanced reliability and UX:
 
-| Parameter | Type | Tools | Description |
-|-----------|------|-------|-------------|
-| `retry` | `boolean` | deploy, publish, upgrade, snapshot upload | Automatically retry on transient network failures (up to 3 attempts with exponential backoff: 1s → 2s → 4s) |
-| `progress` | `boolean` | deploy, publish, upgrade, snapshot upload | Stream real-time progress updates during long-running operations (build status + upload batch progress) |
-| `writeFile` | `boolean` | `juno_config_init` | Write the config file directly to disk instead of returning text for preview |
-| `wait` | `boolean` | `juno_emulator_start` | Wait until the emulator is fully ready before returning |
+| Parameter   | Type      | Tools                                     | Description                                                                                                 |
+| ----------- | --------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `retry`     | `boolean` | deploy, publish, upgrade, snapshot upload | Automatically retry on transient network failures (up to 3 attempts with exponential backoff: 1s → 2s → 4s) |
+| `progress`  | `boolean` | deploy, publish, upgrade, snapshot upload | Stream real-time progress updates during long-running operations (build status + upload batch progress)     |
+| `writeFile` | `boolean` | `juno_config_init`                        | Write the config file directly to disk instead of returning text for preview                                |
+| `wait`      | `boolean` | `juno_emulator_start`                     | Wait until the emulator is fully ready before returning                                                     |
 
 ## Prerequisites
 
