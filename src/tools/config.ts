@@ -233,9 +233,13 @@ export function registerConfigTools(server: McpServer): void {
         pkg.name = dir;
         await writeFile(packageJsonPath, JSON.stringify(pkg, null, 2));
 
-        const deps = ["@junobuild/core", "@junobuild/plugin-analytics"];
+        const deps = ["@junobuild/core"];
         for (const dep of deps) {
-          execSync(`${pm} add ${dep}`, { cwd: dir });
+          try {
+            execSync(`${pm} add ${dep}`, { cwd: dir });
+          } catch {
+            // Skip if package not found - static sites don't need SDK
+          }
         }
 
         const configContent = `import type { SatelliteConfig } from "@junobuild/config";
