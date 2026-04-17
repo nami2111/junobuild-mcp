@@ -14,11 +14,29 @@ Manage satellites, hosting, serverless functions, changes and more through any M
 - **Config file writing** — `juno_config_init` can write config files directly to disk
 - **Docs caching** — documentation responses cached for 1 hour to reduce latency
 
-## Setup
+## Client Setup
 
-### 1. Add to your MCP client
+Choose your AI coding agent below for specific setup instructions.
 
-No install needed — `npx` handles downloading automatically.
+<details>
+<summary>
+
+### Claude Code
+
+</summary>
+
+**CLI (recommended):**
+
+```bash
+claude mcp add junobuild npx -y junobuild-mcp-server
+```
+
+**Config file:**
+
+| Scope   | Location             |
+| ------- | -------------------- |
+| User    | `~/.claude/mcp.json` |
+| Project | `.mcp.json`          |
 
 ```json
 {
@@ -31,7 +49,349 @@ No install needed — `npx` handles downloading automatically.
 }
 ```
 
-### 2. Authenticate the Juno CLI
+</details>
+
+<details>
+<summary>
+
+### Codex
+
+</summary>
+
+**CLI:**
+
+```bash
+codex mcp add junobuild -- npx -y junobuild-mcp-server
+```
+
+**Config file:**
+
+| Scope   | Location               |
+| ------- | ---------------------- |
+| Global  | `~/.codex/config.toml` |
+| Project | `.codex/config.toml`   |
+
+```toml
+[mcp_servers.junobuild]
+command = "npx"
+args = ["-y", "junobuild-mcp-server"]
+```
+
+</details>
+
+**CLI:**
+
+```bash
+codex mcp add junobuild -- npx -y junobuild-mcp-server
+```
+
+**Config file:**
+
+| Scope   | Location               |
+| ------- | ---------------------- |
+| Global  | `~/.codex/config.toml` |
+| Project | `.codex/config.toml`   |
+
+```toml
+[mcp_servers.junobuild]
+command = "npx"
+args = ["-y", "junobuild-mcp-server"]
+```
+
+---
+
+</details>
+
+<details>
+<summary>
+
+### OpenCode
+
+</summary>
+
+**Config file:**
+
+| Scope     | Location                                  |
+| --------- | ----------------------------------------- |
+| User      | `~/.opencode/opencode.json` (Linux/macOS) |
+| Workspace | `opencode.json` (project root)            |
+
+```json
+{
+  "mcpServers": {
+    "junobuild": {
+      "command": "npx",
+      "args": ["-y", "junobuild-mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>
+
+### Factory Droid
+
+</summary>
+
+**CLI:**
+
+```bash
+droid mcp add junobuild npx -y junobuild-mcp-server
+```
+
+**Config file:**
+
+| Scope   | Location              |
+| ------- | --------------------- |
+| User    | `~/.factory/mcp.json` |
+| Project | `.factory/mcp.json`   |
+
+```json
+{
+  "mcpServers": {
+    "junobuild": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "junobuild-mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>
+
+### Antigravity
+
+</summary>
+
+Uses a **Powers** system with custom configuration.
+
+**Config file:**
+
+| Scope     | Location                                 |
+| --------- | ---------------------------------------- |
+| Workspace | `.antigravity/powers/` or project config |
+
+Add the MCP server configuration to your Power's `mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "junobuild": {
+      "command": "npx",
+      "args": ["-y", "junobuild-mcp-server"]
+    }
+  }
+}
+```
+
+**Note:** See [Antigravity MCP documentation](https://antigravity.codes/blog/antigravity-mcp-tutorial) for full Power setup.
+
+</details>
+
+<details>
+<summary>
+
+### Cursor
+
+</summary>
+
+**Config file:**
+
+| Scope   | Location             |
+| ------- | -------------------- |
+| User    | `~/.cursor/mcp.json` |
+| Project | `.cursor/mcp.json`   |
+
+```json
+{
+  "mcpServers": {
+    "junobuild": {
+      "command": "npx",
+      "args": ["-y", "junobuild-mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>
+
+### Amp Code
+
+</summary>
+
+**CLI:**
+
+```bash
+amp mcp add junobuild -- npx -y junobuild-mcp-server
+```
+
+**Config file:**
+
+| Scope     | Location                                    |
+| --------- | ------------------------------------------- |
+| User      | `~/.config/amp/settings.json` (macOS/Linux) |
+| Workspace | `.amp/settings.json`                        |
+
+```json
+{
+  "amp.mcpServers": {
+    "junobuild": {
+      "command": "npx",
+      "args": ["-y", "junobuild-mcp-server"]
+    }
+  }
+}
+```
+
+**Note:** Workspace MCP servers require approval via `amp mcp approve <server-name>`.
+
+</details>
+
+<details>
+<summary>
+
+### VSCode
+
+</summary>
+
+**Config file:**
+
+| Scope     | Location                               |
+| --------- | -------------------------------------- |
+| User      | `~/.config/Code/User/mcp.json` (Linux) |
+| Workspace | `.vscode/mcp.json`                     |
+
+```json
+{
+  "servers": {
+    "junobuild": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "junobuild-mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>
+
+### Windsurf
+
+</summary>
+
+**Config file:**
+
+| Scope | Location                              |
+| ----- | ------------------------------------- |
+| User  | `~/.codeium/windsurf/mcp_config.json` |
+
+```json
+{
+  "mcpServers": {
+    "junobuild": {
+      "command": "npx",
+      "args": ["-y", "junobuild-mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>
+
+### Kiro
+
+</summary>
+
+**Config file:**
+
+| Scope     | Location                    |
+| --------- | --------------------------- |
+| User      | `~/.kiro/settings/mcp.json` |
+| Workspace | `.kiro/settings/mcp.json`   |
+
+```json
+{
+  "mcpServers": {
+    "junobuild": {
+      "command": "npx",
+      "args": ["-y", "junobuild-mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>
+
+### Kilo Code
+
+</summary>
+
+**Config file:**
+
+| Scope   | Location                            |
+| ------- | ----------------------------------- |
+| User    | `~/.config/Kilo Code/User/mcp.json` |
+| Project | `.vscode/mcp.json`                  |
+
+```json
+{
+  "servers": {
+    "junobuild": {
+      "command": "npx",
+      "args": ["-y", "junobuild-mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>
+
+### Cline
+
+**Config file:**
+
+| Scope | Location                                  |
+| ----- | ----------------------------------------- |
+| User  | `cline_mcp_settings.json` (in config dir) |
+
+```json
+{
+  "mcpServers": {
+    "junobuild": {
+      "command": "npx",
+      "args": ["-y", "junobuild-mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+---
+
+## Authenticate the Juno CLI
 
 The server wraps [`@junobuild/cli`](https://juno.build/docs/reference/cli), which must be installed and authenticated:
 
@@ -41,6 +401,14 @@ juno login
 ```
 
 For non-interactive environments (CI, headless), set the `JUNO_TOKEN` environment variable or use the `--mode` and `--profile` flags available on every tool.
+
+## Environment Variables
+
+For non-interactive environments (CI, headless), authenticate using environment variables:
+
+```bash
+export JUNO_TOKEN="your-juno-token"
+```
 
 **Note:** The `juno_create_project` tool does NOT use the interactive `create-juno` CLI. Instead it:
 
