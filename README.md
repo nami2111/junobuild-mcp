@@ -79,29 +79,6 @@ args = ["-y", "junobuild-mcp-server"]
 
 </details>
 
-**CLI:**
-
-```bash
-codex mcp add junobuild -- npx -y junobuild-mcp-server
-```
-
-**Config file:**
-
-| Scope   | Location               |
-| ------- | ---------------------- |
-| Global  | `~/.codex/config.toml` |
-| Project | `.codex/config.toml`   |
-
-```toml
-[mcp_servers.junobuild]
-command = "npx"
-args = ["-y", "junobuild-mcp-server"]
-```
-
----
-
-</details>
-
 <details>
 <summary>
 
@@ -369,6 +346,8 @@ amp mcp add junobuild -- npx -y junobuild-mcp-server
 <summary>
 
 ### Cline
+
+</summary>
 
 **Config file:**
 
