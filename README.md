@@ -6,7 +6,7 @@ Manage satellites, hosting, serverless functions, changes and more through any M
 
 ## Features
 
-- **15 tools** across 6 domains — CLI coverage for identity, config, hosting, functions, changes, and documentation
+- **16 tools** across 6 domains — CLI coverage for identity, config, hosting, functions, changes, and documentation
 - **Progress streaming** — long-running operations (deploy, publish, upgrade) emit real-time progress updates via MCP progress notifications
 - **Automatic retry** — network-dependent operations can retry on transient failures with exponential backoff
 - **CLI binary caching** — resolves `juno` binary path once, eliminating npx overhead on every call
@@ -434,7 +434,7 @@ Topic keys use underscore naming matching folder hierarchy: `build_<feature>`, `
 
 | Domain        | Tools                                                                                              |
 | ------------- | -------------------------------------------------------------------------------------------------- |
-| **Identity**  | `juno_version`, `juno_run`                                                                         |
+| **Identity**  | `juno_version`, `juno_run`, `juno_status`                                                     |
 | **Config**    | `juno_config_init`, `juno_config_apply`, `juno_create_project`                                     |
 | **Hosting**   | `juno_hosting_deploy`, `juno_hosting_clear`, `juno_hosting_prune`                                  |
 | **Functions** | `juno_functions_build`, `juno_functions_eject`, `juno_functions_publish`, `juno_functions_upgrade` |
