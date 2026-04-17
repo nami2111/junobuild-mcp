@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.6
+
+### Patch Changes
+
+- Add juno_status tool to check module health and deployment status
+
 ## 1.2.5
 
 ### Patch Changes
