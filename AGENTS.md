@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-MCP server for Juno (junobuild) — wraps `@junobuild/cli` commands via `child_process` to expose 28 tools for managing satellites, hosting, functions, snapshots, and more.
+MCP server for Juno (junobuild) — wraps `@junobuild/cli` commands via `child_process` to expose tools for managing satellites, hosting, functions, snapshots, and more.
 
 ## Build & Run Commands
 
@@ -15,11 +15,6 @@ npm run clean          # Remove dist/
 # Quick verification
 npm run build && node dist/index.js   # Must start without errors
 ```
-
-There is **no linter, formatter, or test framework** configured yet. When adding one, prefer:
-- **Linting**: ESLint with `@typescript-eslint`
-- **Formatting**: Prettier (already familiar to Juno ecosystem)
-- **Testing**: Vitest (already used in the Juno monorepo)
 
 ## Project Structure
 
