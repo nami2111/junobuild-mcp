@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.8
+
+### Patch Changes
+
+- Add cache size limit and cleanup for docs tools and remove dead code
+
 ## 1.2.7
 
 ### Patch Changes
