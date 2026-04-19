@@ -12,6 +12,20 @@ interface CacheEntry {
 }
 
 const docCache = new Map<string, CacheEntry>();
+const MAX_CACHE_SIZE = 50;
+
+function cleanupExpired(): void {
+  const now = Date.now();
+  for (const [key, entry] of docCache) {
+    if (entry.expiresAt < now) {
+      docCache.delete(key);
+    }
+  }
+  while (docCache.size > MAX_CACHE_SIZE) {
+    const oldest = docCache.keys().next().value;
+    if (oldest) docCache.delete(oldest);
+  }
+}
 
 function getAlternatePath(path: string): string {
   return path.endsWith(".mdx") ? path.replace(/\.mdx$/, ".md") : path.replace(/\.md$/, ".mdx");
@@ -55,6 +69,8 @@ export function registerDocsTools(server: McpServer): void {
     async (params) => {
       const path = TOPICS[params.topic as TopicKey];
       const topicKey = params.topic as string;
+
+      cleanupExpired();
 
       const cached = docCache.get(topicKey);
       if (cached && cached.expiresAt > Date.now()) {
