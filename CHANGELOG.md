@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.10
+
+### Patch Changes
+
+- migrate execCli to spawn with argument arrays
+
 ## 1.2.9
 
 ### Patch Changes
