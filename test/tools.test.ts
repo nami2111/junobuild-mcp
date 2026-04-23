@@ -55,6 +55,24 @@ describe("Tools E2E", () => {
     expect(content[0].text).toContain("Config written");
   });
 
+  it("should reject path traversal in config init", async () => {
+    const result = await clientWrapper.client.callTool({
+      name: "juno_config_init",
+      arguments: {
+        format: "json",
+        source: "build",
+        satelliteId: "aaaaa-bbbbb-ccccc-ddddd-cai",
+        multiEnv: false,
+        writeFile: true,
+        path: "../../../etc/passwd"
+      }
+    });
+
+    expect(result.isError).toBe(true);
+    const content: any = result.content;
+    expect(content[0].text).toContain("traversal");
+  });
+
   it("should call config apply", async () => {
     const result = await clientWrapper.client.callTool({
       name: "juno_config_apply",
