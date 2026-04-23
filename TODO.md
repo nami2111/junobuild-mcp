@@ -148,6 +148,8 @@ The schema accepts aliases (`rust`/`rs`, `typescript`/`ts`, `javascript`/`mjs`).
 
 ### 11. Improve `buildFlags` String Construction
 
+> ✅ Resolved as part of Task 3 — `buildFlags` was replaced by `buildFlagArgs`, which returns `string[]` directly. No string concatenation of CLI arguments remains in the execution path.
+
 ```typescript
 return parts.length > 0 ? " " + parts.join(" ") : "";
 ```
@@ -160,7 +162,7 @@ This adds a leading space that is later concatenated into the command string. Us
 
 - [x] Fix stale tests (`juno_whoami`, `juno_open`, `juno_emulator_stop`, old schema fields)
 - [x] Deduplicate `makeProgressCallback` into shared utility
-- [ ] Refactor `execCli` to use `spawn()` with argument arrays
+- [x] Refactor `execCli` to use `spawn()` with argument arrays
 - [ ] Add path traversal validation to `juno_config_init`
 - [ ] Add `globalFlagsBase` to changes schemas
 - [ ] Add unit tests for retry, streaming, progress parsing, and formatting

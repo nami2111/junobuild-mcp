@@ -17,11 +17,11 @@ export function stripProgressChars(text: string): string {
   return text.replace(UNICODE_SPINNERS, "").replace(REPEATED_Z, "").replace(/\r?\n/g, "\n");
 }
 
-function buildFlags(flags?: GlobalFlags): string {
+function buildFlagArgs(flags?: GlobalFlags): string[] {
   const parts: string[] = [];
-  if (flags?.mode) parts.push(`--mode ${flags.mode}`);
-  if (flags?.profile) parts.push(`--profile ${flags.profile}`);
-  return parts.length > 0 ? " " + parts.join(" ") : "";
+  if (flags?.mode) parts.push("--mode", flags.mode);
+  if (flags?.profile) parts.push("--profile", flags.profile);
+  return parts;
 }
 
 let cachedCliPath: string | null = null;
@@ -47,17 +47,25 @@ async function resolveCliPath(): Promise<string> {
   }
 }
 
+async function resolveCliParts(): Promise<{ cmd: string; args: string[] }> {
+  const path = await resolveCliPath();
+  if (path.includes(" ")) {
+    const [cmd, ...args] = path.split(" ");
+    return { cmd, args };
+  }
+  return { cmd: path, args: [] };
+}
+
 export async function execCli(
   command: string,
   args: string[] = [],
   flags?: GlobalFlags,
   timeout: number = DEFAULT_TIMEOUT
 ): Promise<CliResult> {
-  const flagStr = buildFlags(flags);
-  const cliPath = await resolveCliPath();
-  const cmd = `${cliPath} ${command}${flagStr} ${args.join(" ")}`.trim();
-
-  return execCommand(cmd, timeout);
+  const { cmd: cliCmd, args: cliArgs } = await resolveCliParts();
+  const flagArgs = buildFlagArgs(flags);
+  const allArgs = [...cliArgs, command, ...flagArgs, ...args];
+  return runProcess(cliCmd, allArgs, timeout);
 }
 
 export async function execCommand(
@@ -75,35 +83,40 @@ export async function execCommand(
   });
 }
 
-export async function execCommandNonInteractive(
+interface RunProcessOptions {
+  cwd?: string;
+  stdinAnswers?: string[];
+  onProgress?: ProgressCallback;
+}
+
+function runProcess(
   cmd: string,
-  timeout: number = DEFAULT_TIMEOUT,
-  cwd?: string,
-  stdinAnswers?: string[]
+  args: string[],
+  timeout: number,
+  options?: RunProcessOptions
 ): Promise<CliResult> {
   return new Promise<CliResult>((resolve) => {
-    const [cmdPart, ...cmdArgs] = cmd.split(" ");
-    const child = spawn(cmdPart, cmdArgs, {
+    const child = spawn(cmd, args, {
       timeout,
-      stdio: stdinAnswers ? ["pipe", "pipe", "pipe"] : ["ignore", "pipe", "pipe"],
-      cwd,
+      cwd: options?.cwd,
       env: { ...process.env, FORCE_COLOR: "0", CI: "1" }
     });
 
     let stdout = "";
     let stderr = "";
+    let buildProgressEmitted = false;
 
     const timeoutId = setTimeout(() => {
       child.kill("SIGTERM");
     }, timeout);
 
-    if (stdinAnswers && child.stdin && stdinAnswers.length > 0) {
+    if (options?.stdinAnswers && child.stdin && options.stdinAnswers.length > 0) {
       let answerIndex = 0;
       const sendNextAnswer = () => {
-        if (answerIndex < stdinAnswers.length && child.stdin) {
-          child.stdin.write(stdinAnswers[answerIndex] + "\n");
+        if (answerIndex < options.stdinAnswers!.length && child.stdin) {
+          child.stdin.write(options.stdinAnswers![answerIndex] + "\n");
           answerIndex++;
-          if (answerIndex < stdinAnswers.length) {
+          if (answerIndex < options.stdinAnswers!.length) {
             setTimeout(sendNextAnswer, 3000);
           } else {
             child.stdin.end();
@@ -116,14 +129,29 @@ export async function execCommandNonInteractive(
     if (child.stdout) {
       const rlStdout = createInterface({ input: child.stdout, terminal: false });
       rlStdout.on("line", (line) => {
-        stdout += stripAnsi(line) + "\n";
+        const text = stripAnsi(stripProgressChars(line));
+        if (text) stdout += text + "\n";
+
+        if (options?.onProgress) {
+          const trimmed = text.trim();
+          if (!trimmed) return;
+
+          const parsed = parseProgress(trimmed);
+          if (parsed) {
+            options.onProgress(parsed.progress, parsed.message);
+          } else if (!buildProgressEmitted && trimmed.length > 10) {
+            buildProgressEmitted = true;
+            options.onProgress(0, "Building...");
+          }
+        }
       });
     }
 
     if (child.stderr) {
       const rlStderr = createInterface({ input: child.stderr, terminal: false });
       rlStderr.on("line", (line) => {
-        stderr += stripAnsi(line) + "\n";
+        const text = stripAnsi(stripProgressChars(line));
+        if (text) stderr += text + "\n";
       });
     }
 
@@ -145,6 +173,16 @@ export async function execCommandNonInteractive(
       });
     });
   });
+}
+
+export async function execCommandNonInteractive(
+  cmd: string,
+  timeout: number = DEFAULT_TIMEOUT,
+  cwd?: string,
+  stdinAnswers?: string[]
+): Promise<CliResult> {
+  const [cmdPart, ...cmdArgs] = cmd.split(" ");
+  return runProcess(cmdPart, cmdArgs, timeout, { cwd, stdinAnswers });
 }
 
 const TRANSIENT_PATTERNS = [
@@ -249,72 +287,10 @@ export async function execWithStreaming(
   timeout: number = DEFAULT_TIMEOUT,
   onProgress?: ProgressCallback
 ): Promise<CliResult> {
-  const flagStr = buildFlags(flags);
-  const cliPath = await resolveCliPath();
-  const cmd = `${cliPath} ${command}${flagStr} ${args.join(" ")}`.trim();
-
-  return new Promise<CliResult>((resolve) => {
-    const [cmdPart, ...cmdArgs] = cmd.split(" ");
-    const child = spawn(cmdPart, cmdArgs, {
-      timeout,
-      env: { ...process.env, FORCE_COLOR: "0", CI: "1" }
-    });
-
-    let stdout = "";
-    let stderr = "";
-    let buildProgressEmitted = false;
-
-    const timeoutId = setTimeout(() => {
-      child.kill("SIGTERM");
-    }, timeout);
-
-    if (child.stdout) {
-      const rlStdout = createInterface({ input: child.stdout, terminal: false });
-      rlStdout.on("line", (line) => {
-        const text = stripAnsi(stripProgressChars(line));
-        if (text) stdout += text + "\n";
-
-        if (onProgress) {
-          const trimmed = text.trim();
-          if (!trimmed) return;
-
-          const parsed = parseProgress(trimmed);
-          if (parsed) {
-            onProgress(parsed.progress, parsed.message);
-          } else if (!buildProgressEmitted && trimmed.length > 10) {
-            buildProgressEmitted = true;
-            onProgress(0, "Building...");
-          }
-        }
-      });
-    }
-
-    if (child.stderr) {
-      const rlStderr = createInterface({ input: child.stderr, terminal: false });
-      rlStderr.on("line", (line) => {
-        const text = stripAnsi(stripProgressChars(line));
-        if (text) stderr += text + "\n";
-      });
-    }
-
-    child.on("close", (code) => {
-      clearTimeout(timeoutId);
-      resolve({
-        stdout,
-        stderr,
-        exitCode: code ?? 1
-      });
-    });
-
-    child.on("error", (error) => {
-      clearTimeout(timeoutId);
-      resolve({
-        stdout,
-        stderr: `${stderr}\n${error.message}`,
-        exitCode: 1
-      });
-    });
-  });
+  const { cmd: cliCmd, args: cliArgs } = await resolveCliParts();
+  const flagArgs = buildFlagArgs(flags);
+  const allArgs = [...cliArgs, command, ...flagArgs, ...args];
+  return runProcess(cliCmd, allArgs, timeout, { onProgress });
 }
 
 export function formatResponse(
