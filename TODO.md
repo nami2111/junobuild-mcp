@@ -6,7 +6,7 @@
 
 ## 🔴 High Priority
 
-### 1. Fix Stale Tests
+### 1. Fix Stale Tests ✅
 
 Several tests reference tools and schema fields that were removed in v1.2.4–v1.2.5. These tests **will fail** when run.
 
@@ -19,7 +19,7 @@ Several tests reference tools and schema fields that were removed in v1.2.4–v1
 
 ---
 
-### 2. Deduplicate `makeProgressCallback`
+### 2. Deduplicate `makeProgressCallback` ✅
 
 The exact same function is duplicated in:
 - `src/tools/hosting.ts` (lines 13–27)
@@ -47,7 +47,7 @@ function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
 
 ---
 
-### 3. Eliminate Shell Injection Risk in `execCli`
+### 3. Eliminate Shell Injection Risk in `execCli` ✅
 
 `execCli` builds command strings via template literal:
 
@@ -73,7 +73,7 @@ If `flags.profile` or any argument contains shell metacharacters, this is vulner
 
 ---
 
-### 5. Add `globalFlagsBase` to Changes Schemas
+### 5. Add `globalFlagsBase` to Changes Schemas ✅
 
 The `changes_list`, `changes_apply`, and `changes_reject` schemas do not include `mode` or `profile` flags. However, the underlying Juno CLI commands likely support these global flags.
 
@@ -81,17 +81,21 @@ The `changes_list`, `changes_apply`, and `changes_reject` schemas do not include
 
 ---
 
-### 6. Add Unit Tests for `cli.ts` Utilities
+### 6. Add Unit Tests for `cli.ts` Utilities ✅
 
-The sophisticated logic in `cli.ts` has no unit test coverage:
+**Status:** Implemented in `test/cli-utilities.test.ts` (55 tests).
 
-- `execWithRetry()` — exponential backoff, transient error detection
-- `execWithStreaming()` — progress parsing, notification emission
-- `formatResponse()` — error/warning formatting, truncation
-- `parseProgress()` — batch phase detection, percentage calculation
-- `isTransientError()` — pattern matching across 13 error signatures
+Coverage added for:
+- `formatResponse()` — success/error paths, labels, warnings, ANSI stripping, `CHARACTER_LIMIT` truncation
+- `stripProgressChars()` — braille spinner removal, checkmark/cross symbols, repeated `z`, CRLF normalization
+- `buildFlagArgs()` — empty, mode-only, profile-only, combined flag assembly
+- `isTransientError()` — all 12 transient patterns (both stdout/stderr), non-transient rejection, case-insensitivity
+- `parseProgress()` — batch phase detection (Initializing/Uploading/Committing), percentage math, edge cases (`total=0`, unknown phase, single batch)
+- `makeProgressCallback()` — missing token, valid token, correct `notifications/progress` payload, swallowed send errors
+- `execCommand()` — success, failure, ANSI stripping
+- `execCli()` / `execWithRetry()` / `execWithStreaming()` — smoke tests verifying CliResult structure
 
-**Action:** Add unit tests in `test/cli.test.ts` or a new `test/cli-utilities.test.ts`.
+**Bug discovered & fixed:** `isTransientError()` used `.toLowerCase()` on the combined output but `TRANSIENT_PATTERNS` contained uppercase strings (`"ETIMEDOUT"`, `"ECONNRESET"`, etc.). `String.prototype.includes()` is case-sensitive, so 4 of the 12 patterns never matched and retries were silently skipped for those error types. All patterns are now lowercased.
 
 ---
 
@@ -159,7 +163,7 @@ This adds a leading space that is later concatenated into the command string. Us
 - [x] Refactor `execCli` to use `spawn()` with argument arrays
 - [x] Add path traversal validation to `juno_config_init`
 - [x] Add `globalFlagsBase` to changes schemas
-- [ ] Add unit tests for retry, streaming, progress parsing, and formatting
+- [x] Add unit tests for retry, streaming, progress parsing, and formatting
 - [ ] Replace `execSync` in `create_project` with async equivalent
 - [ ] Fix silent error handling in project move operation
 - [ ] Normalize language enum aliases (optional)
