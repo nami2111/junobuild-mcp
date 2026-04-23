@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { globalFlagsBase } from "./common.js";
 
-export const changesListSchema = z
-  .object({
+export const changesListSchema = globalFlagsBase
+  .extend({
     all: z
       .boolean()
       .default(false)
@@ -13,8 +14,8 @@ export const changesListSchema = z
   })
   .strict();
 
-export const changesApplySchema = z
-  .object({
+export const changesApplySchema = globalFlagsBase
+  .extend({
     id: z.string().describe("The ID of the change to apply"),
     snapshot: z.boolean().default(false).describe("Create a snapshot before applying"),
     hash: z.string().optional().describe("Expected hash of all included changes for verification"),
@@ -25,8 +26,8 @@ export const changesApplySchema = z
   })
   .strict();
 
-export const changesRejectSchema = z
-  .object({
+export const changesRejectSchema = globalFlagsBase
+  .extend({
     id: z.string().describe("The ID of the change to reject"),
     hash: z.string().optional().describe("Expected hash of all included changes for verification"),
     keepStaged: z
