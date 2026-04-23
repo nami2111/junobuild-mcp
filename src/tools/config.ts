@@ -1,5 +1,5 @@
-import { mkdir, writeFile, readFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname, resolve, sep } from "node:path";
 import { execSync } from "node:child_process";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { execCli, formatResponse } from "../cli.js";
@@ -128,6 +128,20 @@ export function registerConfigTools(server: McpServer): void {
       const filename = params.path ?? `juno.config.${ext}`;
 
       if (params.writeFile) {
+        const resolvedFile = resolve(filename);
+        const cwd = resolve(process.cwd());
+        if (!resolvedFile.startsWith(cwd + sep)) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Error: Path traversal detected. The provided path must be within the project directory."
+              }
+            ],
+            isError: true
+          };
+        }
+
         const dir = dirname(filename);
         if (dir && dir !== ".") {
           await mkdir(dir, { recursive: true });
@@ -207,7 +221,7 @@ export function registerConfigTools(server: McpServer): void {
         const viteTemplate = TEMPLATE_MAP[template] || "react --template-ts";
         const sourceDir = `src-${Date.now()}`;
 
-        let result = await execCommand(
+        const result = await execCommand(
           `npm create vite@latest ${sourceDir} -- --template ${viteTemplate}`,
           120_000
         );
@@ -227,7 +241,7 @@ export function registerConfigTools(server: McpServer): void {
         });
 
         const packageJsonPath = `${dir}/package.json`;
-        const { readFile, writeFile, mkdir } = await import("node:fs/promises");
+        const { readFile, writeFile } = await import("node:fs/promises");
 
         const pkg = JSON.parse(await readFile(packageJsonPath, "utf-8"));
         pkg.name = dir;

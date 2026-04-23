@@ -26,6 +26,14 @@ export const configInitSchema = z
     path: z
       .string()
       .optional()
+      .refine(
+        (val) => {
+          if (val === undefined) return true;
+          // Reject obvious traversal and absolute paths early at schema level
+          return !val.includes("..") && !val.startsWith("/") && !val.startsWith("\\");
+        },
+        { message: "Path must be relative and not contain '..' traversal sequences" }
+      )
       .describe(
         "Custom file path for the config (defaults to juno.config.ts/js/json in project root)"
       )
