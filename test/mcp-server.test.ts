@@ -39,9 +39,7 @@ describe("MCP Server E2E", () => {
       arguments: {
         directory: "my-juno-app",
         template: "react-ts-starter",
-        packageManager: "npm",
-        serverlessFunctions: "none",
-        githubAction: false
+        packageManager: "npm"
       }
     });
 

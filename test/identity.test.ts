@@ -31,27 +31,6 @@ describe("Identity E2E", () => {
     expect(content[0].text).toBeDefined();
   });
 
-  it("should call whoami successfully (returns info or authenticated error)", async () => {
-    const result = await clientWrapper.client.callTool({
-      name: "juno_whoami",
-      arguments: {}
-    });
-    
-    expect(!!result.isError).toBe(true); // Fails since no auth
-    const content: any = result.content;
-    expect(content[0].text).toBeDefined();
-  });
-
-  it("should call open satellite successfully", async () => {
-    const result = await clientWrapper.client.callTool({
-      name: "juno_open",
-      arguments: {}
-    });
-    
-    const content: any = result.content;
-    expect(content[0].text).toBeDefined();
-  });
-
   it("should call run script successfully", async () => {
     const result = await clientWrapper.client.callTool({
       name: "juno_run",

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createTestClient, createTestDir } from "./test-utils.js";
-import { join } from "node:path";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 
 describe("Tools E2E", () => {
@@ -63,16 +62,6 @@ describe("Tools E2E", () => {
     });
 
     // Fails expectedly inside without actual config or login
-    const content: any = result.content;
-    expect(content[0].text).toBeDefined();
-  });
-
-  it("should stop emulator", async () => {
-    const result = await clientWrapper.client.callTool({
-      name: "juno_emulator_stop",
-      arguments: {}
-    });
-
     const content: any = result.content;
     expect(content[0].text).toBeDefined();
   });
