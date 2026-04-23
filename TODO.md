@@ -63,19 +63,13 @@ If `flags.profile` or any argument contains shell metacharacters, this is vulner
 
 ## 🟡 Medium Priority
 
-### 4. Add Path Validation to `juno_config_init`
+### 4. Add Path Validation to `juno_config_init` ✅
 
-The `path` parameter in `juno_config_init` writes directly to disk without validation:
+**Status:** Implemented via dual-layer defense.
 
-```typescript
-const filename = params.path ?? `juno.config.${ext}`;
-// ...
-await writeFile(filename, content, "utf-8");
-```
-
-A value like `../../../etc/passwd` could write outside the project directory.
-
-**Action:** Validate `path` using `path.resolve()` and ensure it is within the project root (or current working directory).
+- **Schema layer:** Added `.refine()` in `src/schemas/config.ts` that rejects any `path` containing `..`, `/`, or `\` at the Zod validation stage.
+- **Runtime layer:** Added `path.resolve()` + `startsWith(cwd + sep)` check in `src/tools/config.ts` before any `mkdir`/`writeFile` calls. Returns `{ isError: true }` if traversal is detected.
+- **Test layer:** Added E2E test in `test/tools.test.ts` asserting that `path: "../../../etc/passwd"` is rejected.
 
 ---
 
@@ -163,7 +157,7 @@ This adds a leading space that is later concatenated into the command string. Us
 - [x] Fix stale tests (`juno_whoami`, `juno_open`, `juno_emulator_stop`, old schema fields)
 - [x] Deduplicate `makeProgressCallback` into shared utility
 - [x] Refactor `execCli` to use `spawn()` with argument arrays
-- [ ] Add path traversal validation to `juno_config_init`
+- [x] Add path traversal validation to `juno_config_init`
 - [ ] Add `globalFlagsBase` to changes schemas
 - [ ] Add unit tests for retry, streaming, progress parsing, and formatting
 - [ ] Replace `execSync` in `create_project` with async equivalent
