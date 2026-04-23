@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.12
+
+### Patch Changes
+
+- add global flags support to Changes tools
+
 ## 1.2.11
 
 ### Patch Changes
