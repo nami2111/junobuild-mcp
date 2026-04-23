@@ -17,7 +17,7 @@ export function stripProgressChars(text: string): string {
   return text.replace(UNICODE_SPINNERS, "").replace(REPEATED_Z, "").replace(/\r?\n/g, "\n");
 }
 
-function buildFlagArgs(flags?: GlobalFlags): string[] {
+export function buildFlagArgs(flags?: GlobalFlags): string[] {
   const parts: string[] = [];
   if (flags?.mode) parts.push("--mode", flags.mode);
   if (flags?.profile) parts.push("--profile", flags.profile);
@@ -45,6 +45,10 @@ async function resolveCliPath(): Promise<string> {
     cachedCliPath = `npx ${CLI_PACKAGE}`;
     return cachedCliPath;
   }
+}
+
+export function resetCliPathCache(): void {
+  cachedCliPath = null;
 }
 
 async function resolveCliParts(): Promise<{ cmd: string; args: string[] }> {
@@ -187,10 +191,10 @@ export async function execCommandNonInteractive(
 
 const TRANSIENT_PATTERNS = [
   "timeout",
-  "ETIMEDOUT",
-  "ECONNRESET",
-  "ECONNREFUSED",
-  "ENOTFOUND",
+  "etimedout",
+  "econnreset",
+  "econnrefused",
+  "enotfound",
   "socket hang up",
   "network",
   "rate limit",
@@ -200,7 +204,7 @@ const TRANSIENT_PATTERNS = [
   "504"
 ];
 
-function isTransientError(result: CliResult): boolean {
+export function isTransientError(result: CliResult): boolean {
   if (result.exitCode === 0) return false;
   const output = `${result.stdout} ${result.stderr}`.toLowerCase();
   return TRANSIENT_PATTERNS.some((pattern) => output.includes(pattern));
@@ -256,7 +260,7 @@ export function makeProgressCallback(extra: unknown): ProgressCallback | undefin
 
 const BATCH_PHASES = ["Initializing", "Uploading", "Committing"];
 
-function parseProgress(line: string): { progress: number; message: string } | null {
+export function parseProgress(line: string): { progress: number; message: string } | null {
   const batchMatch = line.match(/\[(\d+)\/(\d+)\]/);
   if (!batchMatch) return null;
 
