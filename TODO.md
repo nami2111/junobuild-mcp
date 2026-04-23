@@ -158,7 +158,7 @@ This adds a leading space that is later concatenated into the command string. Us
 - [x] Deduplicate `makeProgressCallback` into shared utility
 - [x] Refactor `execCli` to use `spawn()` with argument arrays
 - [x] Add path traversal validation to `juno_config_init`
-- [ ] Add `globalFlagsBase` to changes schemas
+- [x] Add `globalFlagsBase` to changes schemas
 - [ ] Add unit tests for retry, streaming, progress parsing, and formatting
 - [ ] Replace `execSync` in `create_project` with async equivalent
 - [ ] Fix silent error handling in project move operation
