@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.13
+
+### Patch Changes
+
+- correct transient error matching and export utilities
+
 ## 1.2.12
 
 ### Patch Changes
