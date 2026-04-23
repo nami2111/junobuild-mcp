@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.11
+
+### Patch Changes
+
+- Add Path Validation to `juno_config_init`
+
 ## 1.2.10
 
 ### Patch Changes
