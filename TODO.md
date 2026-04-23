@@ -159,7 +159,7 @@ This adds a leading space that is later concatenated into the command string. Us
 ## Summary Checklist
 
 - [x] Fix stale tests (`juno_whoami`, `juno_open`, `juno_emulator_stop`, old schema fields)
-- [ ] Deduplicate `makeProgressCallback` into shared utility
+- [x] Deduplicate `makeProgressCallback` into shared utility
 - [ ] Refactor `execCli` to use `spawn()` with argument arrays
 - [ ] Add path traversal validation to `juno_config_init`
 - [ ] Add `globalFlagsBase` to changes schemas

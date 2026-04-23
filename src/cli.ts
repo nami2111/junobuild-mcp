@@ -200,6 +200,22 @@ export async function execWithRetry(
 
 export type ProgressCallback = (progress: number, message: string) => void;
 
+export function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
+  const e = extra as {
+    _meta?: Record<string, unknown>;
+    sendNotification: (n: unknown) => Promise<void>;
+  };
+  const token = e._meta?.progressToken as string | number | undefined;
+  if (!token) return undefined;
+
+  return (progress: number, message: string) => {
+    e.sendNotification({
+      method: "notifications/progress",
+      params: { progressToken: token, progress, total: 100, message }
+    }).catch(() => {});
+  };
+}
+
 const BATCH_PHASES = ["Initializing", "Uploading", "Committing"];
 
 function parseProgress(line: string): { progress: number; message: string } | null {

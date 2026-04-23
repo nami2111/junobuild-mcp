@@ -4,7 +4,7 @@ import {
   execWithRetry,
   execWithStreaming,
   formatResponse,
-  type ProgressCallback
+  makeProgressCallback
 } from "../cli.js";
 import {
   functionsBuildSchema,
@@ -14,22 +14,6 @@ import {
 } from "../schemas/functions.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
-
-function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
-  const e = extra as {
-    _meta?: Record<string, unknown>;
-    sendNotification: (n: unknown) => Promise<void>;
-  };
-  const token = e._meta?.progressToken as string | number | undefined;
-  if (!token) return undefined;
-
-  return (progress: number, message: string) => {
-    e.sendNotification({
-      method: "notifications/progress",
-      params: { progressToken: token, progress, total: 100, message }
-    }).catch(() => {});
-  };
-}
 
 export function registerFunctionsTools(server: McpServer): void {
   server.registerTool(
