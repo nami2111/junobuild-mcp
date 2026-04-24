@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.14
+
+### Patch Changes
+
+- replace child_process with native fs and async exec
+
 ## 1.2.13
 
 ### Patch Changes
