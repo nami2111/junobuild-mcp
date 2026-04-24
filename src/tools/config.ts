@@ -1,6 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, rename } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
-import { execSync } from "node:child_process";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { execCli, formatResponse } from "../cli.js";
 import { configInitSchema, configApplySchema, createProjectSchema } from "../schemas/config.js";
@@ -204,7 +203,7 @@ export function registerConfigTools(server: McpServer): void {
     },
     async (params) => {
       try {
-        const { execCommand } = await import("../cli.js");
+        const { execCommandNonInteractive } = await import("../cli.js");
         const dir = params.directory;
         const template = params.template || "react-ts-starter";
         const pm = params.packageManager;
@@ -221,7 +220,7 @@ export function registerConfigTools(server: McpServer): void {
         const viteTemplate = TEMPLATE_MAP[template] || "react --template-ts";
         const sourceDir = `src-${Date.now()}`;
 
-        const result = await execCommand(
+        const result = await execCommandNonInteractive(
           `npm create vite@latest ${sourceDir} -- --template ${viteTemplate}`,
           120_000
         );
@@ -233,12 +232,7 @@ export function registerConfigTools(server: McpServer): void {
           };
         }
 
-        const moveCmd = `mv ${sourceDir} ${dir}`;
-        await new Promise<void>((resolve) => {
-          import("node:child_process").then(({ exec }) => {
-            exec(moveCmd, () => resolve());
-          });
-        });
+        await rename(sourceDir, dir);
 
         const packageJsonPath = `${dir}/package.json`;
         const { readFile, writeFile } = await import("node:fs/promises");
@@ -249,9 +243,8 @@ export function registerConfigTools(server: McpServer): void {
 
         const deps = ["@junobuild/core"];
         for (const dep of deps) {
-          try {
-            execSync(`${pm} add ${dep}`, { cwd: dir });
-          } catch {
+          const addResult = await execCommandNonInteractive(`${pm} add ${dep}`, 120_000, dir);
+          if (addResult.exitCode !== 0) {
             // Skip if package not found - static sites don't need SDK
           }
         }
