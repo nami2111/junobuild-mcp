@@ -99,7 +99,7 @@ Coverage added for:
 
 ---
 
-### 7. Make `create_project` Fully Async
+### 7. Make `create_project` Fully Async ✅
 
 `src/tools/config.ts` line 239 uses blocking `execSync`:
 
@@ -113,7 +113,7 @@ This blocks the Node.js event loop during project creation.
 
 ---
 
-### 8. Fix Silent Error in Project Move Operation
+### 8. Fix Silent Error in Project Move Operation ✅
 
 The `mv` command in `create_project` silently ignores errors:
 
@@ -164,8 +164,8 @@ This adds a leading space that is later concatenated into the command string. Us
 - [x] Add path traversal validation to `juno_config_init`
 - [x] Add `globalFlagsBase` to changes schemas
 - [x] Add unit tests for retry, streaming, progress parsing, and formatting
-- [ ] Replace `execSync` in `create_project` with async equivalent
-- [ ] Fix silent error handling in project move operation
+- [x] Replace `execSync` in `create_project` with async equivalent
+- [x] Fix silent error handling in project move operation
 - [ ] Normalize language enum aliases (optional)
 - [ ] Evaluate re-adding `juno_whoami` tool (optional)
 - [ ] Clean up `buildFlags` string construction (optional)
