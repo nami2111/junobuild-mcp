@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.15
+
+### Patch Changes
+
+- Refactor config.ts to use static imports
+
 ## 1.2.14
 
 ### Patch Changes
