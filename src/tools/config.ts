@@ -240,10 +240,11 @@ export function registerConfigTools(server: McpServer): void {
         await writeFile(packageJsonPath, JSON.stringify(pkg, null, 2));
 
         const deps = ["@junobuild/core"];
+        const failedDeps: string[] = [];
         for (const dep of deps) {
           const addResult = await execCommandNonInteractive(`${pm} add ${dep}`, 120_000, dir);
           if (addResult.exitCode !== 0) {
-            // Skip if package not found - static sites don't need SDK
+            failedDeps.push(dep);
           }
         }
 
@@ -266,6 +267,10 @@ export default {
         output += `4. juno emulator start  # in another terminal\n`;
         output += `5. juno hosting deploy --mode development\n`;
         output += `\nFor production: ${pm} run build && juno hosting deploy\n`;
+
+        if (failedDeps.length > 0) {
+          output += `\n**Warning:** Failed to install: ${failedDeps.join(", ")}. You may need to run \`${pm} install\` manually.\n`;
+        }
 
         return {
           content: [{ type: "text", text: output }]
