@@ -1,7 +1,7 @@
-import { mkdir, writeFile, rename } from "node:fs/promises";
+import { mkdir, writeFile, rename, readFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, formatResponse } from "../cli.js";
+import { execCli, execCommandNonInteractive, formatResponse } from "../cli.js";
 import { configInitSchema, configApplySchema, createProjectSchema } from "../schemas/config.js";
 import { DEPLOY_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
@@ -203,7 +203,6 @@ export function registerConfigTools(server: McpServer): void {
     },
     async (params) => {
       try {
-        const { execCommandNonInteractive } = await import("../cli.js");
         const dir = params.directory;
         const template = params.template || "react-ts-starter";
         const pm = params.packageManager;
@@ -235,7 +234,6 @@ export function registerConfigTools(server: McpServer): void {
         await rename(sourceDir, dir);
 
         const packageJsonPath = `${dir}/package.json`;
-        const { readFile, writeFile } = await import("node:fs/promises");
 
         const pkg = JSON.parse(await readFile(packageJsonPath, "utf-8"));
         pkg.name = dir;
