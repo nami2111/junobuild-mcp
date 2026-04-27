@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.16
+
+### Patch Changes
+
+- Include failed deps in config tool output
+
 ## 1.2.15
 
 ### Patch Changes
