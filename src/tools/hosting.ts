@@ -7,7 +7,7 @@ import {
   makeProgressCallback
 } from "../cli.js";
 import { hostingDeploySchema, hostingClearSchema, hostingPruneSchema } from "../schemas/hosting.js";
-import { DEPLOY_TIMEOUT } from "../constants.js";
+import { NETWORK_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
 export function registerHostingTools(server: McpServer): void {
@@ -44,13 +44,13 @@ export function registerHostingTools(server: McpServer): void {
           "hosting",
           ["deploy", ...args],
           flags,
-          DEPLOY_TIMEOUT,
+          NETWORK_TIMEOUT,
           onProgress
         );
       } else if (params.retry) {
-        result = await execWithRetry("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT);
+        result = await execWithRetry("hosting", ["deploy", ...args], flags, NETWORK_TIMEOUT);
       } else {
-        result = await execCli("hosting", ["deploy", ...args], flags, DEPLOY_TIMEOUT);
+        result = await execCli("hosting", ["deploy", ...args], flags, NETWORK_TIMEOUT);
       }
 
       const { text, isError } = formatResponse(result, "Hosting Deploy");
@@ -76,7 +76,7 @@ export function registerHostingTools(server: McpServer): void {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
       const args: string[] = [];
       if (params.fullPath) args.push("-f", params.fullPath);
-      const result = await execCli("hosting", ["clear", ...args], flags, DEPLOY_TIMEOUT);
+      const result = await execCli("hosting", ["clear", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Hosting Clear");
       return { content: [{ type: "text", text }], isError };
     }
@@ -101,7 +101,7 @@ export function registerHostingTools(server: McpServer): void {
       const args: string[] = [];
       args.push("--batch", String(params.batch));
       if (params.dryRun) args.push("--dry-run");
-      const result = await execCli("hosting", ["prune", ...args], flags, DEPLOY_TIMEOUT);
+      const result = await execCli("hosting", ["prune", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Hosting Prune");
       return { content: [{ type: "text", text }], isError };
     }

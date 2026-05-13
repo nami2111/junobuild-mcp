@@ -19,7 +19,7 @@ export function registerIdentityTools(server: McpServer): void {
       }
     },
     async () => {
-      const result = await execCli("--version", []);
+      const result = await execCli("version");
       const { text, isError } = formatResponse(result, "Version");
       return { content: [{ type: "text", text }], isError };
     }

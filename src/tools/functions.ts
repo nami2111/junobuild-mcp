@@ -12,7 +12,7 @@ import {
   functionsPublishSchema,
   functionsUpgradeSchema
 } from "../schemas/functions.js";
-import { DEPLOY_TIMEOUT } from "../constants.js";
+import { NETWORK_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
 export function registerFunctionsTools(server: McpServer): void {
@@ -36,7 +36,7 @@ export function registerFunctionsTools(server: McpServer): void {
       if (params.cargoPath) args.push("--cargo-path", params.cargoPath);
       if (params.sourcePath) args.push("--source-path", params.sourcePath);
       if (params.watch) args.push("--watch");
-      const result = await execCli("functions", ["build", ...args], undefined, DEPLOY_TIMEOUT);
+      const result = await execCli("functions", ["build", ...args], undefined, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Functions Build");
       return { content: [{ type: "text", text }], isError };
     }
@@ -59,7 +59,7 @@ export function registerFunctionsTools(server: McpServer): void {
     async (params) => {
       const args: string[] = [];
       if (params.lang) args.push("-l", params.lang);
-      const result = await execCli("functions", ["eject", ...args]);
+      const result = await execCli("functions", ["eject", ...args], undefined, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Functions Eject");
       return { content: [{ type: "text", text }], isError };
     }
@@ -94,13 +94,13 @@ export function registerFunctionsTools(server: McpServer): void {
           "functions",
           ["publish", ...args],
           flags,
-          DEPLOY_TIMEOUT,
+          NETWORK_TIMEOUT,
           onProgress
         );
       } else if (params.retry) {
-        result = await execWithRetry("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT);
+        result = await execWithRetry("functions", ["publish", ...args], flags, NETWORK_TIMEOUT);
       } else {
-        result = await execCli("functions", ["publish", ...args], flags, DEPLOY_TIMEOUT);
+        result = await execCli("functions", ["publish", ...args], flags, NETWORK_TIMEOUT);
       }
 
       const { text, isError } = formatResponse(result, "Functions Publish");
@@ -140,13 +140,13 @@ export function registerFunctionsTools(server: McpServer): void {
           "functions",
           ["upgrade", ...args],
           flags,
-          DEPLOY_TIMEOUT,
+          NETWORK_TIMEOUT,
           onProgress
         );
       } else if (params.retry) {
-        result = await execWithRetry("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT);
+        result = await execWithRetry("functions", ["upgrade", ...args], flags, NETWORK_TIMEOUT);
       } else {
-        result = await execCli("functions", ["upgrade", ...args], flags, DEPLOY_TIMEOUT);
+        result = await execCli("functions", ["upgrade", ...args], flags, NETWORK_TIMEOUT);
       }
 
       const { text, isError } = formatResponse(result, "Functions Upgrade");

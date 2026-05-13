@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { execCli, formatResponse } from "../cli.js";
 import { changesListSchema, changesApplySchema, changesRejectSchema } from "../schemas/changes.js";
-import { DEPLOY_TIMEOUT } from "../constants.js";
+import { NETWORK_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
 export function registerChangesTools(server: McpServer): void {
@@ -24,7 +24,7 @@ export function registerChangesTools(server: McpServer): void {
       const args: string[] = [];
       if (params.all) args.push("-a");
       if (params.every) args.push("-e");
-      const result = await execCli("changes", ["list", ...args], flags);
+      const result = await execCli("changes", ["list", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Changes List");
       return { content: [{ type: "text", text }], isError };
     }
@@ -50,7 +50,7 @@ export function registerChangesTools(server: McpServer): void {
       if (params.snapshot) args.push("--snapshot");
       if (params.hash) args.push("--hash", params.hash);
       if (params.keepStaged) args.push("-k");
-      const result = await execCli("changes", ["apply", ...args], flags, DEPLOY_TIMEOUT);
+      const result = await execCli("changes", ["apply", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Changes Apply");
       return { content: [{ type: "text", text }], isError };
     }
@@ -75,7 +75,7 @@ export function registerChangesTools(server: McpServer): void {
       const args = ["-i", params.id];
       if (params.hash) args.push("--hash", params.hash);
       if (params.keepStaged) args.push("-k");
-      const result = await execCli("changes", ["reject", ...args], flags, DEPLOY_TIMEOUT);
+      const result = await execCli("changes", ["reject", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Changes Reject");
       return { content: [{ type: "text", text }], isError };
     }
