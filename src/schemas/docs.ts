@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-const BASE_PATH = "https://raw.githubusercontent.com/junobuild/docs/main/docs";
-
 export const TOPICS = {
   intro: "/intro.mdx",
   start_a_new_project: "/start-a-new-project.mdx",

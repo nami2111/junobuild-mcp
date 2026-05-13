@@ -3,6 +3,20 @@ import { execCli, formatResponse } from "../cli.js";
 import { versionSchema, runScriptSchema, statusSchema } from "../schemas/identity.js";
 import type { GlobalFlags } from "../types.js";
 
+export function buildRunScriptArgs(params: { src: string }): string[] {
+  return ["-s", params.src];
+}
+
+export function buildStatusArgs(params: {
+  containerUrl?: string;
+  consoleUrl?: string;
+}): string[] {
+  const args: string[] = [];
+  if (params.containerUrl) args.push("--container-url", params.containerUrl);
+  if (params.consoleUrl) args.push("--console-url", params.consoleUrl);
+  return args;
+}
+
 export function registerIdentityTools(server: McpServer): void {
   server.registerTool(
     "juno_version",
@@ -41,7 +55,7 @@ export function registerIdentityTools(server: McpServer): void {
     },
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args = ["-s", params.src];
+      const args = buildRunScriptArgs(params);
       const result = await execCli("run", args, flags);
       const { text, isError } = formatResponse(result, "Run Script");
       return { content: [{ type: "text", text }], isError };
@@ -64,9 +78,7 @@ export function registerIdentityTools(server: McpServer): void {
     },
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args: string[] = [];
-      if (params.containerUrl) args.push("--container-url", params.containerUrl);
-      if (params.consoleUrl) args.push("--console-url", params.consoleUrl);
+      const args = buildStatusArgs(params);
       const result = await execCli("status", args, flags);
       const { text, isError } = formatResponse(result, "Status");
       return { content: [{ type: "text", text }], isError };

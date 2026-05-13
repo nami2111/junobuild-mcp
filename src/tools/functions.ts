@@ -15,6 +15,60 @@ import {
 import { NETWORK_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
+export function buildFunctionsBuildArgs(params: {
+  lang?: string;
+  cargoPath?: string;
+  sourcePath?: string;
+  watch?: boolean;
+}): string[] {
+  const args: string[] = [];
+  if (params.lang) args.push("-l", params.lang);
+  if (params.cargoPath) args.push("--cargo-path", params.cargoPath);
+  if (params.sourcePath) args.push("--source-path", params.sourcePath);
+  if (params.watch) args.push("--watch");
+  return args;
+}
+
+export function buildFunctionsEjectArgs(params: { lang?: string }): string[] {
+  const args: string[] = [];
+  if (params.lang) args.push("-l", params.lang);
+  return args;
+}
+
+export function buildFunctionsPublishArgs(params: {
+  src?: string;
+  noApply?: boolean;
+  keepStaged?: boolean;
+  retry?: boolean;
+  progress?: boolean;
+}): string[] {
+  const args: string[] = [];
+  if (params.src) args.push("-s", params.src);
+  if (params.noApply) args.push("--no-apply");
+  if (params.keepStaged) args.push("-k");
+  return args;
+}
+
+export function buildFunctionsUpgradeArgs(params: {
+  src?: string;
+  cdn?: boolean;
+  cdnPath?: string;
+  clearChunks?: boolean;
+  noSnapshot?: boolean;
+  reset?: boolean;
+  retry?: boolean;
+  progress?: boolean;
+}): string[] {
+  const args: string[] = [];
+  if (params.src) args.push("-s", params.src);
+  if (params.cdn) args.push("--cdn");
+  if (params.cdnPath) args.push("--cdn-path", params.cdnPath);
+  if (params.clearChunks) args.push("--clear-chunks");
+  if (params.noSnapshot) args.push("--no-snapshot");
+  if (params.reset) args.push("-r");
+  return args;
+}
+
 export function registerFunctionsTools(server: McpServer): void {
   server.registerTool(
     "juno_functions_build",
@@ -31,11 +85,7 @@ export function registerFunctionsTools(server: McpServer): void {
       }
     },
     async (params) => {
-      const args: string[] = [];
-      if (params.lang) args.push("-l", params.lang);
-      if (params.cargoPath) args.push("--cargo-path", params.cargoPath);
-      if (params.sourcePath) args.push("--source-path", params.sourcePath);
-      if (params.watch) args.push("--watch");
+      const args = buildFunctionsBuildArgs(params);
       const result = await execCli("functions", ["build", ...args], undefined, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Functions Build");
       return { content: [{ type: "text", text }], isError };
@@ -57,8 +107,7 @@ export function registerFunctionsTools(server: McpServer): void {
       }
     },
     async (params) => {
-      const args: string[] = [];
-      if (params.lang) args.push("-l", params.lang);
+      const args = buildFunctionsEjectArgs(params);
       const result = await execCli("functions", ["eject", ...args], undefined, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Functions Eject");
       return { content: [{ type: "text", text }], isError };
@@ -81,10 +130,7 @@ export function registerFunctionsTools(server: McpServer): void {
     },
     async (params, extra) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args: string[] = [];
-      if (params.src) args.push("-s", params.src);
-      if (params.noApply) args.push("--no-apply");
-      if (params.keepStaged) args.push("-k");
+      const args = buildFunctionsPublishArgs(params);
 
       let result: Awaited<ReturnType<typeof execCli>>;
       const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
@@ -124,13 +170,7 @@ export function registerFunctionsTools(server: McpServer): void {
     },
     async (params, extra) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args: string[] = [];
-      if (params.src) args.push("-s", params.src);
-      if (params.cdn) args.push("--cdn");
-      if (params.cdnPath) args.push("--cdn-path", params.cdnPath);
-      if (params.clearChunks) args.push("--clear-chunks");
-      if (params.noSnapshot) args.push("--no-snapshot");
-      if (params.reset) args.push("-r");
+      const args = buildFunctionsUpgradeArgs(params);
 
       let result: Awaited<ReturnType<typeof execCli>>;
       const onProgress = params.progress ? makeProgressCallback(extra) : undefined;

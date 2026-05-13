@@ -4,6 +4,37 @@ import { changesListSchema, changesApplySchema, changesRejectSchema } from "../s
 import { NETWORK_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
+export function buildChangesListArgs(params: { all?: boolean; every?: boolean }): string[] {
+  const args: string[] = [];
+  if (params.all) args.push("-a");
+  if (params.every) args.push("-e");
+  return args;
+}
+
+export function buildChangesApplyArgs(params: {
+  id: string;
+  snapshot?: boolean;
+  hash?: string;
+  keepStaged?: boolean;
+}): string[] {
+  const args = ["-i", params.id];
+  if (params.snapshot) args.push("--snapshot");
+  if (params.hash) args.push("--hash", params.hash);
+  if (params.keepStaged) args.push("-k");
+  return args;
+}
+
+export function buildChangesRejectArgs(params: {
+  id: string;
+  hash?: string;
+  keepStaged?: boolean;
+}): string[] {
+  const args = ["-i", params.id];
+  if (params.hash) args.push("--hash", params.hash);
+  if (params.keepStaged) args.push("-k");
+  return args;
+}
+
 export function registerChangesTools(server: McpServer): void {
   server.registerTool(
     "juno_changes_list",
@@ -21,9 +52,7 @@ export function registerChangesTools(server: McpServer): void {
     },
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args: string[] = [];
-      if (params.all) args.push("-a");
-      if (params.every) args.push("-e");
+      const args = buildChangesListArgs(params);
       const result = await execCli("changes", ["list", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Changes List");
       return { content: [{ type: "text", text }], isError };
@@ -46,10 +75,7 @@ export function registerChangesTools(server: McpServer): void {
     },
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args = ["-i", params.id];
-      if (params.snapshot) args.push("--snapshot");
-      if (params.hash) args.push("--hash", params.hash);
-      if (params.keepStaged) args.push("-k");
+      const args = buildChangesApplyArgs(params);
       const result = await execCli("changes", ["apply", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Changes Apply");
       return { content: [{ type: "text", text }], isError };
@@ -72,9 +98,7 @@ export function registerChangesTools(server: McpServer): void {
     },
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args = ["-i", params.id];
-      if (params.hash) args.push("--hash", params.hash);
-      if (params.keepStaged) args.push("-k");
+      const args = buildChangesRejectArgs(params);
       const result = await execCli("changes", ["reject", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Changes Reject");
       return { content: [{ type: "text", text }], isError };

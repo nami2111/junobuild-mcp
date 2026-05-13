@@ -6,7 +6,7 @@ import { configInitSchema, configApplySchema, createProjectSchema } from "../sch
 import { NETWORK_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
-interface ConfigInitParams {
+export interface ConfigInitParams {
   format: "typescript" | "javascript" | "json";
   source: string;
   satelliteId: string;
@@ -17,7 +17,7 @@ interface ConfigInitParams {
   path?: string;
 }
 
-function buildConfigOptionsSnippet(params: ConfigInitParams): string {
+export function buildConfigOptionsSnippet(params: ConfigInitParams): string {
   const satelliteBlock = params.multiEnv
     ? `  satellite: {
     ids: {
@@ -49,7 +49,7 @@ function buildConfigOptionsSnippet(params: ConfigInitParams): string {
   return parts.join(",\n");
 }
 
-function generateTypeScriptConfig(params: ConfigInitParams): string {
+export function generateTypeScriptConfig(params: ConfigInitParams): string {
   return `import { defineConfig } from "@junobuild/config";
 
 export default defineConfig({
@@ -57,7 +57,7 @@ ${buildConfigOptionsSnippet(params)}
 });`;
 }
 
-function generateJavaScriptConfig(params: ConfigInitParams): string {
+export function generateJavaScriptConfig(params: ConfigInitParams): string {
   return `const { defineConfig } = require("@junobuild/config");
 
 module.exports = defineConfig({
@@ -65,7 +65,7 @@ ${buildConfigOptionsSnippet(params)}
 });`;
 }
 
-function generateJsonConfig(params: ConfigInitParams): string {
+export function generateJsonConfig(params: ConfigInitParams): string {
   const config: Record<string, unknown> = {};
 
   if (params.multiEnv) {
@@ -105,6 +105,12 @@ function generateConfigContent(params: ConfigInitParams): {
     case "json":
       return { content: generateJsonConfig(params), ext: "json", lang: "json" };
   }
+}
+
+export function buildConfigApplyArgs(params: { force?: boolean }): string[] {
+  const args: string[] = [];
+  if (params.force) args.push("--force");
+  return args;
 }
 
 export function registerConfigTools(server: McpServer): void {
@@ -179,8 +185,7 @@ export function registerConfigTools(server: McpServer): void {
     },
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args: string[] = [];
-      if (params.force) args.push("--force");
+      const args = buildConfigApplyArgs(params);
       const result = await execCli("config", ["apply", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Config Apply");
       return { content: [{ type: "text", text }], isError };

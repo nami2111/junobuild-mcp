@@ -10,6 +10,41 @@ import { hostingDeploySchema, hostingClearSchema, hostingPruneSchema } from "../
 import { NETWORK_TIMEOUT } from "../constants.js";
 import type { GlobalFlags } from "../types.js";
 
+export function buildHostingDeployArgs(params: {
+  batch: number;
+  clear?: boolean;
+  prune?: boolean;
+  immediate?: boolean;
+  keepStaged?: boolean;
+  noApply?: boolean;
+  config?: boolean;
+  retry?: boolean;
+  progress?: boolean;
+}): string[] {
+  const args: string[] = [];
+  args.push("--batch", String(params.batch));
+  if (params.clear) args.push("--clear");
+  if (params.prune) args.push("--prune");
+  if (params.immediate) args.push("-i");
+  if (params.keepStaged) args.push("-k");
+  if (params.noApply) args.push("--no-apply");
+  if (params.config) args.push("--config");
+  return args;
+}
+
+export function buildHostingClearArgs(params: { fullPath?: string }): string[] {
+  const args: string[] = [];
+  if (params.fullPath) args.push("-f", params.fullPath);
+  return args;
+}
+
+export function buildHostingPruneArgs(params: { batch: number; dryRun?: boolean }): string[] {
+  const args: string[] = [];
+  args.push("--batch", String(params.batch));
+  if (params.dryRun) args.push("--dry-run");
+  return args;
+}
+
 export function registerHostingTools(server: McpServer): void {
   server.registerTool(
     "juno_hosting_deploy",
@@ -27,14 +62,7 @@ export function registerHostingTools(server: McpServer): void {
     },
     async (params, extra) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args: string[] = [];
-      args.push("--batch", String(params.batch));
-      if (params.clear) args.push("--clear");
-      if (params.prune) args.push("--prune");
-      if (params.immediate) args.push("-i");
-      if (params.keepStaged) args.push("-k");
-      if (params.noApply) args.push("--no-apply");
-      if (params.config) args.push("--config");
+      const args = buildHostingDeployArgs(params);
 
       let result: Awaited<ReturnType<typeof execCli>>;
       const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
@@ -74,8 +102,7 @@ export function registerHostingTools(server: McpServer): void {
     },
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args: string[] = [];
-      if (params.fullPath) args.push("-f", params.fullPath);
+      const args = buildHostingClearArgs(params);
       const result = await execCli("hosting", ["clear", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Hosting Clear");
       return { content: [{ type: "text", text }], isError };
@@ -98,9 +125,7 @@ export function registerHostingTools(server: McpServer): void {
     },
     async (params) => {
       const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args: string[] = [];
-      args.push("--batch", String(params.batch));
-      if (params.dryRun) args.push("--dry-run");
+      const args = buildHostingPruneArgs(params);
       const result = await execCli("hosting", ["prune", ...args], flags, NETWORK_TIMEOUT);
       const { text, isError } = formatResponse(result, "Hosting Prune");
       return { content: [{ type: "text", text }], isError };
