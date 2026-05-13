@@ -270,7 +270,7 @@ export function parseProgress(line: string): { progress: number; message: string
 
   let phaseOffset = 1;
   for (let i = 0; i < BATCH_PHASES.length; i++) {
-    if (line.includes(BATCH_PHASES[i])) {
+    if (new RegExp(`\\b${BATCH_PHASES[i]}\\b`).test(line)) {
       phaseOffset = i + 1;
       break;
     }
@@ -280,7 +280,7 @@ export function parseProgress(line: string): { progress: number; message: string
   const completedSteps = (current - 1) * BATCH_PHASES.length + phaseOffset;
   const progress = Math.min(Math.round((completedSteps / totalSteps) * 100), 99);
 
-  const phase = BATCH_PHASES.find((p) => line.includes(p)) ?? "Processing";
+  const phase = BATCH_PHASES.find((p) => new RegExp(`\\b${p}\\b`).test(line)) ?? "Processing";
   return { progress, message: `${phase} batch ${current}/${total}` };
 }
 
