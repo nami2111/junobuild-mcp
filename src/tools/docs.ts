@@ -27,7 +27,7 @@ function cleanupExpired(): void {
   }
 }
 
-function getAlternatePath(path: string): string {
+export function getAlternatePath(path: string): string {
   return path.endsWith(".mdx") ? path.replace(/\.mdx$/, ".md") : path.replace(/\.md$/, ".mdx");
 }
 
