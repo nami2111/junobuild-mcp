@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.3.0
+
+### Minor Changes
+
+- some fix and add test file
+
 ## 1.2.17
 
 ### Patch Changes
