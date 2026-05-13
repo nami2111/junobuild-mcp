@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.2.17
+
+### Patch Changes
+
+- chore: patch security
+
 ## 1.2.16
 
 ### Patch Changes
