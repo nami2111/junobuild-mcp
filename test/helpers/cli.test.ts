@@ -10,9 +10,41 @@ import {
   execCommand,
   execCli,
   execWithRetry,
-  execWithStreaming
-} from "../src/cli.js";
-import { CHARACTER_LIMIT } from "../src/constants.js";
+  execWithStreaming,
+  execCommandNonInteractive
+} from "../../src/cli.js";
+import { CHARACTER_LIMIT } from "../../src/constants.js";
+import { rmSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { randomUUID } from "node:crypto";
+
+describe("buildFlagArgs", () => {
+  it("returns empty array when flags undefined", () => {
+    expect(buildFlagArgs()).toEqual([]);
+  });
+
+  it("returns empty array when flags empty", () => {
+    expect(buildFlagArgs({})).toEqual([]);
+  });
+
+  it("builds --mode flag only", () => {
+    expect(buildFlagArgs({ mode: "staging" })).toEqual(["--mode", "staging"]);
+  });
+
+  it("builds --profile flag only", () => {
+    expect(buildFlagArgs({ profile: "prod" })).toEqual(["--profile", "prod"]);
+  });
+
+  it("builds both flags in order", () => {
+    expect(buildFlagArgs({ mode: "production", profile: "main" })).toEqual([
+      "--mode",
+      "production",
+      "--profile",
+      "main"
+    ]);
+  });
+});
 
 describe("formatResponse", () => {
   it("returns success output without label", () => {
@@ -67,7 +99,7 @@ describe("formatResponse", () => {
   it("truncates text exceeding CHARACTER_LIMIT", () => {
     const long = "a".repeat(CHARACTER_LIMIT + 100);
     const result = formatResponse({ stdout: long, stderr: "", exitCode: 0 });
-    expect(result.text.length).toBeLessThanOrEqual(CHARACTER_LIMIT + 20); // allow for suffix
+    expect(result.text.length).toBeLessThanOrEqual(CHARACTER_LIMIT + 20);
     expect(result.text).toContain("...(truncated)");
   });
 
@@ -107,7 +139,6 @@ describe("stripProgressChars", () => {
   });
 
   it("does not convert orphan CR to LF", () => {
-    // stripProgressChars regex /\r?\n/g only matches CRLF pairs, not standalone \r
     const input = "line1\rline2";
     expect(stripProgressChars(input)).toBe("line1\rline2");
   });
@@ -115,33 +146,6 @@ describe("stripProgressChars", () => {
   it("returns plain text unchanged", () => {
     const input = "plain text without progress chars";
     expect(stripProgressChars(input)).toBe(input);
-  });
-});
-
-describe("buildFlagArgs", () => {
-  it("returns empty array when flags undefined", () => {
-    expect(buildFlagArgs()).toEqual([]);
-  });
-
-  it("returns empty array when flags empty", () => {
-    expect(buildFlagArgs({})).toEqual([]);
-  });
-
-  it("builds --mode flag only", () => {
-    expect(buildFlagArgs({ mode: "staging" })).toEqual(["--mode", "staging"]);
-  });
-
-  it("builds --profile flag only", () => {
-    expect(buildFlagArgs({ profile: "prod" })).toEqual(["--profile", "prod"]);
-  });
-
-  it("builds both flags in order", () => {
-    expect(buildFlagArgs({ mode: "production", profile: "main" })).toEqual([
-      "--mode",
-      "production",
-      "--profile",
-      "main"
-    ]);
   });
 });
 
@@ -190,14 +194,13 @@ describe("parseProgress", () => {
   it("parses [1/10] Initializing correctly", () => {
     const parsed = parseProgress("[1/10] Initializing");
     expect(parsed).not.toBeNull();
-    expect(parsed!.progress).toBe(3); // (0*3 + 1) / 30 * 100 ≈ 3.33 → 3
+    expect(parsed!.progress).toBe(3);
     expect(parsed!.message).toBe("Initializing batch 1/10");
   });
 
   it("parses [5/10] Uploading correctly", () => {
     const parsed = parseProgress("[5/10] Uploading batch files");
     expect(parsed).not.toBeNull();
-    // completedSteps = (5-1)*3 + 2 = 14; totalSteps = 30; 14/30*100 = 46.67 → 47
     expect(parsed!.progress).toBe(47);
     expect(parsed!.message).toBe("Uploading batch 5/10");
   });
@@ -227,7 +230,6 @@ describe("parseProgress", () => {
   it("handles single batch [1/1]", () => {
     const parsed = parseProgress("[1/1] Uploading");
     expect(parsed).not.toBeNull();
-    // (0*3 + 2) / 3 * 100 = 66.67 → 67
     expect(parsed!.progress).toBe(67);
   });
 });
@@ -254,7 +256,6 @@ describe("makeProgressCallback", () => {
     });
 
     cb!(50, "Uploading");
-    // micro-task flush
     await new Promise((r) => setTimeout(r, 10));
 
     expect(sendNotification).toHaveBeenCalledWith({
@@ -275,8 +276,38 @@ describe("makeProgressCallback", () => {
       sendNotification
     });
 
-    // should not throw
     expect(() => cb!(10, "test")).not.toThrow();
+  });
+});
+
+describe("execCommandNonInteractive", () => {
+  it("runs a simple command successfully", async () => {
+    const result = await execCommandNonInteractive("echo hello", 5_000);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("hello");
+  });
+
+  it("respects timeout and kills process", async () => {
+    const result = await execCommandNonInteractive("sleep 10", 1_000);
+    expect(result.exitCode).not.toBe(0);
+  });
+
+  it("runs command in specified cwd", async () => {
+    const testDir = join(tmpdir(), `juno-test-cwd-${randomUUID()}`);
+    mkdirSync(testDir, { recursive: true });
+    try {
+      const result = await execCommandNonInteractive("pwd", 5_000, testDir);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.trim()).toBe(testDir);
+    } finally {
+      rmSync(testDir, { recursive: true, force: true });
+    }
+  });
+
+  it("pipes stdin answers to interactive command", async () => {
+    const result = await execCommandNonInteractive("cat", 10_000, undefined, ["hello"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("hello");
   });
 });
 
@@ -288,14 +319,12 @@ describe("execCommand", () => {
   });
 
   it("returns stderr and exitCode 1 for failed command", async () => {
-    // Use a portable invalid command.
     const failResult = await execCommand("ls /nonexistent_path_12345");
     expect(failResult.exitCode).toBe(1);
     expect(failResult.stderr).toBeTruthy();
   });
 
   it("strips ANSI from output", async () => {
-    // `echo` doesn't emit ANSI, but we can verify the wrapper doesn't break
     const result = await execCommand("printf 'plain'");
     expect(result.stdout).toBe("plain");
   });
@@ -311,18 +340,12 @@ describe("execCli + execWithRetry + execWithStreaming", () => {
   });
 
   it("execCli falls back to npx when juno is not found", async () => {
-    // Since juno is unlikely installed in the test environment,
-    // execCli will resolve to `npx @junobuild/cli` and then fail to run.
-    // We just verify it attempts a command without crashing.
     const result = await execCli("version", [], undefined, 5_000);
-    // npx will install or fail within 5s; either way we get a result.
     expect(result).toHaveProperty("exitCode");
     expect(typeof result.exitCode).toBe("number");
   });
 
   it("execWithRetry returns a CliResult for Juno CLI commands", async () => {
-    // execWithRetry wraps execCli (Juno CLI), not arbitrary shell commands.
-    // We verify it returns a structured result without crashing.
     const result = await execWithRetry("version", [], undefined, 5_000, 0);
     expect(result).toHaveProperty("exitCode");
     expect(typeof result.exitCode).toBe("number");
@@ -332,19 +355,12 @@ describe("execCli + execWithRetry + execWithStreaming", () => {
 
   it("execWithRetry does not invoke backoff for non-transient errors", async () => {
     const spy = vi.spyOn(global, "setTimeout");
-    // Use maxRetries=0 so the loop runs once; even if the CLI command fails
-    // with a non-transient error, no backoff timers should fire because
-    // attempt > 0 is never true.
     const result = await execWithRetry("version", [], undefined, 5_000, 0, 10);
-    // setTimeout should not be called for backoff (attempt never > 0 with maxRetries=0).
-    // Note: execCli internals may use timers, so we only assert no *backoff* calls
-    // with the specific delay pattern. Instead, just verify the result shape.
     expect(typeof result.exitCode).toBe("number");
     spy.mockRestore();
   });
 
   it("execWithRetry retry logic is consistent with isTransientError", () => {
-    // Retry loop only continues when isTransientError returns true.
     const transient = { stdout: "", stderr: "ETIMEDOUT", exitCode: 1 };
     const nonTransient = { stdout: "", stderr: "file not found", exitCode: 1 };
     const success = { stdout: "ok", stderr: "", exitCode: 0 };
@@ -355,8 +371,6 @@ describe("execCli + execWithRetry + execWithStreaming", () => {
   });
 
   it("execWithStreaming returns a CliResult without crashing", async () => {
-    // execWithStreaming wraps the Juno CLI; we verify it accepts a progress
-    // callback and returns a structured result.
     const progressCalls: Array<{ progress: number; message: string }> = [];
     const onProgress = (progress: number, message: string) => {
       progressCalls.push({ progress, message });

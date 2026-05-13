@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getAlternatePath } from "../src/tools/docs.js";
+import { getAlternatePath } from "../../src/tools/docs.js";
 
 describe("getAlternatePath", () => {
   it("converts .mdx to .md", () => {
@@ -16,5 +16,9 @@ describe("getAlternatePath", () => {
 
   it("handles paths in subdirectories", () => {
     expect(getAlternatePath("/guides/local-development.mdx")).toBe("/guides/local-development.md");
+  });
+
+  it("returns original path when neither .md nor .mdx", () => {
+    expect(getAlternatePath("/build/authentication/index.txt")).toBe("/build/authentication/index.txt");
   });
 });

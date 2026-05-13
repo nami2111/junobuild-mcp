@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createTestClient, createTestDir } from "./test-utils.js";
+import { createTestClient, createTestDir } from "../test-utils.js";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import type { TextContent } from "@modelcontextprotocol/sdk/types.js";
 
-describe("Tools E2E", () => {
+describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
   let clientWrapper: Awaited<ReturnType<typeof createTestClient>>;
   let testDir: string;
 
   beforeAll(async () => {
     testDir = createTestDir("tools-test");
     mkdirSync(testDir, { recursive: true });
-    
+
     clientWrapper = await createTestClient(testDir);
   });
 
@@ -113,5 +113,27 @@ describe("Tools E2E", () => {
     expect(!!result.isError).toBe(false);
     const content = result.content as TextContent[];
     expect(content[0].text).toContain("Juno");
+  });
+
+  it("should return version information", async () => {
+    const result = await clientWrapper.client.callTool({
+      name: "juno_version",
+      arguments: {}
+    });
+
+    expect(!!result.isError).toBe(false);
+    const content = result.content as TextContent[];
+    expect(content[0].type).toBe("text");
+    expect(content[0].text).toBeDefined();
+  });
+
+  it("should call run script successfully", async () => {
+    const result = await clientWrapper.client.callTool({
+      name: "juno_run",
+      arguments: { src: "nonexistent.js" }
+    });
+
+    const content = result.content as TextContent[];
+    expect(content[0].text).toContain("nonexistent.js");
   });
 });

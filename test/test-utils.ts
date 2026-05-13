@@ -3,6 +3,8 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
+import type { CliResult } from "../src/types.js";
+import { vi } from "vitest";
 
 export const MCP_SERVER = join(process.cwd(), "dist/index.js");
 
@@ -30,4 +32,20 @@ export async function createTestClient(cwd?: string) {
 
 export function createTestDir(prefix: string) {
   return join(tmpdir(), `juno-mcp-${prefix}-${randomUUID()}`);
+}
+
+export function createMockExecCli(
+  overrides?: Partial<CliResult>
+): ReturnType<typeof vi.fn> {
+  const defaults: CliResult = { stdout: "", stderr: "", exitCode: 0 };
+  return vi.fn().mockResolvedValue({ ...defaults, ...overrides });
+}
+
+export function createMockFormatResponse(
+  overrides?: { text?: string; isError?: boolean }
+): ReturnType<typeof vi.fn> {
+  return vi.fn().mockReturnValue({
+    text: overrides?.text ?? "Success",
+    isError: overrides?.isError ?? false
+  });
 }
