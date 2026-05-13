@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.3.2
+
+### Patch Changes
+
+- Add handler functions and unit tests for Juno tool commands
+
 ## 1.3.1
 
 ### Patch Changes
