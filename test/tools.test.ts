@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createTestClient, createTestDir } from "./test-utils.js";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
+import type { TextContent } from "@modelcontextprotocol/sdk/types.js";
 
 describe("Tools E2E", () => {
   let clientWrapper: Awaited<ReturnType<typeof createTestClient>>;
@@ -33,7 +34,7 @@ describe("Tools E2E", () => {
     });
 
     expect(!!result.isError).toBe(false);
-    const content: any = result.content;
+    const content = result.content as TextContent[];
     expect(content[0].text).toContain("juno.config.ts");
   });
 
@@ -51,7 +52,7 @@ describe("Tools E2E", () => {
     });
 
     expect(!!result.isError).toBe(false);
-    const content: any = result.content;
+    const content = result.content as TextContent[];
     expect(content[0].text).toContain("Config written");
   });
 
@@ -69,7 +70,7 @@ describe("Tools E2E", () => {
     });
 
     expect(result.isError).toBe(true);
-    const content: any = result.content;
+    const content = result.content as TextContent[];
     expect(content[0].text).toContain("traversal");
   });
 
@@ -79,8 +80,7 @@ describe("Tools E2E", () => {
       arguments: {}
     });
 
-    // Fails expectedly inside without actual config or login
-    const content: any = result.content;
+    const content = result.content as TextContent[];
     expect(content[0].text).toBeDefined();
   });
 
@@ -90,7 +90,7 @@ describe("Tools E2E", () => {
       arguments: { batch: 10 }
     });
 
-    const content: any = result.content;
+    const content = result.content as TextContent[];
     expect(content[0].text).toBeDefined();
   });
 
@@ -100,7 +100,7 @@ describe("Tools E2E", () => {
       arguments: {}
     });
 
-    const content: any = result.content;
+    const content = result.content as TextContent[];
     expect(content[0].text).toBeDefined();
   });
 
@@ -111,7 +111,7 @@ describe("Tools E2E", () => {
     });
 
     expect(!!result.isError).toBe(false);
-    const content: any = result.content;
+    const content = result.content as TextContent[];
     expect(content[0].text).toContain("Juno");
   });
 });

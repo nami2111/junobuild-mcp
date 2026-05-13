@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createTestClient, createTestDir } from "./test-utils.js";
 import { join } from "node:path";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 describe("MCP Server E2E", () => {
   let clientWrapper: Awaited<ReturnType<typeof createTestClient>>;
@@ -25,7 +26,7 @@ describe("MCP Server E2E", () => {
 
   it("should list tools successfully", async () => {
     const list = await clientWrapper.client.listTools();
-    const toolNames = list.tools.map((t: any) => t.name);
+    const toolNames = list.tools.map((t: Tool) => t.name);
     
     expect(toolNames.length).toBeGreaterThan(0);
     expect(toolNames).toContain("juno_create_project");

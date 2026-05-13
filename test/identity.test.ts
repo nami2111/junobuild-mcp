@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createTestClient, createTestDir } from "./test-utils.js";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
+import type { TextContent } from "@modelcontextprotocol/sdk/types.js";
 
 describe("Identity E2E", () => {
   let clientWrapper: Awaited<ReturnType<typeof createTestClient>>;
@@ -26,7 +27,7 @@ describe("Identity E2E", () => {
     });
     
     expect(!!result.isError).toBe(false);
-    const content: any = result.content;
+    const content = result.content as TextContent[];
     expect(content[0].type).toBe("text");
     expect(content[0].text).toBeDefined();
   });
@@ -37,7 +38,7 @@ describe("Identity E2E", () => {
       arguments: { src: "nonexistent.js" }
     });
     
-    const content: any = result.content;
+    const content = result.content as TextContent[];
     expect(content[0].text).toContain("nonexistent.js");
   });
 });
