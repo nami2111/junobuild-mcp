@@ -47,6 +47,7 @@
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "JUNO_E2E=true vitest run --config vitest.e2e.config.ts",
     "prepublishOnly": "npm run build",
     "changeset": "changeset",
     "version": "changeset version",
