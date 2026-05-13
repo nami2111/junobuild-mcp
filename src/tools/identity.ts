@@ -17,6 +17,32 @@ export function buildStatusArgs(params: {
   return args;
 }
 
+export async function handleVersion(): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const result = await execCli("version");
+  const { text, isError } = formatResponse(result, "Version");
+  return { content: [{ type: "text", text }], isError };
+}
+
+export async function handleRunScript(
+  params: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
+  const args = buildRunScriptArgs(params as { src: string });
+  const result = await execCli("run", args, flags);
+  const { text, isError } = formatResponse(result, "Run Script");
+  return { content: [{ type: "text", text }], isError };
+}
+
+export async function handleStatus(
+  params: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
+  const args = buildStatusArgs(params as { containerUrl?: string; consoleUrl?: string });
+  const result = await execCli("status", args, flags);
+  const { text, isError } = formatResponse(result, "Status");
+  return { content: [{ type: "text", text }], isError };
+}
+
 export function registerIdentityTools(server: McpServer): void {
   server.registerTool(
     "juno_version",
@@ -32,11 +58,7 @@ export function registerIdentityTools(server: McpServer): void {
         openWorldHint: false
       }
     },
-    async () => {
-      const result = await execCli("version");
-      const { text, isError } = formatResponse(result, "Version");
-      return { content: [{ type: "text", text }], isError };
-    }
+    async () => handleVersion()
   );
 
   server.registerTool(
@@ -53,13 +75,7 @@ export function registerIdentityTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => {
-      const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args = buildRunScriptArgs(params);
-      const result = await execCli("run", args, flags);
-      const { text, isError } = formatResponse(result, "Run Script");
-      return { content: [{ type: "text", text }], isError };
-    }
+    async (params) => handleRunScript(params as Record<string, unknown>)
   );
 
   server.registerTool(
@@ -76,12 +92,6 @@ export function registerIdentityTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => {
-      const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args = buildStatusArgs(params);
-      const result = await execCli("status", args, flags);
-      const { text, isError } = formatResponse(result, "Status");
-      return { content: [{ type: "text", text }], isError };
-    }
+    async (params) => handleStatus(params as Record<string, unknown>)
   );
 }

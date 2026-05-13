@@ -69,6 +69,80 @@ export function buildFunctionsUpgradeArgs(params: {
   return args;
 }
 
+export async function handleFunctionsBuild(
+  params: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const args = buildFunctionsBuildArgs(params as { lang?: string; cargoPath?: string; sourcePath?: string; watch?: boolean });
+  const result = await execCli("functions", ["build", ...args], undefined, NETWORK_TIMEOUT);
+  const { text, isError } = formatResponse(result, "Functions Build");
+  return { content: [{ type: "text", text }], isError };
+}
+
+export async function handleFunctionsEject(
+  params: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const args = buildFunctionsEjectArgs(params as { lang?: string });
+  const result = await execCli("functions", ["eject", ...args], undefined, NETWORK_TIMEOUT);
+  const { text, isError } = formatResponse(result, "Functions Eject");
+  return { content: [{ type: "text", text }], isError };
+}
+
+export async function handleFunctionsPublish(
+  params: Record<string, unknown>,
+  extra?: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
+  const args = buildFunctionsPublishArgs(params as { src?: string; noApply?: boolean; keepStaged?: boolean; retry?: boolean; progress?: boolean });
+
+  const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
+  let result: Awaited<ReturnType<typeof execCli>>;
+
+  if (onProgress) {
+    result = await execWithStreaming(
+      "functions",
+      ["publish", ...args],
+      flags,
+      NETWORK_TIMEOUT,
+      onProgress
+    );
+  } else if (params.retry) {
+    result = await execWithRetry("functions", ["publish", ...args], flags, NETWORK_TIMEOUT);
+  } else {
+    result = await execCli("functions", ["publish", ...args], flags, NETWORK_TIMEOUT);
+  }
+
+  const { text, isError } = formatResponse(result, "Functions Publish");
+  return { content: [{ type: "text", text }], isError };
+}
+
+export async function handleFunctionsUpgrade(
+  params: Record<string, unknown>,
+  extra?: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
+  const args = buildFunctionsUpgradeArgs(params as { src?: string; cdn?: boolean; cdnPath?: string; clearChunks?: boolean; noSnapshot?: boolean; reset?: boolean; retry?: boolean; progress?: boolean });
+
+  const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
+  let result: Awaited<ReturnType<typeof execCli>>;
+
+  if (onProgress) {
+    result = await execWithStreaming(
+      "functions",
+      ["upgrade", ...args],
+      flags,
+      NETWORK_TIMEOUT,
+      onProgress
+    );
+  } else if (params.retry) {
+    result = await execWithRetry("functions", ["upgrade", ...args], flags, NETWORK_TIMEOUT);
+  } else {
+    result = await execCli("functions", ["upgrade", ...args], flags, NETWORK_TIMEOUT);
+  }
+
+  const { text, isError } = formatResponse(result, "Functions Upgrade");
+  return { content: [{ type: "text", text }], isError };
+}
+
 export function registerFunctionsTools(server: McpServer): void {
   server.registerTool(
     "juno_functions_build",
@@ -84,12 +158,7 @@ export function registerFunctionsTools(server: McpServer): void {
         openWorldHint: false
       }
     },
-    async (params) => {
-      const args = buildFunctionsBuildArgs(params);
-      const result = await execCli("functions", ["build", ...args], undefined, NETWORK_TIMEOUT);
-      const { text, isError } = formatResponse(result, "Functions Build");
-      return { content: [{ type: "text", text }], isError };
-    }
+    async (params) => handleFunctionsBuild(params as Record<string, unknown>)
   );
 
   server.registerTool(
@@ -106,12 +175,7 @@ export function registerFunctionsTools(server: McpServer): void {
         openWorldHint: false
       }
     },
-    async (params) => {
-      const args = buildFunctionsEjectArgs(params);
-      const result = await execCli("functions", ["eject", ...args], undefined, NETWORK_TIMEOUT);
-      const { text, isError } = formatResponse(result, "Functions Eject");
-      return { content: [{ type: "text", text }], isError };
-    }
+    async (params) => handleFunctionsEject(params as Record<string, unknown>)
   );
 
   server.registerTool(
@@ -128,30 +192,7 @@ export function registerFunctionsTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params, extra) => {
-      const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args = buildFunctionsPublishArgs(params);
-
-      let result: Awaited<ReturnType<typeof execCli>>;
-      const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
-
-      if (onProgress) {
-        result = await execWithStreaming(
-          "functions",
-          ["publish", ...args],
-          flags,
-          NETWORK_TIMEOUT,
-          onProgress
-        );
-      } else if (params.retry) {
-        result = await execWithRetry("functions", ["publish", ...args], flags, NETWORK_TIMEOUT);
-      } else {
-        result = await execCli("functions", ["publish", ...args], flags, NETWORK_TIMEOUT);
-      }
-
-      const { text, isError } = formatResponse(result, "Functions Publish");
-      return { content: [{ type: "text", text }], isError };
-    }
+    async (params, extra) => handleFunctionsPublish(params as Record<string, unknown>, extra)
   );
 
   server.registerTool(
@@ -168,29 +209,6 @@ export function registerFunctionsTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params, extra) => {
-      const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args = buildFunctionsUpgradeArgs(params);
-
-      let result: Awaited<ReturnType<typeof execCli>>;
-      const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
-
-      if (onProgress) {
-        result = await execWithStreaming(
-          "functions",
-          ["upgrade", ...args],
-          flags,
-          NETWORK_TIMEOUT,
-          onProgress
-        );
-      } else if (params.retry) {
-        result = await execWithRetry("functions", ["upgrade", ...args], flags, NETWORK_TIMEOUT);
-      } else {
-        result = await execCli("functions", ["upgrade", ...args], flags, NETWORK_TIMEOUT);
-      }
-
-      const { text, isError } = formatResponse(result, "Functions Upgrade");
-      return { content: [{ type: "text", text }], isError };
-    }
+    async (params, extra) => handleFunctionsUpgrade(params as Record<string, unknown>, extra)
   );
 }

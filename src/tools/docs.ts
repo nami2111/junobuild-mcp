@@ -51,6 +51,61 @@ async function fetchDoc(path: string): Promise<{ content: string; url: string }>
   return { content: await response.text(), url };
 }
 
+export async function handleDocFetch(
+  params: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const path = TOPICS[params.topic as TopicKey];
+  const topicKey = params.topic as string;
+
+  cleanupExpired();
+
+  const cached = docCache.get(topicKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `# Juno Docs: ${topicKey} (cached)\n\n${cached.content}`
+        }
+      ]
+    };
+  }
+
+  try {
+    const { content, url } = await fetchDoc(path);
+
+    let text = content;
+    if (text.length > CHARACTER_LIMIT) {
+      text = text.slice(0, CHARACTER_LIMIT) + "\n...(truncated)";
+    }
+
+    docCache.set(topicKey, {
+      content: text,
+      expiresAt: Date.now() + CACHE_TTL_MS
+    });
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `# Juno Docs: ${topicKey}\n\nSource: ${url}\n\n${text}`
+        }
+      ]
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Failed to fetch documentation for "${topicKey}": ${message}`
+        }
+      ],
+      isError: true
+    };
+  }
+}
+
 export function registerDocsTools(server: McpServer): void {
   server.registerTool(
     "juno_docs",
@@ -66,57 +121,6 @@ export function registerDocsTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => {
-      const path = TOPICS[params.topic as TopicKey];
-      const topicKey = params.topic as string;
-
-      cleanupExpired();
-
-      const cached = docCache.get(topicKey);
-      if (cached && cached.expiresAt > Date.now()) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `# Juno Docs: ${topicKey} (cached)\n\n${cached.content}`
-            }
-          ]
-        };
-      }
-
-      try {
-        const { content, url } = await fetchDoc(path);
-
-        let text = content;
-        if (text.length > CHARACTER_LIMIT) {
-          text = text.slice(0, CHARACTER_LIMIT) + "\n...(truncated)";
-        }
-
-        docCache.set(topicKey, {
-          content: text,
-          expiresAt: Date.now() + CACHE_TTL_MS
-        });
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `# Juno Docs: ${topicKey}\n\nSource: ${url}\n\n${text}`
-            }
-          ]
-        };
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Failed to fetch documentation for "${topicKey}": ${message}`
-            }
-          ],
-          isError: true
-        };
-      }
-    }
+    async (params) => handleDocFetch(params as Record<string, unknown>)
   );
 }

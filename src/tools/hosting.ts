@@ -45,6 +45,54 @@ export function buildHostingPruneArgs(params: { batch: number; dryRun?: boolean 
   return args;
 }
 
+export async function handleHostingDeploy(
+  params: Record<string, unknown>,
+  extra?: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
+  const args = buildHostingDeployArgs(params as { batch: number; clear?: boolean; prune?: boolean; immediate?: boolean; keepStaged?: boolean; noApply?: boolean; config?: boolean; retry?: boolean; progress?: boolean });
+
+  const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
+  let result: Awaited<ReturnType<typeof execCli>>;
+
+  if (onProgress) {
+    result = await execWithStreaming(
+      "hosting",
+      ["deploy", ...args],
+      flags,
+      NETWORK_TIMEOUT,
+      onProgress
+    );
+  } else if (params.retry) {
+    result = await execWithRetry("hosting", ["deploy", ...args], flags, NETWORK_TIMEOUT);
+  } else {
+    result = await execCli("hosting", ["deploy", ...args], flags, NETWORK_TIMEOUT);
+  }
+
+  const { text, isError } = formatResponse(result, "Hosting Deploy");
+  return { content: [{ type: "text", text }], isError };
+}
+
+export async function handleHostingClear(
+  params: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
+  const args = buildHostingClearArgs(params as { fullPath?: string });
+  const result = await execCli("hosting", ["clear", ...args], flags, NETWORK_TIMEOUT);
+  const { text, isError } = formatResponse(result, "Hosting Clear");
+  return { content: [{ type: "text", text }], isError };
+}
+
+export async function handleHostingPrune(
+  params: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
+  const args = buildHostingPruneArgs(params as { batch: number; dryRun?: boolean });
+  const result = await execCli("hosting", ["prune", ...args], flags, NETWORK_TIMEOUT);
+  const { text, isError } = formatResponse(result, "Hosting Prune");
+  return { content: [{ type: "text", text }], isError };
+}
+
 export function registerHostingTools(server: McpServer): void {
   server.registerTool(
     "juno_hosting_deploy",
@@ -60,30 +108,7 @@ export function registerHostingTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params, extra) => {
-      const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args = buildHostingDeployArgs(params);
-
-      let result: Awaited<ReturnType<typeof execCli>>;
-      const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
-
-      if (onProgress) {
-        result = await execWithStreaming(
-          "hosting",
-          ["deploy", ...args],
-          flags,
-          NETWORK_TIMEOUT,
-          onProgress
-        );
-      } else if (params.retry) {
-        result = await execWithRetry("hosting", ["deploy", ...args], flags, NETWORK_TIMEOUT);
-      } else {
-        result = await execCli("hosting", ["deploy", ...args], flags, NETWORK_TIMEOUT);
-      }
-
-      const { text, isError } = formatResponse(result, "Hosting Deploy");
-      return { content: [{ type: "text", text }], isError };
-    }
+    async (params, extra) => handleHostingDeploy(params as Record<string, unknown>, extra)
   );
 
   server.registerTool(
@@ -100,13 +125,7 @@ export function registerHostingTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => {
-      const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args = buildHostingClearArgs(params);
-      const result = await execCli("hosting", ["clear", ...args], flags, NETWORK_TIMEOUT);
-      const { text, isError } = formatResponse(result, "Hosting Clear");
-      return { content: [{ type: "text", text }], isError };
-    }
+    async (params) => handleHostingClear(params as Record<string, unknown>)
   );
 
   server.registerTool(
@@ -123,12 +142,6 @@ export function registerHostingTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => {
-      const flags: GlobalFlags = { mode: params.mode, profile: params.profile };
-      const args = buildHostingPruneArgs(params);
-      const result = await execCli("hosting", ["prune", ...args], flags, NETWORK_TIMEOUT);
-      const { text, isError } = formatResponse(result, "Hosting Prune");
-      return { content: [{ type: "text", text }], isError };
-    }
+    async (params) => handleHostingPrune(params as Record<string, unknown>)
   );
 }
