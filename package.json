@@ -32,7 +32,7 @@
     "fix": "ultracite fix"
   },
   "type": "module",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "MCP server for Juno (junobuild) - manage satellites, hosting, functions, snapshots and more",
   "license": "MIT",
   "main": "dist/index.js",

@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.4.1
+
+### Patch Changes
+
+- Add Juno environment context and refactor tools
+
 ## 1.4.0
 
 ### Minor Changes
