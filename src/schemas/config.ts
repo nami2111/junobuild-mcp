@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { globalFlagsBase } from "./common.js";
-import { ConfigFormatEnum, PackageManagerEnum } from "./enums.js";
+import { ConfigFormatEnum } from "./enums.js";
 
 export const configInitSchema = z
   .object({
@@ -43,20 +43,5 @@ export const configInitSchema = z
 export const configApplySchema = globalFlagsBase
   .extend({
     force: z.boolean().default(false).describe("Overwrite configuration without checks")
-  })
-  .strict();
-
-export const createProjectSchema = z
-  .object({
-    directory: z.string().describe("Directory name for the new project"),
-    template: z
-      .string()
-      .optional()
-      .describe(
-        "Template key to use (e.g. react-ts-starter, nextjs-starter, sveltekit-starter). Defaults to react-ts-starter."
-      ),
-    packageManager: PackageManagerEnum.default("npm")
-      .optional()
-      .describe("Package manager to use (npm, yarn, pnpm)")
   })
   .strict();

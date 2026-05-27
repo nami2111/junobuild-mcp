@@ -1,14 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import {
-  execCli,
-  execWithRetry,
-  execWithStreaming,
-  formatResponse,
-  makeProgressCallback
-} from "../cli.js";
+import { makeToolHandler } from "../tool-handler.js";
 import { hostingDeploySchema, hostingClearSchema, hostingPruneSchema } from "../schemas/hosting.js";
-import { NETWORK_TIMEOUT } from "../constants.js";
-import type { GlobalFlags } from "../types.js";
 
 export function buildHostingDeployArgs(params: {
   batch: number;
@@ -45,53 +37,40 @@ export function buildHostingPruneArgs(params: { batch: number; dryRun?: boolean 
   return args;
 }
 
-export async function handleHostingDeploy(
-  params: Record<string, unknown>,
-  extra?: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
-  const args = buildHostingDeployArgs(params as { batch: number; clear?: boolean; prune?: boolean; immediate?: boolean; keepStaged?: boolean; noApply?: boolean; config?: boolean; retry?: boolean; progress?: boolean });
+export const handleHostingDeploy = makeToolHandler({
+  command: "hosting",
+  subcommand: "deploy",
+  label: "Hosting Deploy",
+  argsFromParams: (p) =>
+    buildHostingDeployArgs(
+      p as {
+        batch: number;
+        clear?: boolean;
+        prune?: boolean;
+        immediate?: boolean;
+        keepStaged?: boolean;
+        noApply?: boolean;
+        config?: boolean;
+        retry?: boolean;
+        progress?: boolean;
+      }
+    ),
+  getStrategy: (p) => (p.progress ? "streaming" : p.retry ? "retry" : "simple")
+});
 
-  const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
-  let result: Awaited<ReturnType<typeof execCli>>;
+export const handleHostingClear = makeToolHandler({
+  command: "hosting",
+  subcommand: "clear",
+  label: "Hosting Clear",
+  argsFromParams: (p) => buildHostingClearArgs(p as { fullPath?: string })
+});
 
-  if (onProgress) {
-    result = await execWithStreaming(
-      "hosting",
-      ["deploy", ...args],
-      flags,
-      NETWORK_TIMEOUT,
-      onProgress
-    );
-  } else if (params.retry) {
-    result = await execWithRetry("hosting", ["deploy", ...args], flags, NETWORK_TIMEOUT);
-  } else {
-    result = await execCli("hosting", ["deploy", ...args], flags, NETWORK_TIMEOUT);
-  }
-
-  const { text, isError } = formatResponse(result, "Hosting Deploy");
-  return { content: [{ type: "text", text }], isError };
-}
-
-export async function handleHostingClear(
-  params: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
-  const args = buildHostingClearArgs(params as { fullPath?: string });
-  const result = await execCli("hosting", ["clear", ...args], flags, NETWORK_TIMEOUT);
-  const { text, isError } = formatResponse(result, "Hosting Clear");
-  return { content: [{ type: "text", text }], isError };
-}
-
-export async function handleHostingPrune(
-  params: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
-  const args = buildHostingPruneArgs(params as { batch: number; dryRun?: boolean });
-  const result = await execCli("hosting", ["prune", ...args], flags, NETWORK_TIMEOUT);
-  const { text, isError } = formatResponse(result, "Hosting Prune");
-  return { content: [{ type: "text", text }], isError };
-}
+export const handleHostingPrune = makeToolHandler({
+  command: "hosting",
+  subcommand: "prune",
+  label: "Hosting Prune",
+  argsFromParams: (p) => buildHostingPruneArgs(p as { batch: number; dryRun?: boolean })
+});
 
 export function registerHostingTools(server: McpServer): void {
   server.registerTool(
@@ -108,7 +87,7 @@ export function registerHostingTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params, extra) => handleHostingDeploy(params as Record<string, unknown>, extra)
+    handleHostingPrune
   );
 
   server.registerTool(
@@ -125,7 +104,7 @@ export function registerHostingTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => handleHostingClear(params as Record<string, unknown>)
+    handleHostingClear
   );
 
   server.registerTool(
@@ -142,6 +121,6 @@ export function registerHostingTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => handleHostingPrune(params as Record<string, unknown>)
+    handleHostingDeploy
   );
 }

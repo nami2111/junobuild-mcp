@@ -1,19 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import {
-  execCli,
-  execWithRetry,
-  execWithStreaming,
-  formatResponse,
-  makeProgressCallback
-} from "../cli.js";
+import { makeToolHandler } from "../tool-handler.js";
 import {
   functionsBuildSchema,
   functionsEjectSchema,
   functionsPublishSchema,
   functionsUpgradeSchema
 } from "../schemas/functions.js";
-import { NETWORK_TIMEOUT } from "../constants.js";
-import type { GlobalFlags } from "../types.js";
 
 export function buildFunctionsBuildArgs(params: {
   lang?: string;
@@ -69,79 +61,61 @@ export function buildFunctionsUpgradeArgs(params: {
   return args;
 }
 
-export async function handleFunctionsBuild(
-  params: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const args = buildFunctionsBuildArgs(params as { lang?: string; cargoPath?: string; sourcePath?: string; watch?: boolean });
-  const result = await execCli("functions", ["build", ...args], undefined, NETWORK_TIMEOUT);
-  const { text, isError } = formatResponse(result, "Functions Build");
-  return { content: [{ type: "text", text }], isError };
-}
+export const handleFunctionsBuild = makeToolHandler({
+  command: "functions",
+  subcommand: "build",
+  label: "Functions Build",
+  hasMode: false,
+  argsFromParams: (p) =>
+    buildFunctionsBuildArgs(
+      p as { lang?: string; cargoPath?: string; sourcePath?: string; watch?: boolean }
+    )
+});
 
-export async function handleFunctionsEject(
-  params: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const args = buildFunctionsEjectArgs(params as { lang?: string });
-  const result = await execCli("functions", ["eject", ...args], undefined, NETWORK_TIMEOUT);
-  const { text, isError } = formatResponse(result, "Functions Eject");
-  return { content: [{ type: "text", text }], isError };
-}
+export const handleFunctionsEject = makeToolHandler({
+  command: "functions",
+  subcommand: "eject",
+  label: "Functions Eject",
+  hasMode: false,
+  argsFromParams: (p) => buildFunctionsEjectArgs(p as { lang?: string })
+});
 
-export async function handleFunctionsPublish(
-  params: Record<string, unknown>,
-  extra?: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
-  const args = buildFunctionsPublishArgs(params as { src?: string; noApply?: boolean; keepStaged?: boolean; retry?: boolean; progress?: boolean });
+export const handleFunctionsPublish = makeToolHandler({
+  command: "functions",
+  subcommand: "publish",
+  label: "Functions Publish",
+  argsFromParams: (p) =>
+    buildFunctionsPublishArgs(
+      p as {
+        src?: string;
+        noApply?: boolean;
+        keepStaged?: boolean;
+        retry?: boolean;
+        progress?: boolean;
+      }
+    ),
+  getStrategy: (p) => (p.progress ? "streaming" : p.retry ? "retry" : "simple")
+});
 
-  const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
-  let result: Awaited<ReturnType<typeof execCli>>;
-
-  if (onProgress) {
-    result = await execWithStreaming(
-      "functions",
-      ["publish", ...args],
-      flags,
-      NETWORK_TIMEOUT,
-      onProgress
-    );
-  } else if (params.retry) {
-    result = await execWithRetry("functions", ["publish", ...args], flags, NETWORK_TIMEOUT);
-  } else {
-    result = await execCli("functions", ["publish", ...args], flags, NETWORK_TIMEOUT);
-  }
-
-  const { text, isError } = formatResponse(result, "Functions Publish");
-  return { content: [{ type: "text", text }], isError };
-}
-
-export async function handleFunctionsUpgrade(
-  params: Record<string, unknown>,
-  extra?: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
-  const args = buildFunctionsUpgradeArgs(params as { src?: string; cdn?: boolean; cdnPath?: string; clearChunks?: boolean; noSnapshot?: boolean; reset?: boolean; retry?: boolean; progress?: boolean });
-
-  const onProgress = params.progress ? makeProgressCallback(extra) : undefined;
-  let result: Awaited<ReturnType<typeof execCli>>;
-
-  if (onProgress) {
-    result = await execWithStreaming(
-      "functions",
-      ["upgrade", ...args],
-      flags,
-      NETWORK_TIMEOUT,
-      onProgress
-    );
-  } else if (params.retry) {
-    result = await execWithRetry("functions", ["upgrade", ...args], flags, NETWORK_TIMEOUT);
-  } else {
-    result = await execCli("functions", ["upgrade", ...args], flags, NETWORK_TIMEOUT);
-  }
-
-  const { text, isError } = formatResponse(result, "Functions Upgrade");
-  return { content: [{ type: "text", text }], isError };
-}
+export const handleFunctionsUpgrade = makeToolHandler({
+  command: "functions",
+  subcommand: "upgrade",
+  label: "Functions Upgrade",
+  argsFromParams: (p) =>
+    buildFunctionsUpgradeArgs(
+      p as {
+        src?: string;
+        cdn?: boolean;
+        cdnPath?: string;
+        clearChunks?: boolean;
+        noSnapshot?: boolean;
+        reset?: boolean;
+        retry?: boolean;
+        progress?: boolean;
+      }
+    ),
+  getStrategy: (p) => (p.progress ? "streaming" : p.retry ? "retry" : "simple")
+});
 
 export function registerFunctionsTools(server: McpServer): void {
   server.registerTool(
@@ -158,7 +132,7 @@ export function registerFunctionsTools(server: McpServer): void {
         openWorldHint: false
       }
     },
-    async (params) => handleFunctionsBuild(params as Record<string, unknown>)
+    handleFunctionsBuild
   );
 
   server.registerTool(
@@ -175,7 +149,7 @@ export function registerFunctionsTools(server: McpServer): void {
         openWorldHint: false
       }
     },
-    async (params) => handleFunctionsEject(params as Record<string, unknown>)
+    handleFunctionsEject
   );
 
   server.registerTool(
@@ -192,7 +166,7 @@ export function registerFunctionsTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params, extra) => handleFunctionsPublish(params as Record<string, unknown>, extra)
+    handleFunctionsPublish
   );
 
   server.registerTool(
@@ -209,6 +183,6 @@ export function registerFunctionsTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params, extra) => handleFunctionsUpgrade(params as Record<string, unknown>, extra)
+    handleFunctionsUpgrade
   );
 }

@@ -9,6 +9,7 @@ import { registerConfigTools } from "./tools/config.js";
 import { registerHostingTools } from "./tools/hosting.js";
 import { registerFunctionsTools } from "./tools/functions.js";
 import { registerChangesTools } from "./tools/changes.js";
+import { registerProjectTools } from "./tools/project.js";
 import { registerDocsTools } from "./tools/docs.js";
 
 const pkgPath = fileURLToPath(new URL("../package.json", import.meta.url));
@@ -24,6 +25,7 @@ registerConfigTools(server);
 registerHostingTools(server);
 registerFunctionsTools(server);
 registerChangesTools(server);
+registerProjectTools(server);
 registerDocsTools(server);
 
 async function main(): Promise<void> {

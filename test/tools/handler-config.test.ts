@@ -1,11 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { handleConfigInit, handleConfigApply, handleCreateProject } from "../../src/tools/config.js";
+import { handleConfigInit, handleConfigApply } from "../../src/tools/config.js";
+import { handleCreateProject } from "../../src/tools/project.js";
 import { NETWORK_TIMEOUT } from "../../src/constants.js";
 
 vi.mock("../../src/cli.js", () => ({
   execCli: vi.fn().mockResolvedValue({ stdout: "apply ok", stderr: "", exitCode: 0 }),
-  execCommandNonInteractive: vi.fn().mockResolvedValue({ stdout: "", stderr: "", exitCode: 0 }),
   formatResponse: vi.fn().mockReturnValue({ text: "apply ok", isError: false })
+}));
+
+vi.mock("../../src/executor.js", () => ({
+  execCommandNonInteractive: vi.fn().mockResolvedValue({ stdout: "", stderr: "", exitCode: 0 })
 }));
 
 vi.mock("node:fs/promises", () => ({
@@ -15,7 +19,8 @@ vi.mock("node:fs/promises", () => ({
   readFile: vi.fn().mockResolvedValue(JSON.stringify({ name: "temp" }))
 }));
 
-import { execCli, execCommandNonInteractive, formatResponse } from "../../src/cli.js";
+import { execCli, formatResponse } from "../../src/cli.js";
+import { execCommandNonInteractive } from "../../src/executor.js";
 const mockExecCli = vi.mocked(execCli);
 const mockExecCmd = vi.mocked(execCommandNonInteractive);
 const mockFormatResponse = vi.mocked(formatResponse);
@@ -95,7 +100,8 @@ describe("handleConfigApply", () => {
   it("passes mode and profile", async () => {
     await handleConfigApply({ mode: "production", profile: "main" });
     expect(mockExecCli).toHaveBeenCalledWith(
-      "config", ["apply"],
+      "config",
+      ["apply"],
       { mode: "production", profile: "main" },
       NETWORK_TIMEOUT
     );
@@ -114,12 +120,9 @@ describe("handleCreateProject", () => {
       packageManager: "npm"
     });
     expect(mockExecCmd).toHaveBeenCalledWith(
-      expect.stringContaining("npm create vite@latest"),
-      expect.any(Number)
-    );
-    expect(mockExecCmd).toHaveBeenCalledWith(
-      expect.stringContaining("svelte"),
-      expect.any(Number)
+      "npm",
+      expect.arrayContaining(["create", "vite@latest"]),
+      120_000
     );
     expect(result.isError).toBeFalsy();
     expect(result.content[0].text).toContain("my-app");
@@ -131,7 +134,8 @@ describe("handleCreateProject", () => {
       packageManager: "npm"
     });
     expect(mockExecCmd).toHaveBeenCalledWith(
-      expect.stringContaining("react --template-ts"),
+      "npm",
+      expect.arrayContaining(["--template", "react", "--template-ts"]),
       expect.any(Number)
     );
   });

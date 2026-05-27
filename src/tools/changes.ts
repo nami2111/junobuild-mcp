@@ -1,8 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, formatResponse } from "../cli.js";
+import { makeToolHandler } from "../tool-handler.js";
 import { changesListSchema, changesApplySchema, changesRejectSchema } from "../schemas/changes.js";
-import { NETWORK_TIMEOUT } from "../constants.js";
-import type { GlobalFlags } from "../types.js";
 
 export function buildChangesListArgs(params: { all?: boolean; every?: boolean }): string[] {
   const args: string[] = [];
@@ -35,35 +33,30 @@ export function buildChangesRejectArgs(params: {
   return args;
 }
 
-export async function handleChangesList(
-  params: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
-  const args = buildChangesListArgs(params as { all?: boolean; every?: boolean });
-  const result = await execCli("changes", ["list", ...args], flags, NETWORK_TIMEOUT);
-  const { text, isError } = formatResponse(result, "Changes List");
-  return { content: [{ type: "text", text }], isError };
-}
+export const handleChangesList = makeToolHandler({
+  command: "changes",
+  subcommand: "list",
+  label: "Changes List",
+  argsFromParams: (p) => buildChangesListArgs(p as { all?: boolean; every?: boolean })
+});
 
-export async function handleChangesApply(
-  params: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
-  const args = buildChangesApplyArgs(params as { id: string; snapshot?: boolean; hash?: string; keepStaged?: boolean });
-  const result = await execCli("changes", ["apply", ...args], flags, NETWORK_TIMEOUT);
-  const { text, isError } = formatResponse(result, "Changes Apply");
-  return { content: [{ type: "text", text }], isError };
-}
+export const handleChangesApply = makeToolHandler({
+  command: "changes",
+  subcommand: "apply",
+  label: "Changes Apply",
+  argsFromParams: (p) =>
+    buildChangesApplyArgs(
+      p as { id: string; snapshot?: boolean; hash?: string; keepStaged?: boolean }
+    )
+});
 
-export async function handleChangesReject(
-  params: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
-  const args = buildChangesRejectArgs(params as { id: string; hash?: string; keepStaged?: boolean });
-  const result = await execCli("changes", ["reject", ...args], flags, NETWORK_TIMEOUT);
-  const { text, isError } = formatResponse(result, "Changes Reject");
-  return { content: [{ type: "text", text }], isError };
-}
+export const handleChangesReject = makeToolHandler({
+  command: "changes",
+  subcommand: "reject",
+  label: "Changes Reject",
+  argsFromParams: (p) =>
+    buildChangesRejectArgs(p as { id: string; hash?: string; keepStaged?: boolean })
+});
 
 export function registerChangesTools(server: McpServer): void {
   server.registerTool(
@@ -80,7 +73,7 @@ export function registerChangesTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => handleChangesList(params as Record<string, unknown>)
+    handleChangesList
   );
 
   server.registerTool(
@@ -97,7 +90,7 @@ export function registerChangesTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => handleChangesApply(params as Record<string, unknown>)
+    handleChangesApply
   );
 
   server.registerTool(
@@ -114,6 +107,6 @@ export function registerChangesTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => handleChangesReject(params as Record<string, unknown>)
+    handleChangesReject
   );
 }

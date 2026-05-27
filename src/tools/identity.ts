@@ -1,47 +1,38 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { execCli, formatResponse } from "../cli.js";
+import { makeToolHandler } from "../tool-handler.js";
 import { versionSchema, runScriptSchema, statusSchema } from "../schemas/identity.js";
-import type { GlobalFlags } from "../types.js";
 
 export function buildRunScriptArgs(params: { src: string }): string[] {
   return ["-s", params.src];
 }
 
-export function buildStatusArgs(params: {
-  containerUrl?: string;
-  consoleUrl?: string;
-}): string[] {
+export function buildStatusArgs(params: { containerUrl?: string; consoleUrl?: string }): string[] {
   const args: string[] = [];
   if (params.containerUrl) args.push("--container-url", params.containerUrl);
   if (params.consoleUrl) args.push("--console-url", params.consoleUrl);
   return args;
 }
 
-export async function handleVersion(): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const result = await execCli("version");
-  const { text, isError } = formatResponse(result, "Version");
-  return { content: [{ type: "text", text }], isError };
-}
+export const handleVersion = makeToolHandler({
+  command: "version",
+  subcommand: "",
+  label: "Version",
+  hasMode: false
+});
 
-export async function handleRunScript(
-  params: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
-  const args = buildRunScriptArgs(params as { src: string });
-  const result = await execCli("run", args, flags);
-  const { text, isError } = formatResponse(result, "Run Script");
-  return { content: [{ type: "text", text }], isError };
-}
+export const handleRunScript = makeToolHandler({
+  command: "run",
+  subcommand: "",
+  label: "Run Script",
+  argsFromParams: (p) => buildRunScriptArgs(p as { src: string })
+});
 
-export async function handleStatus(
-  params: Record<string, unknown>
-): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
-  const flags: GlobalFlags = { mode: params.mode as string | undefined, profile: params.profile as string | undefined };
-  const args = buildStatusArgs(params as { containerUrl?: string; consoleUrl?: string });
-  const result = await execCli("status", args, flags);
-  const { text, isError } = formatResponse(result, "Status");
-  return { content: [{ type: "text", text }], isError };
-}
+export const handleStatus = makeToolHandler({
+  command: "status",
+  subcommand: "",
+  label: "Status",
+  argsFromParams: (p) => buildStatusArgs(p as { containerUrl?: string; consoleUrl?: string })
+});
 
 export function registerIdentityTools(server: McpServer): void {
   server.registerTool(
@@ -58,7 +49,7 @@ export function registerIdentityTools(server: McpServer): void {
         openWorldHint: false
       }
     },
-    async () => handleVersion()
+    handleVersion
   );
 
   server.registerTool(
@@ -75,7 +66,7 @@ export function registerIdentityTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => handleRunScript(params as Record<string, unknown>)
+    handleRunScript
   );
 
   server.registerTool(
@@ -92,6 +83,6 @@ export function registerIdentityTools(server: McpServer): void {
         openWorldHint: true
       }
     },
-    async (params) => handleStatus(params as Record<string, unknown>)
+    handleStatus
   );
 }

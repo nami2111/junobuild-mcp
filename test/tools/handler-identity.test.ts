@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { handleVersion, handleRunScript, handleStatus } from "../../src/tools/identity.js";
+import { NETWORK_TIMEOUT } from "../../src/constants.js";
 
 vi.mock("../../src/cli.js", () => ({
   execCli: vi.fn().mockResolvedValue({ stdout: "ok", stderr: "", exitCode: 0 }),
@@ -12,8 +13,8 @@ const mockFormatResponse = vi.mocked(formatResponse);
 
 describe("handleVersion", () => {
   it("calls execCli with version command", async () => {
-    const result = await handleVersion();
-    expect(mockExecCli).toHaveBeenCalledWith("version");
+    const result = await handleVersion({});
+    expect(mockExecCli).toHaveBeenCalledWith("version", [], undefined, NETWORK_TIMEOUT);
     expect(mockFormatResponse).toHaveBeenCalledWith(
       { stdout: "ok", stderr: "", exitCode: 0 },
       "Version"
@@ -26,16 +27,20 @@ describe("handleRunScript", () => {
   it("calls execCli with run and -s flag", async () => {
     await handleRunScript({ src: "deploy.ts" });
     expect(mockExecCli).toHaveBeenCalledWith(
-      "run", ["-s", "deploy.ts"],
-      {}
+      "run",
+      ["-s", "deploy.ts"],
+      { mode: undefined, profile: undefined },
+      NETWORK_TIMEOUT
     );
   });
 
   it("passes mode and profile", async () => {
     await handleRunScript({ src: "test.js", mode: "development", profile: "dev" });
     expect(mockExecCli).toHaveBeenCalledWith(
-      "run", ["-s", "test.js"],
-      { mode: "development", profile: "dev" }
+      "run",
+      ["-s", "test.js"],
+      { mode: "development", profile: "dev" },
+      NETWORK_TIMEOUT
     );
   });
 });
@@ -43,7 +48,12 @@ describe("handleRunScript", () => {
 describe("handleStatus", () => {
   it("calls execCli with status command", async () => {
     await handleStatus({});
-    expect(mockExecCli).toHaveBeenCalledWith("status", [], {});
+    expect(mockExecCli).toHaveBeenCalledWith(
+      "status",
+      [],
+      { mode: undefined, profile: undefined },
+      NETWORK_TIMEOUT
+    );
   });
 
   it("passes container-url and console-url", async () => {
@@ -53,8 +63,14 @@ describe("handleStatus", () => {
     });
     expect(mockExecCli).toHaveBeenCalledWith(
       "status",
-      ["--container-url", "https://container.example.com", "--console-url", "https://console.example.com"],
-      {}
+      [
+        "--container-url",
+        "https://container.example.com",
+        "--console-url",
+        "https://console.example.com"
+      ],
+      { mode: undefined, profile: undefined },
+      NETWORK_TIMEOUT
     );
   });
 });

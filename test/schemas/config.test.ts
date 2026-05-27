@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { configInitSchema, configApplySchema, createProjectSchema } from "../../src/schemas/config.js";
+import { configInitSchema, configApplySchema } from "../../src/schemas/config.js";
+import { createProjectSchema } from "../../src/schemas/project.js";
 
 describe("configInitSchema", () => {
   it("applies defaults", () => {

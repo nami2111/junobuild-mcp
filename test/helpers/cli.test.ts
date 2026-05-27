@@ -1,18 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   formatResponse,
-  stripProgressChars,
   buildFlagArgs,
-  isTransientError,
-  parseProgress,
   makeProgressCallback,
   resetCliPathCache,
   execCommand,
   execCli,
   execWithRetry,
-  execWithStreaming,
-  execCommandNonInteractive
+  execWithStreaming
 } from "../../src/cli.js";
+import {
+  stripProgressChars,
+  isTransientError,
+  parseProgress,
+  execCommandNonInteractive
+} from "../../src/executor.js";
 import { CHARACTER_LIMIT } from "../../src/constants.js";
 import { rmSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -90,9 +92,7 @@ describe("formatResponse", () => {
   });
 
   it("strips ANSI codes from output", () => {
-    const result = formatResponse(
-      { stdout: "\x1b[32mok\x1b[0m", stderr: "", exitCode: 0 }
-    );
+    const result = formatResponse({ stdout: "\x1b[32mok\x1b[0m", stderr: "", exitCode: 0 });
     expect(result.text).toBe("ok");
   });
 
@@ -282,13 +282,13 @@ describe("makeProgressCallback", () => {
 
 describe("execCommandNonInteractive", () => {
   it("runs a simple command successfully", async () => {
-    const result = await execCommandNonInteractive("echo hello", 5_000);
+    const result = await execCommandNonInteractive("echo", ["hello"], 5_000);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("hello");
   });
 
   it("respects timeout and kills process", async () => {
-    const result = await execCommandNonInteractive("sleep 10", 1_000);
+    const result = await execCommandNonInteractive("sleep", ["10"], 1_000);
     expect(result.exitCode).not.toBe(0);
   });
 
@@ -296,7 +296,7 @@ describe("execCommandNonInteractive", () => {
     const testDir = join(tmpdir(), `juno-test-cwd-${randomUUID()}`);
     mkdirSync(testDir, { recursive: true });
     try {
-      const result = await execCommandNonInteractive("pwd", 5_000, testDir);
+      const result = await execCommandNonInteractive("pwd", [], 5_000, testDir);
       expect(result.exitCode).toBe(0);
       expect(result.stdout.trim()).toBe(testDir);
     } finally {
@@ -305,7 +305,7 @@ describe("execCommandNonInteractive", () => {
   });
 
   it("pipes stdin answers to interactive command", async () => {
-    const result = await execCommandNonInteractive("cat", 10_000, undefined, ["hello"]);
+    const result = await execCommandNonInteractive("cat", [], 10_000, undefined, ["hello"]);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("hello");
   });
