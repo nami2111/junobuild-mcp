@@ -98,11 +98,21 @@ describe("handleConfigApply", () => {
   });
 
   it("passes mode and profile", async () => {
-    await handleConfigApply({ mode: "production", profile: "main" });
+    await handleConfigApply({
+      mode: "production",
+      profile: "main",
+      containerUrl: "https://container.example.com",
+      consoleUrl: "https://console.example.com"
+    });
     expect(mockExecCli).toHaveBeenCalledWith(
       "config",
       ["apply"],
-      { mode: "production", profile: "main" },
+      {
+        mode: "production",
+        profile: "main",
+        containerUrl: "https://container.example.com",
+        consoleUrl: "https://console.example.com"
+      },
       NETWORK_TIMEOUT
     );
   });

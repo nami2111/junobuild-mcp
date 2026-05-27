@@ -1,6 +1,7 @@
 import { rename, readFile, writeFile } from "node:fs/promises";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { execCommandNonInteractive } from "../executor.js";
+import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
 import { createProjectSchema } from "../schemas/project.js";
 
 export async function handleCreateProject(
@@ -89,21 +90,23 @@ export default {
   }
 }
 
-export function registerProjectTools(server: McpServer): void {
-  server.registerTool(
-    "juno_create_project",
-    {
-      title: "Juno Create Project",
-      description:
-        "Scaffold a new Juno project. Uses Vite to create the frontend, then adds Juno SDK and config. Does NOT use the interactive create-juno CLI.",
-      inputSchema: createProjectSchema.shape,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: false
-      }
+export const projectTools: readonly RegisteredJunoTool[] = [
+  {
+    name: "juno_create_project",
+    title: "Juno Create Project",
+    description:
+      "Scaffold a new Juno project. Uses Vite to create the frontend, then adds Juno SDK and config. Does NOT use the interactive create-juno CLI.",
+    inputSchema: createProjectSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false
     },
-    async (params) => handleCreateProject(params as Record<string, unknown>)
-  );
+    handler: async (params: Record<string, unknown>) => handleCreateProject(params)
+  }
+];
+
+export function registerProjectTools(server: McpServer): void {
+  registerJunoTools(server, projectTools);
 }

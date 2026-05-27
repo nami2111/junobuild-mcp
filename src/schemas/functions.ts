@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { globalFlagsBase } from "./common.js";
+import { environmentFlagsBase } from "./common.js";
 import { FunctionLanguageEnum } from "./enums.js";
 
 export const functionsBuildSchema = z
@@ -20,7 +20,7 @@ export const functionsEjectSchema = z
   })
   .strict();
 
-export const functionsPublishSchema = globalFlagsBase
+export const functionsPublishSchema = environmentFlagsBase
   .extend({
     src: z.string().optional().describe("Path to a specific local gzipped WASM file to publish"),
     noApply: z
@@ -46,7 +46,7 @@ export const functionsPublishSchema = globalFlagsBase
   })
   .strict();
 
-export const functionsUpgradeSchema = globalFlagsBase
+export const functionsUpgradeSchema = environmentFlagsBase
   .extend({
     src: z.string().optional().describe("Path to a specific local gzipped WASM file"),
     cdn: z

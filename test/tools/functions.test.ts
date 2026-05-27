@@ -83,19 +83,23 @@ describe("buildFunctionsPublishArgs", () => {
     expect(buildFunctionsPublishArgs({ keepStaged: true })).toEqual(["-k"]);
   });
 
+  it("does not add -k when noApply is true", () => {
+    expect(buildFunctionsPublishArgs({ noApply: true, keepStaged: true })).toEqual([
+      "--no-apply"
+    ]);
+  });
+
   it("does not add progress or retry (they control execution path)", () => {
     const args = buildFunctionsPublishArgs({ progress: true, retry: true });
     expect(args).toEqual([]);
   });
 
-  it("adds all arg flags", () => {
+  it("adds compatible arg flags", () => {
     expect(buildFunctionsPublishArgs({
       src: "./out.wasm.gz",
-      noApply: true,
       keepStaged: true
     })).toEqual([
       "-s", "./out.wasm.gz",
-      "--no-apply",
       "-k"
     ]);
   });

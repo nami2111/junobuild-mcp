@@ -1,5 +1,4 @@
 import { exec } from "node:child_process";
-import type { CliResult, GlobalFlags } from "./types.js";
 import { CLI_PACKAGE, DEFAULT_TIMEOUT, CHARACTER_LIMIT } from "./constants.js";
 import {
   runProcess,
@@ -8,12 +7,11 @@ import {
   sleep,
   type ProgressCallback
 } from "./executor.js";
+import { buildJunoContextArgs } from "./juno-context.js";
+import type { CliResult, GlobalFlags } from "./types.js";
 
 export function buildFlagArgs(flags?: GlobalFlags): string[] {
-  const parts: string[] = [];
-  if (flags?.mode) parts.push("--mode", flags.mode);
-  if (flags?.profile) parts.push("--profile", flags.profile);
-  return parts;
+  return buildJunoContextArgs(flags);
 }
 
 let cachedCliPath: string | null = null;

@@ -6,6 +6,7 @@ import {
   makeProgressCallback
 } from "./cli.js";
 import { NETWORK_TIMEOUT } from "./constants.js";
+import { modeProfileContext, pickJunoContext, type JunoContextCapability } from "./juno-context.js";
 import type { GlobalFlags } from "./types.js";
 
 type ExecStrategy = "simple" | "retry" | "streaming";
@@ -16,6 +17,7 @@ export interface ToolHandlerConfig {
   label: string;
   argsFromParams?: (params: Record<string, unknown>) => string[];
   hasMode?: boolean;
+  context?: readonly JunoContextCapability[] | false;
   timeout?: number;
   strategy?: ExecStrategy;
   getStrategy?: (params: Record<string, unknown>) => ExecStrategy;
@@ -23,13 +25,13 @@ export interface ToolHandlerConfig {
 
 export function makeToolHandler(config: ToolHandlerConfig) {
   return async (params: Record<string, unknown>, extra?: Record<string, unknown>) => {
-    const flags: GlobalFlags | undefined =
-      config.hasMode !== false
-        ? {
-            mode: params.mode as string | undefined,
-            profile: params.profile as string | undefined
-          }
-        : undefined;
+    const contextCapabilities =
+      config.context === false || config.hasMode === false
+        ? undefined
+        : (config.context ?? modeProfileContext);
+    const flags: GlobalFlags | undefined = contextCapabilities
+      ? pickJunoContext(params, contextCapabilities)
+      : undefined;
     const args = config.argsFromParams?.(params) ?? [];
     const subArgs = config.subcommand ? [config.subcommand, ...args] : args;
 

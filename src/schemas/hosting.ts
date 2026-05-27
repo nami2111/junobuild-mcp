@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { globalFlagsBase } from "./common.js";
+import { environmentFlagsBase } from "./common.js";
 
-export const hostingDeploySchema = globalFlagsBase
+export const hostingDeploySchema = environmentFlagsBase
   .extend({
     batch: z
       .number()
@@ -40,13 +40,13 @@ export const hostingDeploySchema = globalFlagsBase
   })
   .strict();
 
-export const hostingClearSchema = globalFlagsBase
+export const hostingClearSchema = environmentFlagsBase
   .extend({
     fullPath: z.string().optional().describe("Clear a particular file by its path")
   })
   .strict();
 
-export const hostingPruneSchema = globalFlagsBase
+export const hostingPruneSchema = environmentFlagsBase
   .extend({
     batch: z
       .number()

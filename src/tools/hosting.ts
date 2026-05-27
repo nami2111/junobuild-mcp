@@ -1,4 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { buildInstantChangeArgs } from "../change-workflow.js";
+import { environmentContext } from "../juno-context.js";
+import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
 import { makeToolHandler } from "../tool-handler.js";
 import { hostingDeploySchema, hostingClearSchema, hostingPruneSchema } from "../schemas/hosting.js";
 
@@ -17,9 +20,7 @@ export function buildHostingDeployArgs(params: {
   args.push("--batch", String(params.batch));
   if (params.clear) args.push("--clear");
   if (params.prune) args.push("--prune");
-  if (params.immediate) args.push("-i");
-  if (params.keepStaged) args.push("-k");
-  if (params.noApply) args.push("--no-apply");
+  args.push(...buildInstantChangeArgs(params));
   if (params.config) args.push("--config");
   return args;
 }
@@ -41,6 +42,7 @@ export const handleHostingDeploy = makeToolHandler({
   command: "hosting",
   subcommand: "deploy",
   label: "Hosting Deploy",
+  context: environmentContext,
   argsFromParams: (p) =>
     buildHostingDeployArgs(
       p as {
@@ -62,6 +64,7 @@ export const handleHostingClear = makeToolHandler({
   command: "hosting",
   subcommand: "clear",
   label: "Hosting Clear",
+  context: environmentContext,
   argsFromParams: (p) => buildHostingClearArgs(p as { fullPath?: string })
 });
 
@@ -69,58 +72,55 @@ export const handleHostingPrune = makeToolHandler({
   command: "hosting",
   subcommand: "prune",
   label: "Hosting Prune",
+  context: environmentContext,
   argsFromParams: (p) => buildHostingPruneArgs(p as { batch: number; dryRun?: boolean })
 });
 
+export const hostingTools: readonly RegisteredJunoTool[] = [
+  {
+    name: "juno_hosting_deploy",
+    title: "Juno Hosting Deploy",
+    description:
+      "Deploy your app's frontend files to your satellite. Reads from the `source` directory defined in juno.config and uploads all assets. Supports batch parallelism, clearing before deploy, and pruning stale files after.",
+    inputSchema: hostingDeploySchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    },
+    handler: handleHostingDeploy
+  },
+  {
+    name: "juno_hosting_clear",
+    title: "Juno Hosting Clear",
+    description:
+      "Remove frontend files (JS, HTML, CSS, etc.) from your satellite. This does NOT remove user-uploaded files from custom collections — only the deployed app assets.",
+    inputSchema: hostingClearSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: true
+    },
+    handler: handleHostingClear
+  },
+  {
+    name: "juno_hosting_prune",
+    title: "Juno Hosting Prune",
+    description:
+      "Remove stale frontend files from your satellite that are no longer in your build output. Use --dry-run to preview which files would be deleted without actually deleting them.",
+    inputSchema: hostingPruneSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: true
+    },
+    handler: handleHostingPrune
+  }
+];
+
 export function registerHostingTools(server: McpServer): void {
-  server.registerTool(
-    "juno_hosting_deploy",
-    {
-      title: "Juno Hosting Deploy",
-      description:
-        "Deploy your app's frontend files to your satellite. Reads from the `source` directory defined in juno.config and uploads all assets. Supports batch parallelism, clearing before deploy, and pruning stale files after.",
-      inputSchema: hostingDeploySchema.shape,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true
-      }
-    },
-    handleHostingPrune
-  );
-
-  server.registerTool(
-    "juno_hosting_clear",
-    {
-      title: "Juno Hosting Clear",
-      description:
-        "Remove frontend files (JS, HTML, CSS, etc.) from your satellite. This does NOT remove user-uploaded files from custom collections — only the deployed app assets.",
-      inputSchema: hostingClearSchema.shape,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: false,
-        openWorldHint: true
-      }
-    },
-    handleHostingClear
-  );
-
-  server.registerTool(
-    "juno_hosting_prune",
-    {
-      title: "Juno Hosting Prune",
-      description:
-        "Remove stale frontend files from your satellite that are no longer in your build output. Use --dry-run to preview which files would be deleted without actually deleting them.",
-      inputSchema: hostingPruneSchema.shape,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: false,
-        openWorldHint: true
-      }
-    },
-    handleHostingDeploy
-  );
+  registerJunoTools(server, hostingTools);
 }

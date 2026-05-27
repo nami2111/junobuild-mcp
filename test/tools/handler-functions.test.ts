@@ -73,7 +73,7 @@ describe("handleFunctionsPublish", () => {
     await handleFunctionsPublish({ progress: true, mode: "production" }, { _meta: { progressToken: "x" } });
     expect(mockExecWithStreaming).toHaveBeenCalledWith(
       "functions", ["publish"],
-      { mode: "production", profile: undefined },
+      { mode: "production" },
       NETWORK_TIMEOUT,
       expect.any(Function)
     );
@@ -90,7 +90,7 @@ describe("handleFunctionsPublish", () => {
   it("passes src and no-apply flags", async () => {
     await handleFunctionsPublish({ src: "./out.wasm.gz", noApply: true, keepStaged: true });
     expect(mockExecCli).toHaveBeenCalledWith(
-      "functions", ["publish", "-s", "./out.wasm.gz", "--no-apply", "-k"],
+      "functions", ["publish", "-s", "./out.wasm.gz", "--no-apply"],
       {}, NETWORK_TIMEOUT
     );
   });

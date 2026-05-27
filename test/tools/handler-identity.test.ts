@@ -29,7 +29,7 @@ describe("handleRunScript", () => {
     expect(mockExecCli).toHaveBeenCalledWith(
       "run",
       ["-s", "deploy.ts"],
-      { mode: undefined, profile: undefined },
+      {},
       NETWORK_TIMEOUT
     );
   });
@@ -51,7 +51,7 @@ describe("handleStatus", () => {
     expect(mockExecCli).toHaveBeenCalledWith(
       "status",
       [],
-      { mode: undefined, profile: undefined },
+      {},
       NETWORK_TIMEOUT
     );
   });
@@ -63,13 +63,11 @@ describe("handleStatus", () => {
     });
     expect(mockExecCli).toHaveBeenCalledWith(
       "status",
-      [
-        "--container-url",
-        "https://container.example.com",
-        "--console-url",
-        "https://console.example.com"
-      ],
-      { mode: undefined, profile: undefined },
+      [],
+      {
+        containerUrl: "https://container.example.com",
+        consoleUrl: "https://console.example.com"
+      },
       NETWORK_TIMEOUT
     );
   });

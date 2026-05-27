@@ -46,6 +46,26 @@ describe("buildFlagArgs", () => {
       "main"
     ]);
   });
+
+  it("builds full Juno environment flags in order", () => {
+    expect(
+      buildFlagArgs({
+        mode: "development",
+        profile: "dev",
+        containerUrl: "https://container.example.com",
+        consoleUrl: "https://console.example.com"
+      })
+    ).toEqual([
+      "--mode",
+      "development",
+      "--profile",
+      "dev",
+      "--container-url",
+      "https://container.example.com",
+      "--console-url",
+      "https://console.example.com"
+    ]);
+  });
 });
 
 describe("formatResponse", () => {

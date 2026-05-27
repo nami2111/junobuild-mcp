@@ -1,4 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { buildChangeSubmissionArgs } from "../change-workflow.js";
+import { environmentContext } from "../juno-context.js";
+import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
 import { makeToolHandler } from "../tool-handler.js";
 import {
   functionsBuildSchema,
@@ -36,8 +39,7 @@ export function buildFunctionsPublishArgs(params: {
 }): string[] {
   const args: string[] = [];
   if (params.src) args.push("-s", params.src);
-  if (params.noApply) args.push("--no-apply");
-  if (params.keepStaged) args.push("-k");
+  args.push(...buildChangeSubmissionArgs(params));
   return args;
 }
 
@@ -84,6 +86,7 @@ export const handleFunctionsPublish = makeToolHandler({
   command: "functions",
   subcommand: "publish",
   label: "Functions Publish",
+  context: environmentContext,
   argsFromParams: (p) =>
     buildFunctionsPublishArgs(
       p as {
@@ -101,6 +104,7 @@ export const handleFunctionsUpgrade = makeToolHandler({
   command: "functions",
   subcommand: "upgrade",
   label: "Functions Upgrade",
+  context: environmentContext,
   argsFromParams: (p) =>
     buildFunctionsUpgradeArgs(
       p as {
@@ -117,72 +121,65 @@ export const handleFunctionsUpgrade = makeToolHandler({
   getStrategy: (p) => (p.progress ? "streaming" : p.retry ? "retry" : "simple")
 });
 
+export const functionsTools: readonly RegisteredJunoTool[] = [
+  {
+    name: "juno_functions_build",
+    title: "Juno Functions Build",
+    description:
+      "Build your serverless functions. Supports Rust, TypeScript, and JavaScript. The CLI auto-detects the language if not specified.",
+    inputSchema: functionsBuildSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false
+    },
+    handler: handleFunctionsBuild
+  },
+  {
+    name: "juno_functions_eject",
+    title: "Juno Functions Eject",
+    description:
+      "Generate the required files to begin developing serverless functions in your project. Scaffolds boilerplate for Rust, TypeScript, or JavaScript functions. Alias: `juno functions init`.",
+    inputSchema: functionsEjectSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false
+    },
+    handler: handleFunctionsEject
+  },
+  {
+    name: "juno_functions_publish",
+    title: "Juno Functions Publish",
+    description:
+      "Publish a new version of your serverless functions to the satellite. Optionally submit as a pending change without applying, or provide a custom WASM file path.",
+    inputSchema: functionsPublishSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    },
+    handler: handleFunctionsPublish
+  },
+  {
+    name: "juno_functions_upgrade",
+    title: "Juno Functions Upgrade",
+    description:
+      "Upgrade your satellite's serverless functions. Can use a local WASM file, select from CDN releases, or use the default local build output. Optionally create a snapshot before upgrading.",
+    inputSchema: functionsUpgradeSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    },
+    handler: handleFunctionsUpgrade
+  }
+];
+
 export function registerFunctionsTools(server: McpServer): void {
-  server.registerTool(
-    "juno_functions_build",
-    {
-      title: "Juno Functions Build",
-      description:
-        "Build your serverless functions. Supports Rust, TypeScript, and JavaScript. The CLI auto-detects the language if not specified.",
-      inputSchema: functionsBuildSchema.shape,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: false
-      }
-    },
-    handleFunctionsBuild
-  );
-
-  server.registerTool(
-    "juno_functions_eject",
-    {
-      title: "Juno Functions Eject",
-      description:
-        "Generate the required files to begin developing serverless functions in your project. Scaffolds boilerplate for Rust, TypeScript, or JavaScript functions. Alias: `juno functions init`.",
-      inputSchema: functionsEjectSchema.shape,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: false
-      }
-    },
-    handleFunctionsEject
-  );
-
-  server.registerTool(
-    "juno_functions_publish",
-    {
-      title: "Juno Functions Publish",
-      description:
-        "Publish a new version of your serverless functions to the satellite. Optionally submit as a pending change without applying, or provide a custom WASM file path.",
-      inputSchema: functionsPublishSchema.shape,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true
-      }
-    },
-    handleFunctionsPublish
-  );
-
-  server.registerTool(
-    "juno_functions_upgrade",
-    {
-      title: "Juno Functions Upgrade",
-      description:
-        "Upgrade your satellite's serverless functions. Can use a local WASM file, select from CDN releases, or use the default local build output. Optionally create a snapshot before upgrading.",
-      inputSchema: functionsUpgradeSchema.shape,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true
-      }
-    },
-    handleFunctionsUpgrade
-  );
+  registerJunoTools(server, functionsTools);
 }

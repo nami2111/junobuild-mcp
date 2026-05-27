@@ -27,7 +27,7 @@ describe("buildHostingDeployArgs", () => {
     expect(args).toContain("-i");
   });
 
-  it("adds -k for keepStaged", () => {
+  it("adds -k for keepStaged when applying immediately", () => {
     const args = buildHostingDeployArgs({ batch: 50, keepStaged: true });
     expect(args).toContain("-k");
   });
@@ -52,14 +52,18 @@ describe("buildHostingDeployArgs", () => {
     expect(args).not.toContain("--config");
   });
 
-  it("adds all flags when all enabled", () => {
+  it("does not add -k when noApply is true", () => {
+    const args = buildHostingDeployArgs({ batch: 50, noApply: true, keepStaged: true });
+    expect(args).toEqual(["--batch", "50", "--no-apply"]);
+  });
+
+  it("adds compatible flags when enabled", () => {
     const args = buildHostingDeployArgs({
       batch: 10,
       clear: true,
       prune: true,
       immediate: true,
       keepStaged: true,
-      noApply: true,
       config: true
     });
     expect(args).toEqual([
@@ -68,7 +72,6 @@ describe("buildHostingDeployArgs", () => {
       "--prune",
       "-i",
       "-k",
-      "--no-apply",
       "--config"
     ]);
   });

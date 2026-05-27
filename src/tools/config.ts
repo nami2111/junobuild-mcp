@@ -1,6 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { environmentContext } from "../juno-context.js";
+import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
 import { makeToolHandler } from "../tool-handler.js";
 import { configInitSchema, configApplySchema } from "../schemas/config.js";
 
@@ -157,41 +159,42 @@ export const handleConfigApply = makeToolHandler({
   command: "config",
   subcommand: "apply",
   label: "Config Apply",
+  context: environmentContext,
   argsFromParams: (p) => buildConfigApplyArgs(p as { force?: boolean })
 });
 
-export function registerConfigTools(server: McpServer): void {
-  server.registerTool(
-    "juno_config_init",
-    {
-      title: "Juno Config Init",
-      description:
-        "Generate a juno.config file (TypeScript, JavaScript, or JSON). By default returns config content for preview. Set writeFile to true to write the file directly to disk. Then run juno_config_apply to push the config to your satellite.",
-      inputSchema: configInitSchema.shape,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: false
-      }
+export const configTools: readonly RegisteredJunoTool[] = [
+  {
+    name: "juno_config_init",
+    title: "Juno Config Init",
+    description:
+      "Generate a juno.config file (TypeScript, JavaScript, or JSON). By default returns config content for preview. Set writeFile to true to write the file directly to disk. Then run juno_config_apply to push the config to your satellite.",
+    inputSchema: configInitSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false
     },
-    async (params) => handleConfigInit(params as ConfigInitParams)
-  );
+    handler: async (params: Record<string, unknown>) =>
+      handleConfigInit(params as unknown as ConfigInitParams)
+  },
+  {
+    name: "juno_config_apply",
+    title: "Juno Config Apply",
+    description:
+      "Apply the current juno.config file to your satellite. This is required after modifying settings like storage headers, datastore rules, authentication config, or collection definitions.",
+    inputSchema: configApplySchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true
+    },
+    handler: handleConfigApply
+  }
+];
 
-  server.registerTool(
-    "juno_config_apply",
-    {
-      title: "Juno Config Apply",
-      description:
-        "Apply the current juno.config file to your satellite. This is required after modifying settings like storage headers, datastore rules, authentication config, or collection definitions.",
-      inputSchema: configApplySchema.shape,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true
-      }
-    },
-    handleConfigApply
-  );
+export function registerConfigTools(server: McpServer): void {
+  registerJunoTools(server, configTools);
 }

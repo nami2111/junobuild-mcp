@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { globalFlagsBase } from "./common.js";
+import { environmentFlagsBase } from "./common.js";
 import { ConfigFormatEnum } from "./enums.js";
 
 export const configInitSchema = z
@@ -40,7 +40,7 @@ export const configInitSchema = z
   })
   .strict();
 
-export const configApplySchema = globalFlagsBase
+export const configApplySchema = environmentFlagsBase
   .extend({
     force: z.boolean().default(false).describe("Overwrite configuration without checks")
   })

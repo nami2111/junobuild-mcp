@@ -75,7 +75,9 @@ describe("functionsPublishSchema", () => {
       retry: true,
       progress: true,
       mode: "staging",
-      profile: "test"
+      profile: "test",
+      containerUrl: "https://container.example.com",
+      consoleUrl: "https://console.example.com"
     });
     expect(result.src).toBe("./out.wasm.gz");
     expect(result.noApply).toBe(true);
@@ -83,6 +85,8 @@ describe("functionsPublishSchema", () => {
     expect(result.retry).toBe(true);
     expect(result.progress).toBe(true);
     expect(result.mode).toBe("staging");
+    expect(result.containerUrl).toBe("https://container.example.com");
+    expect(result.consoleUrl).toBe("https://console.example.com");
   });
 
   it("rejects extra keys due to strict", () => {

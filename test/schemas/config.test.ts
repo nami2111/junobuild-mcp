@@ -67,6 +67,17 @@ describe("configApplySchema", () => {
     expect(result.force).toBe(true);
   });
 
+  it("accepts Juno environment context", () => {
+    const result = configApplySchema.parse({
+      mode: "development",
+      containerUrl: "https://container.example.com",
+      consoleUrl: "https://console.example.com"
+    });
+    expect(result.mode).toBe("development");
+    expect(result.containerUrl).toBe("https://container.example.com");
+    expect(result.consoleUrl).toBe("https://console.example.com");
+  });
+
   it("rejects extra keys due to strict", () => {
     expect(() => configApplySchema.parse({ unknown: true })).toThrow();
   });

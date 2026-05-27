@@ -59,16 +59,28 @@ describe("handleHostingDeploy", () => {
     });
     expect(mockExecCli).toHaveBeenCalledWith(
       "hosting",
-      ["deploy", "--batch", "10", "--clear", "--prune", "-i", "-k", "--no-apply", "--config"],
-      {}, NETWORK_TIMEOUT
+      ["deploy", "--batch", "10", "--clear", "--prune", "-i", "--no-apply", "--config"],
+      {},
+      NETWORK_TIMEOUT
     );
   });
 
-  it("passes mode and profile flags", async () => {
-    await handleHostingDeploy({ batch: 50, mode: "production", profile: "main" });
+  it("passes Juno environment context flags", async () => {
+    await handleHostingDeploy({
+      batch: 50,
+      mode: "production",
+      profile: "main",
+      containerUrl: "https://container.example.com",
+      consoleUrl: "https://console.example.com"
+    });
     expect(mockExecCli).toHaveBeenCalledWith(
       "hosting", ["deploy", "--batch", "50"],
-      { mode: "production", profile: "main" },
+      {
+        mode: "production",
+        profile: "main",
+        containerUrl: "https://container.example.com",
+        consoleUrl: "https://console.example.com"
+      },
       NETWORK_TIMEOUT
     );
   });

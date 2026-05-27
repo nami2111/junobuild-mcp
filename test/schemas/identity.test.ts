@@ -18,10 +18,16 @@ describe("runScriptSchema", () => {
     expect(result.src).toBe("script.ts");
   });
 
-  it("accepts src with mode and profile", () => {
-    const result = runScriptSchema.parse({ src: "test.js", mode: "development", profile: "dev" });
+  it("accepts src with Juno environment context", () => {
+    const result = runScriptSchema.parse({
+      src: "test.js",
+      mode: "development",
+      profile: "dev",
+      containerUrl: "https://container.example.com"
+    });
     expect(result.src).toBe("test.js");
     expect(result.mode).toBe("development");
+    expect(result.containerUrl).toBe("https://container.example.com");
   });
 
   it("rejects missing src", () => {
