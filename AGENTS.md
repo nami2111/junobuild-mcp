@@ -90,3 +90,7 @@ server.registerTool(
 2. Add tool registration in `src/tools/{domain}.ts` — follow the pattern above
 3. If new domain: register in `src/index.ts` and create both files
 4. Always run `npm run build` before committing
+
+
+## Notes
+ALWAYS check the skills that you can use to laverage you works/edit
