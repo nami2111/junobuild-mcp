@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.4.0
+
+### Minor Changes
+
+- Extract executor module and introduce tool handler
+
 ## 1.3.2
 
 ### Patch Changes
