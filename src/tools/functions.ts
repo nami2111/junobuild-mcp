@@ -1,14 +1,17 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { buildChangeSubmissionArgs } from "../change-workflow.js";
 import { environmentContext } from "../juno-context.js";
-import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
-import { makeToolHandler } from "../tool-handler.js";
+import {
+  type RegisteredJunoTool,
+  registerJunoTools,
+} from "../registered-tool.js";
 import {
   functionsBuildSchema,
   functionsEjectSchema,
   functionsPublishSchema,
-  functionsUpgradeSchema
+  functionsUpgradeSchema,
 } from "../schemas/functions.js";
+import { makeToolHandler } from "../tool-handler.js";
 
 export function buildFunctionsBuildArgs(params: {
   lang?: string;
@@ -17,16 +20,26 @@ export function buildFunctionsBuildArgs(params: {
   watch?: boolean;
 }): string[] {
   const args: string[] = [];
-  if (params.lang) args.push("-l", params.lang);
-  if (params.cargoPath) args.push("--cargo-path", params.cargoPath);
-  if (params.sourcePath) args.push("--source-path", params.sourcePath);
-  if (params.watch) args.push("--watch");
+  if (params.lang) {
+    args.push("-l", params.lang);
+  }
+  if (params.cargoPath) {
+    args.push("--cargo-path", params.cargoPath);
+  }
+  if (params.sourcePath) {
+    args.push("--source-path", params.sourcePath);
+  }
+  if (params.watch) {
+    args.push("--watch");
+  }
   return args;
 }
 
 export function buildFunctionsEjectArgs(params: { lang?: string }): string[] {
   const args: string[] = [];
-  if (params.lang) args.push("-l", params.lang);
+  if (params.lang) {
+    args.push("-l", params.lang);
+  }
   return args;
 }
 
@@ -38,7 +51,9 @@ export function buildFunctionsPublishArgs(params: {
   progress?: boolean;
 }): string[] {
   const args: string[] = [];
-  if (params.src) args.push("-s", params.src);
+  if (params.src) {
+    args.push("-s", params.src);
+  }
   args.push(...buildChangeSubmissionArgs(params));
   return args;
 }
@@ -54,12 +69,24 @@ export function buildFunctionsUpgradeArgs(params: {
   progress?: boolean;
 }): string[] {
   const args: string[] = [];
-  if (params.src) args.push("-s", params.src);
-  if (params.cdn) args.push("--cdn");
-  if (params.cdnPath) args.push("--cdn-path", params.cdnPath);
-  if (params.clearChunks) args.push("--clear-chunks");
-  if (params.noSnapshot) args.push("--no-snapshot");
-  if (params.reset) args.push("-r");
+  if (params.src) {
+    args.push("-s", params.src);
+  }
+  if (params.cdn) {
+    args.push("--cdn");
+  }
+  if (params.cdnPath) {
+    args.push("--cdn-path", params.cdnPath);
+  }
+  if (params.clearChunks) {
+    args.push("--clear-chunks");
+  }
+  if (params.noSnapshot) {
+    args.push("--no-snapshot");
+  }
+  if (params.reset) {
+    args.push("-r");
+  }
   return args;
 }
 
@@ -70,8 +97,13 @@ export const handleFunctionsBuild = makeToolHandler({
   hasMode: false,
   argsFromParams: (p) =>
     buildFunctionsBuildArgs(
-      p as { lang?: string; cargoPath?: string; sourcePath?: string; watch?: boolean }
-    )
+      p as {
+        lang?: string;
+        cargoPath?: string;
+        sourcePath?: string;
+        watch?: boolean;
+      }
+    ),
 });
 
 export const handleFunctionsEject = makeToolHandler({
@@ -79,7 +111,7 @@ export const handleFunctionsEject = makeToolHandler({
   subcommand: "eject",
   label: "Functions Eject",
   hasMode: false,
-  argsFromParams: (p) => buildFunctionsEjectArgs(p as { lang?: string })
+  argsFromParams: (p) => buildFunctionsEjectArgs(p as { lang?: string }),
 });
 
 export const handleFunctionsPublish = makeToolHandler({
@@ -97,7 +129,15 @@ export const handleFunctionsPublish = makeToolHandler({
         progress?: boolean;
       }
     ),
-  getStrategy: (p) => (p.progress ? "streaming" : p.retry ? "retry" : "simple")
+  getStrategy: (p) => {
+    if (p.progress) {
+      return "streaming";
+    }
+    if (p.retry) {
+      return "retry";
+    }
+    return "simple";
+  },
 });
 
 export const handleFunctionsUpgrade = makeToolHandler({
@@ -118,7 +158,15 @@ export const handleFunctionsUpgrade = makeToolHandler({
         progress?: boolean;
       }
     ),
-  getStrategy: (p) => (p.progress ? "streaming" : p.retry ? "retry" : "simple")
+  getStrategy: (p) => {
+    if (p.progress) {
+      return "streaming";
+    }
+    if (p.retry) {
+      return "retry";
+    }
+    return "simple";
+  },
 });
 
 export const functionsTools: readonly RegisteredJunoTool[] = [
@@ -132,9 +180,9 @@ export const functionsTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,
-      openWorldHint: false
+      openWorldHint: false,
     },
-    handler: handleFunctionsBuild
+    handler: handleFunctionsBuild,
   },
   {
     name: "juno_functions_eject",
@@ -146,9 +194,9 @@ export const functionsTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: true,
-      openWorldHint: false
+      openWorldHint: false,
     },
-    handler: handleFunctionsEject
+    handler: handleFunctionsEject,
   },
   {
     name: "juno_functions_publish",
@@ -160,9 +208,9 @@ export const functionsTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleFunctionsPublish
+    handler: handleFunctionsPublish,
   },
   {
     name: "juno_functions_upgrade",
@@ -174,10 +222,10 @@ export const functionsTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleFunctionsUpgrade
-  }
+    handler: handleFunctionsUpgrade,
+  },
 ];
 
 export function registerFunctionsTools(server: McpServer): void {

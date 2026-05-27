@@ -1,9 +1,9 @@
 import type { JunoContext } from "./juno-context.js";
 
 export interface CliResult {
-  stdout: string;
-  stderr: string;
   exitCode: number;
+  stderr: string;
+  stdout: string;
 }
 
 export type GlobalFlags = JunoContext;

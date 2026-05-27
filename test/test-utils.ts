@@ -1,10 +1,10 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
-import type { CliResult } from "../src/types.js";
+import { join } from "node:path";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { vi } from "vitest";
+import type { CliResult } from "../src/types.js";
 
 export const MCP_SERVER = join(process.cwd(), "dist/index.js");
 
@@ -13,7 +13,7 @@ export async function createTestClient(cwd?: string) {
     command: process.execPath,
     args: [MCP_SERVER],
     env: { ...process.env, FORCE_COLOR: "0" },
-    cwd
+    cwd,
   });
 
   const client = new Client(
@@ -41,11 +41,12 @@ export function createMockExecCli(
   return vi.fn().mockResolvedValue({ ...defaults, ...overrides });
 }
 
-export function createMockFormatResponse(
-  overrides?: { text?: string; isError?: boolean }
-): ReturnType<typeof vi.fn> {
+export function createMockFormatResponse(overrides?: {
+  text?: string;
+  isError?: boolean;
+}): ReturnType<typeof vi.fn> {
   return vi.fn().mockReturnValue({
     text: overrides?.text ?? "Success",
-    isError: overrides?.isError ?? false
+    isError: overrides?.isError ?? false,
   });
 }

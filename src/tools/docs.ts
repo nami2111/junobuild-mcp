@@ -1,10 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { fetchJunoDoc, getAlternatePath } from "../docs-catalog.js";
-import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
-import { junoDocsSchema } from "../schemas/docs.js";
+import { fetchJunoDoc } from "../docs-catalog.js";
+import {
+  type RegisteredJunoTool,
+  registerJunoTools,
+} from "../registered-tool.js";
 import type { TopicKey } from "../schemas/docs.js";
+import { junoDocsSchema } from "../schemas/docs.js";
 
-export { getAlternatePath };
+export { getAlternatePath } from "../docs-catalog.js";
 
 export async function handleDocFetch(
   params: Record<string, unknown>
@@ -20,9 +23,9 @@ export async function handleDocFetch(
       content: [
         {
           type: "text",
-          text: `# Juno Docs: ${doc.topicKey}${cacheLabel}${sourceLine}\n\n${doc.content}`
-        }
-      ]
+          text: `# Juno Docs: ${doc.topicKey}${cacheLabel}${sourceLine}\n\n${doc.content}`,
+        },
+      ],
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -30,10 +33,10 @@ export async function handleDocFetch(
       content: [
         {
           type: "text",
-          text: `Failed to fetch documentation for "${topicKey}": ${message}`
-        }
+          text: `Failed to fetch documentation for "${topicKey}": ${message}`,
+        },
       ],
-      isError: true
+      isError: true,
     };
   }
 }
@@ -49,10 +52,10 @@ export const docsTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: true,
       destructiveHint: false,
       idempotentHint: true,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: async (params: Record<string, unknown>) => handleDocFetch(params)
-  }
+    handler: async (params: Record<string, unknown>) => handleDocFetch(params),
+  },
 ];
 
 export function registerDocsTools(server: McpServer): void {

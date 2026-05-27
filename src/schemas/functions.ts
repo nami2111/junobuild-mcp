@@ -4,25 +4,40 @@ import { FunctionLanguageEnum } from "./enums.js";
 
 export const functionsBuildSchema = z
   .object({
-    lang: FunctionLanguageEnum.optional().describe("Language for building serverless functions"),
-    cargoPath: z.string().optional().describe("Path to the Rust manifest (Cargo.toml)"),
-    sourcePath: z.string().optional().describe("Path to the TypeScript or JavaScript entry file"),
+    lang: FunctionLanguageEnum.optional().describe(
+      "Language for building serverless functions"
+    ),
+    cargoPath: z
+      .string()
+      .optional()
+      .describe("Path to the Rust manifest (Cargo.toml)"),
+    sourcePath: z
+      .string()
+      .optional()
+      .describe("Path to the TypeScript or JavaScript entry file"),
     watch: z
       .boolean()
       .default(false)
-      .describe("Rebuild your functions automatically when source files change")
+      .describe(
+        "Rebuild your functions automatically when source files change"
+      ),
   })
   .strict();
 
 export const functionsEjectSchema = z
   .object({
-    lang: FunctionLanguageEnum.optional().describe("Language for scaffolding serverless functions")
+    lang: FunctionLanguageEnum.optional().describe(
+      "Language for scaffolding serverless functions"
+    ),
   })
   .strict();
 
 export const functionsPublishSchema = environmentFlagsBase
   .extend({
-    src: z.string().optional().describe("Path to a specific local gzipped WASM file to publish"),
+    src: z
+      .string()
+      .optional()
+      .describe("Path to a specific local gzipped WASM file to publish"),
     noApply: z
       .boolean()
       .default(false)
@@ -42,20 +57,34 @@ export const functionsPublishSchema = environmentFlagsBase
       .default(false)
       .describe(
         "Stream progress updates during publish (shows build status and upload batch progress)"
-      )
+      ),
   })
   .strict();
 
 export const functionsUpgradeSchema = environmentFlagsBase
   .extend({
-    src: z.string().optional().describe("Path to a specific local gzipped WASM file"),
+    src: z
+      .string()
+      .optional()
+      .describe("Path to a specific local gzipped WASM file"),
     cdn: z
       .boolean()
       .default(false)
-      .describe("Select a previously published WASM file from the CDN (interactive)"),
-    cdnPath: z.string().optional().describe("Use a specific published WASM file from the CDN"),
-    clearChunks: z.boolean().default(false).describe("Clear previously uploaded WASM chunks"),
-    noSnapshot: z.boolean().default(false).describe("Skip creating a snapshot before upgrading"),
+      .describe(
+        "Select a previously published WASM file from the CDN (interactive)"
+      ),
+    cdnPath: z
+      .string()
+      .optional()
+      .describe("Use a specific published WASM file from the CDN"),
+    clearChunks: z
+      .boolean()
+      .default(false)
+      .describe("Clear previously uploaded WASM chunks"),
+    noSnapshot: z
+      .boolean()
+      .default(false)
+      .describe("Skip creating a snapshot before upgrading"),
     reset: z.boolean().default(false).describe("Reset to the initial state"),
     retry: z
       .boolean()
@@ -68,6 +97,6 @@ export const functionsUpgradeSchema = environmentFlagsBase
       .default(false)
       .describe(
         "Stream progress updates during upgrade (shows build status and upload batch progress)"
-      )
+      ),
   })
   .strict();

@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { changesListSchema, changesApplySchema, changesRejectSchema } from "../../src/schemas/changes.js";
+import { describe, expect, it } from "vitest";
+import {
+  changesApplySchema,
+  changesListSchema,
+  changesRejectSchema,
+} from "../../src/schemas/changes.js";
 
 describe("changesListSchema", () => {
   it("accepts empty (all defaults)", () => {
@@ -45,7 +49,7 @@ describe("changesApplySchema", () => {
       hash: "0x123",
       keepStaged: true,
       mode: "production",
-      profile: "main"
+      profile: "main",
     });
     expect(result.id).toBe("abc");
     expect(result.snapshot).toBe(true);
@@ -73,7 +77,7 @@ describe("changesRejectSchema", () => {
     const result = changesRejectSchema.parse({
       id: "abc",
       hash: "0x456",
-      keepStaged: true
+      keepStaged: true,
     });
     expect(result.hash).toBe("0x456");
     expect(result.keepStaged).toBe(true);
@@ -84,6 +88,8 @@ describe("changesRejectSchema", () => {
   });
 
   it("rejects extra keys due to strict", () => {
-    expect(() => changesRejectSchema.parse({ id: "a", unknown: true })).toThrow();
+    expect(() =>
+      changesRejectSchema.parse({ id: "a", unknown: true })
+    ).toThrow();
   });
 });

@@ -1,9 +1,16 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { buildInstantChangeArgs } from "../change-workflow.js";
 import { environmentContext } from "../juno-context.js";
-import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
+import {
+  type RegisteredJunoTool,
+  registerJunoTools,
+} from "../registered-tool.js";
+import {
+  hostingClearSchema,
+  hostingDeploySchema,
+  hostingPruneSchema,
+} from "../schemas/hosting.js";
 import { makeToolHandler } from "../tool-handler.js";
-import { hostingDeploySchema, hostingClearSchema, hostingPruneSchema } from "../schemas/hosting.js";
 
 export function buildHostingDeployArgs(params: {
   batch: number;
@@ -18,23 +25,36 @@ export function buildHostingDeployArgs(params: {
 }): string[] {
   const args: string[] = [];
   args.push("--batch", String(params.batch));
-  if (params.clear) args.push("--clear");
-  if (params.prune) args.push("--prune");
+  if (params.clear) {
+    args.push("--clear");
+  }
+  if (params.prune) {
+    args.push("--prune");
+  }
   args.push(...buildInstantChangeArgs(params));
-  if (params.config) args.push("--config");
+  if (params.config) {
+    args.push("--config");
+  }
   return args;
 }
 
 export function buildHostingClearArgs(params: { fullPath?: string }): string[] {
   const args: string[] = [];
-  if (params.fullPath) args.push("-f", params.fullPath);
+  if (params.fullPath) {
+    args.push("-f", params.fullPath);
+  }
   return args;
 }
 
-export function buildHostingPruneArgs(params: { batch: number; dryRun?: boolean }): string[] {
+export function buildHostingPruneArgs(params: {
+  batch: number;
+  dryRun?: boolean;
+}): string[] {
   const args: string[] = [];
   args.push("--batch", String(params.batch));
-  if (params.dryRun) args.push("--dry-run");
+  if (params.dryRun) {
+    args.push("--dry-run");
+  }
   return args;
 }
 
@@ -57,7 +77,15 @@ export const handleHostingDeploy = makeToolHandler({
         progress?: boolean;
       }
     ),
-  getStrategy: (p) => (p.progress ? "streaming" : p.retry ? "retry" : "simple")
+  getStrategy: (p) => {
+    if (p.progress) {
+      return "streaming";
+    }
+    if (p.retry) {
+      return "retry";
+    }
+    return "simple";
+  },
 });
 
 export const handleHostingClear = makeToolHandler({
@@ -65,7 +93,7 @@ export const handleHostingClear = makeToolHandler({
   subcommand: "clear",
   label: "Hosting Clear",
   context: environmentContext,
-  argsFromParams: (p) => buildHostingClearArgs(p as { fullPath?: string })
+  argsFromParams: (p) => buildHostingClearArgs(p as { fullPath?: string }),
 });
 
 export const handleHostingPrune = makeToolHandler({
@@ -73,7 +101,8 @@ export const handleHostingPrune = makeToolHandler({
   subcommand: "prune",
   label: "Hosting Prune",
   context: environmentContext,
-  argsFromParams: (p) => buildHostingPruneArgs(p as { batch: number; dryRun?: boolean })
+  argsFromParams: (p) =>
+    buildHostingPruneArgs(p as { batch: number; dryRun?: boolean }),
 });
 
 export const hostingTools: readonly RegisteredJunoTool[] = [
@@ -87,9 +116,9 @@ export const hostingTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleHostingDeploy
+    handler: handleHostingDeploy,
   },
   {
     name: "juno_hosting_clear",
@@ -101,9 +130,9 @@ export const hostingTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: true,
       idempotentHint: false,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleHostingClear
+    handler: handleHostingClear,
   },
   {
     name: "juno_hosting_prune",
@@ -115,10 +144,10 @@ export const hostingTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: true,
       idempotentHint: false,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleHostingPrune
-  }
+    handler: handleHostingPrune,
+  },
 ];
 
 export function registerHostingTools(server: McpServer): void {

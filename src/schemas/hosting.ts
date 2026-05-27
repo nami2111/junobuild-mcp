@@ -10,8 +10,14 @@ export const hostingDeploySchema = environmentFlagsBase
       .max(200)
       .default(50)
       .describe("Number of files to upload in parallel per batch (1-200)"),
-    clear: z.boolean().default(false).describe("Clear existing app files before deployment"),
-    prune: z.boolean().default(false).describe("Prune stale app files after successful deployment"),
+    clear: z
+      .boolean()
+      .default(false)
+      .describe("Clear existing app files before deployment"),
+    prune: z
+      .boolean()
+      .default(false)
+      .describe("Prune stale app files after successful deployment"),
     immediate: z
       .boolean()
       .default(false)
@@ -24,7 +30,10 @@ export const hostingDeploySchema = environmentFlagsBase
       .boolean()
       .default(false)
       .describe("Submit deployment as a change but do not apply it yet"),
-    config: z.boolean().default(false).describe("Apply configuration after deployment succeeds"),
+    config: z
+      .boolean()
+      .default(false)
+      .describe("Apply configuration after deployment succeeds"),
     retry: z
       .boolean()
       .default(false)
@@ -36,13 +45,16 @@ export const hostingDeploySchema = environmentFlagsBase
       .default(false)
       .describe(
         "Stream progress updates during deployment (shows build status and upload batch progress)"
-      )
+      ),
   })
   .strict();
 
 export const hostingClearSchema = environmentFlagsBase
   .extend({
-    fullPath: z.string().optional().describe("Clear a particular file by its path")
+    fullPath: z
+      .string()
+      .optional()
+      .describe("Clear a particular file by its path"),
   })
   .strict();
 
@@ -55,6 +67,9 @@ export const hostingPruneSchema = environmentFlagsBase
       .max(200)
       .default(100)
       .describe("Number of files to prune in parallel per batch (1-200)"),
-    dryRun: z.boolean().default(false).describe("List stale files without actually deleting them")
+    dryRun: z
+      .boolean()
+      .default(false)
+      .describe("List stale files without actually deleting them"),
   })
   .strict();

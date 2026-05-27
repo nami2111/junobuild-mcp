@@ -25,7 +25,7 @@ const junoConsoleUrlField = z
 export const globalFlagsBase = z
   .object({
     mode: junoModeField,
-    profile: junoProfileField
+    profile: junoProfileField,
   })
   .strict();
 
@@ -33,7 +33,7 @@ export const containerFlagsBase = z
   .object({
     mode: junoModeField,
     profile: junoProfileField,
-    containerUrl: junoContainerUrlField
+    containerUrl: junoContainerUrlField,
   })
   .strict();
 
@@ -42,6 +42,6 @@ export const environmentFlagsBase = z
     mode: junoModeField,
     profile: junoProfileField,
     containerUrl: junoContainerUrlField,
-    consoleUrl: junoConsoleUrlField
+    consoleUrl: junoConsoleUrlField,
   })
   .strict();

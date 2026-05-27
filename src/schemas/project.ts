@@ -12,6 +12,6 @@ export const createProjectSchema = z
       ),
     packageManager: PackageManagerEnum.default("npm")
       .optional()
-      .describe("Package manager to use (npm, yarn, pnpm)")
+      .describe("Package manager to use (npm, yarn, pnpm)"),
   })
   .strict();

@@ -1,9 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   buildFunctionsBuildArgs,
   buildFunctionsEjectArgs,
   buildFunctionsPublishArgs,
-  buildFunctionsUpgradeArgs
+  buildFunctionsUpgradeArgs,
 } from "../../src/tools/functions.js";
 
 describe("buildFunctionsBuildArgs", () => {
@@ -17,13 +17,15 @@ describe("buildFunctionsBuildArgs", () => {
 
   it("adds --cargo-path", () => {
     expect(buildFunctionsBuildArgs({ cargoPath: "./Cargo.toml" })).toEqual([
-      "--cargo-path", "./Cargo.toml"
+      "--cargo-path",
+      "./Cargo.toml",
     ]);
   });
 
   it("adds --source-path", () => {
     expect(buildFunctionsBuildArgs({ sourcePath: "./src/lib.rs" })).toEqual([
-      "--source-path", "./src/lib.rs"
+      "--source-path",
+      "./src/lib.rs",
     ]);
   });
 
@@ -36,16 +38,21 @@ describe("buildFunctionsBuildArgs", () => {
   });
 
   it("adds all args", () => {
-    expect(buildFunctionsBuildArgs({
-      lang: "ts",
-      cargoPath: "./Cargo.toml",
-      sourcePath: "./src/index.ts",
-      watch: true
-    })).toEqual([
-      "-l", "ts",
-      "--cargo-path", "./Cargo.toml",
-      "--source-path", "./src/index.ts",
-      "--watch"
+    expect(
+      buildFunctionsBuildArgs({
+        lang: "ts",
+        cargoPath: "./Cargo.toml",
+        sourcePath: "./src/index.ts",
+        watch: true,
+      })
+    ).toEqual([
+      "-l",
+      "ts",
+      "--cargo-path",
+      "./Cargo.toml",
+      "--source-path",
+      "./src/index.ts",
+      "--watch",
     ]);
   });
 });
@@ -56,7 +63,10 @@ describe("buildFunctionsEjectArgs", () => {
   });
 
   it("adds -l with lang", () => {
-    expect(buildFunctionsEjectArgs({ lang: "typescript" })).toEqual(["-l", "typescript"]);
+    expect(buildFunctionsEjectArgs({ lang: "typescript" })).toEqual([
+      "-l",
+      "typescript",
+    ]);
   });
 
   it("accepts short lang codes", () => {
@@ -71,12 +81,15 @@ describe("buildFunctionsPublishArgs", () => {
 
   it("adds -s with src", () => {
     expect(buildFunctionsPublishArgs({ src: "./out.wasm.gz" })).toEqual([
-      "-s", "./out.wasm.gz"
+      "-s",
+      "./out.wasm.gz",
     ]);
   });
 
   it("adds --no-apply", () => {
-    expect(buildFunctionsPublishArgs({ noApply: true })).toEqual(["--no-apply"]);
+    expect(buildFunctionsPublishArgs({ noApply: true })).toEqual([
+      "--no-apply",
+    ]);
   });
 
   it("adds -k for keepStaged", () => {
@@ -84,9 +97,9 @@ describe("buildFunctionsPublishArgs", () => {
   });
 
   it("does not add -k when noApply is true", () => {
-    expect(buildFunctionsPublishArgs({ noApply: true, keepStaged: true })).toEqual([
-      "--no-apply"
-    ]);
+    expect(
+      buildFunctionsPublishArgs({ noApply: true, keepStaged: true })
+    ).toEqual(["--no-apply"]);
   });
 
   it("does not add progress or retry (they control execution path)", () => {
@@ -95,13 +108,12 @@ describe("buildFunctionsPublishArgs", () => {
   });
 
   it("adds compatible arg flags", () => {
-    expect(buildFunctionsPublishArgs({
-      src: "./out.wasm.gz",
-      keepStaged: true
-    })).toEqual([
-      "-s", "./out.wasm.gz",
-      "-k"
-    ]);
+    expect(
+      buildFunctionsPublishArgs({
+        src: "./out.wasm.gz",
+        keepStaged: true,
+      })
+    ).toEqual(["-s", "./out.wasm.gz", "-k"]);
   });
 });
 
@@ -112,7 +124,8 @@ describe("buildFunctionsUpgradeArgs", () => {
 
   it("adds -s with src", () => {
     expect(buildFunctionsUpgradeArgs({ src: "./new.wasm.gz" })).toEqual([
-      "-s", "./new.wasm.gz"
+      "-s",
+      "./new.wasm.gz",
     ]);
   });
 
@@ -121,17 +134,21 @@ describe("buildFunctionsUpgradeArgs", () => {
   });
 
   it("adds --cdn-path", () => {
-    expect(buildFunctionsUpgradeArgs({ cdnPath: "v1/snapshot.wasm.gz" })).toEqual([
-      "--cdn-path", "v1/snapshot.wasm.gz"
-    ]);
+    expect(
+      buildFunctionsUpgradeArgs({ cdnPath: "v1/snapshot.wasm.gz" })
+    ).toEqual(["--cdn-path", "v1/snapshot.wasm.gz"]);
   });
 
   it("adds --clear-chunks", () => {
-    expect(buildFunctionsUpgradeArgs({ clearChunks: true })).toEqual(["--clear-chunks"]);
+    expect(buildFunctionsUpgradeArgs({ clearChunks: true })).toEqual([
+      "--clear-chunks",
+    ]);
   });
 
   it("adds --no-snapshot", () => {
-    expect(buildFunctionsUpgradeArgs({ noSnapshot: true })).toEqual(["--no-snapshot"]);
+    expect(buildFunctionsUpgradeArgs({ noSnapshot: true })).toEqual([
+      "--no-snapshot",
+    ]);
   });
 
   it("adds -r for reset", () => {
@@ -144,20 +161,24 @@ describe("buildFunctionsUpgradeArgs", () => {
   });
 
   it("adds all arg flags", () => {
-    expect(buildFunctionsUpgradeArgs({
-      src: "./new.wasm.gz",
-      cdn: true,
-      cdnPath: "v1/snapshot.wasm.gz",
-      clearChunks: true,
-      noSnapshot: true,
-      reset: true
-    })).toEqual([
-      "-s", "./new.wasm.gz",
+    expect(
+      buildFunctionsUpgradeArgs({
+        src: "./new.wasm.gz",
+        cdn: true,
+        cdnPath: "v1/snapshot.wasm.gz",
+        clearChunks: true,
+        noSnapshot: true,
+        reset: true,
+      })
+    ).toEqual([
+      "-s",
+      "./new.wasm.gz",
       "--cdn",
-      "--cdn-path", "v1/snapshot.wasm.gz",
+      "--cdn-path",
+      "v1/snapshot.wasm.gz",
       "--clear-chunks",
       "--no-snapshot",
-      "-r"
+      "-r",
     ]);
   });
 });

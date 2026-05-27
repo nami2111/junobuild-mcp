@@ -1,7 +1,10 @@
-import { rename, readFile, writeFile } from "node:fs/promises";
+import { readFile, rename, writeFile } from "node:fs/promises";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { execCommandNonInteractive } from "../executor.js";
-import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
+import {
+  type RegisteredJunoTool,
+  registerJunoTools,
+} from "../registered-tool.js";
 import { createProjectSchema } from "../schemas/project.js";
 
 export async function handleCreateProject(
@@ -18,7 +21,7 @@ export async function handleCreateProject(
       "nextjs-starter": "next",
       "sveltekit-starter": "svelte",
       "angular-starter": "angular",
-      "vue-starter": "vue"
+      "vue-starter": "vue",
     };
 
     const viteTemplate = TEMPLATE_MAP[template] || "react --template-ts";
@@ -27,14 +30,21 @@ export async function handleCreateProject(
     const templateParts = viteTemplate.split(" ");
     const result = await execCommandNonInteractive(
       "npm",
-      ["create", "vite@latest", sourceDir, "--", "--template", ...templateParts],
+      [
+        "create",
+        "vite@latest",
+        sourceDir,
+        "--",
+        "--template",
+        ...templateParts,
+      ],
       120_000
     );
 
     if (result.exitCode !== 0) {
       return {
         content: [{ type: "text", text: result.stderr || result.stdout }],
-        isError: true
+        isError: true,
       };
     }
 
@@ -49,7 +59,12 @@ export async function handleCreateProject(
     const deps = ["@junobuild/core"];
     const failedDeps: string[] = [];
     for (const dep of deps) {
-      const addResult = await execCommandNonInteractive(pm, ["add", dep], 120_000, dir);
+      const addResult = await execCommandNonInteractive(
+        pm,
+        ["add", dep],
+        120_000,
+        dir
+      );
       if (addResult.exitCode !== 0) {
         failedDeps.push(dep);
       }
@@ -66,12 +81,13 @@ export default {
     await writeFile(`${dir}/juno.config.ts`, configContent);
 
     let output = `Project "${dir}" created with ${template} template.\n`;
-    output += `\n## Next Steps\n`;
+    output += "\n## Next Steps\n";
     output += `1. cd ${dir} && ${pm} install\n`;
-    output += `2. Replace placeholder satellite ID in juno.config.ts with your real ID\n`;
+    output +=
+      "2. Replace placeholder satellite ID in juno.config.ts with your real ID\n";
     output += `3. ${pm} run dev\n`;
-    output += `4. juno emulator start  # in another terminal\n`;
-    output += `5. juno hosting deploy --mode development\n`;
+    output += "4. juno emulator start  # in another terminal\n";
+    output += "5. juno hosting deploy --mode development\n";
     output += `\nFor production: ${pm} run build && juno hosting deploy\n`;
 
     if (failedDeps.length > 0) {
@@ -79,13 +95,13 @@ export default {
     }
 
     return {
-      content: [{ type: "text", text: output }]
+      content: [{ type: "text", text: output }],
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     return {
       content: [{ type: "text", text: `Failed to create project: ${message}` }],
-      isError: true
+      isError: true,
     };
   }
 }
@@ -101,10 +117,11 @@ export const projectTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,
-      openWorldHint: false
+      openWorldHint: false,
     },
-    handler: async (params: Record<string, unknown>) => handleCreateProject(params)
-  }
+    handler: async (params: Record<string, unknown>) =>
+      handleCreateProject(params),
+  },
 ];
 
 export function registerProjectTools(server: McpServer): void {

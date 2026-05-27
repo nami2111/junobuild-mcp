@@ -3,28 +3,35 @@ import {
   execWithRetry,
   execWithStreaming,
   formatResponse,
-  makeProgressCallback
+  makeProgressCallback,
 } from "./cli.js";
 import { NETWORK_TIMEOUT } from "./constants.js";
-import { modeProfileContext, pickJunoContext, type JunoContextCapability } from "./juno-context.js";
+import {
+  type JunoContextCapability,
+  modeProfileContext,
+  pickJunoContext,
+} from "./juno-context.js";
 import type { GlobalFlags } from "./types.js";
 
 type ExecStrategy = "simple" | "retry" | "streaming";
 
 export interface ToolHandlerConfig {
-  command: string;
-  subcommand: string;
-  label: string;
   argsFromParams?: (params: Record<string, unknown>) => string[];
-  hasMode?: boolean;
+  command: string;
   context?: readonly JunoContextCapability[] | false;
-  timeout?: number;
-  strategy?: ExecStrategy;
   getStrategy?: (params: Record<string, unknown>) => ExecStrategy;
+  hasMode?: boolean;
+  label: string;
+  strategy?: ExecStrategy;
+  subcommand: string;
+  timeout?: number;
 }
 
 export function makeToolHandler(config: ToolHandlerConfig) {
-  return async (params: Record<string, unknown>, extra?: Record<string, unknown>) => {
+  return async (
+    params: Record<string, unknown>,
+    extra?: Record<string, unknown>
+  ) => {
     const contextCapabilities =
       config.context === false || config.hasMode === false
         ? undefined
@@ -35,7 +42,8 @@ export function makeToolHandler(config: ToolHandlerConfig) {
     const args = config.argsFromParams?.(params) ?? [];
     const subArgs = config.subcommand ? [config.subcommand, ...args] : args;
 
-    const strategy = config.getStrategy?.(params) ?? config.strategy ?? "simple";
+    const strategy =
+      config.getStrategy?.(params) ?? config.strategy ?? "simple";
     const timeout = config.timeout ?? NETWORK_TIMEOUT;
 
     let result: Awaited<ReturnType<typeof execCli>>;
@@ -43,7 +51,13 @@ export function makeToolHandler(config: ToolHandlerConfig) {
     if (strategy === "streaming") {
       const onProgress = makeProgressCallback(extra);
       if (onProgress) {
-        result = await execWithStreaming(config.command, subArgs, flags, timeout, onProgress);
+        result = await execWithStreaming(
+          config.command,
+          subArgs,
+          flags,
+          timeout,
+          onProgress
+        );
       } else {
         result = await execCli(config.command, subArgs, flags, timeout);
       }

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { describe, expect, it, vi } from "vitest";
 import { changesTools } from "../../src/tools/changes.js";
 import { configTools } from "../../src/tools/config.js";
 import { docsTools } from "../../src/tools/docs.js";
@@ -9,7 +9,7 @@ import {
   handleHostingDeploy,
   handleHostingPrune,
   hostingTools,
-  registerHostingTools
+  registerHostingTools,
 } from "../../src/tools/hosting.js";
 import { identityTools } from "../../src/tools/identity.js";
 import { projectTools } from "../../src/tools/project.js";
@@ -21,7 +21,7 @@ const allTools = [
   ...functionsTools,
   ...changesTools,
   ...projectTools,
-  ...docsTools
+  ...docsTools,
 ];
 
 describe("registered Juno tools", () => {
@@ -45,20 +45,20 @@ describe("registered Juno tools", () => {
       "juno_changes_apply",
       "juno_changes_reject",
       "juno_create_project",
-      "juno_docs"
+      "juno_docs",
     ]);
   });
 
   it("binds hosting public tools to their matching handlers", () => {
-    expect(hostingTools.find((tool) => tool.name === "juno_hosting_deploy")?.handler).toBe(
-      handleHostingDeploy
-    );
-    expect(hostingTools.find((tool) => tool.name === "juno_hosting_clear")?.handler).toBe(
-      handleHostingClear
-    );
-    expect(hostingTools.find((tool) => tool.name === "juno_hosting_prune")?.handler).toBe(
-      handleHostingPrune
-    );
+    expect(
+      hostingTools.find((tool) => tool.name === "juno_hosting_deploy")?.handler
+    ).toBe(handleHostingDeploy);
+    expect(
+      hostingTools.find((tool) => tool.name === "juno_hosting_clear")?.handler
+    ).toBe(handleHostingClear);
+    expect(
+      hostingTools.find((tool) => tool.name === "juno_hosting_prune")?.handler
+    ).toBe(handleHostingPrune);
   });
 
   it("registers through the public MCP seam with the declared metadata", () => {
@@ -74,7 +74,7 @@ describe("registered Juno tools", () => {
       expect.objectContaining({
         title: "Juno Hosting Deploy",
         inputSchema: expect.any(Object),
-        annotations: expect.objectContaining({ openWorldHint: true })
+        annotations: expect.objectContaining({ openWorldHint: true }),
       }),
       handleHostingDeploy
     );
@@ -84,7 +84,7 @@ describe("registered Juno tools", () => {
       expect.objectContaining({
         title: "Juno Hosting Prune",
         inputSchema: expect.any(Object),
-        annotations: expect.objectContaining({ destructiveHint: true })
+        annotations: expect.objectContaining({ destructiveHint: true }),
       }),
       handleHostingPrune
     );

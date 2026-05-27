@@ -1,8 +1,15 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { containerContext, environmentContext } from "../juno-context.js";
-import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
+import {
+  type RegisteredJunoTool,
+  registerJunoTools,
+} from "../registered-tool.js";
+import {
+  runScriptSchema,
+  statusSchema,
+  versionSchema,
+} from "../schemas/identity.js";
 import { makeToolHandler } from "../tool-handler.js";
-import { versionSchema, runScriptSchema, statusSchema } from "../schemas/identity.js";
 
 export function buildRunScriptArgs(params: { src: string }): string[] {
   return ["-s", params.src];
@@ -12,7 +19,7 @@ export const handleVersion = makeToolHandler({
   command: "version",
   subcommand: "",
   label: "Version",
-  hasMode: false
+  hasMode: false,
 });
 
 export const handleRunScript = makeToolHandler({
@@ -20,14 +27,14 @@ export const handleRunScript = makeToolHandler({
   subcommand: "",
   label: "Run Script",
   context: containerContext,
-  argsFromParams: (p) => buildRunScriptArgs(p as { src: string })
+  argsFromParams: (p) => buildRunScriptArgs(p as { src: string }),
 });
 
 export const handleStatus = makeToolHandler({
   command: "status",
   subcommand: "",
   label: "Status",
-  context: environmentContext
+  context: environmentContext,
 });
 
 export const identityTools: readonly RegisteredJunoTool[] = [
@@ -41,9 +48,9 @@ export const identityTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: true,
       destructiveHint: false,
       idempotentHint: true,
-      openWorldHint: false
+      openWorldHint: false,
     },
-    handler: handleVersion
+    handler: handleVersion,
   },
   {
     name: "juno_run",
@@ -55,9 +62,9 @@ export const identityTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleRunScript
+    handler: handleRunScript,
   },
   {
     name: "juno_status",
@@ -69,10 +76,10 @@ export const identityTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: true,
       destructiveHint: false,
       idempotentHint: true,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleStatus
-  }
+    handler: handleStatus,
+  },
 ];
 
 export function registerIdentityTools(server: McpServer): void {

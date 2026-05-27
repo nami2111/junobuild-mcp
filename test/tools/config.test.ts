@@ -1,22 +1,22 @@
-import { describe, it, expect } from "vitest";
-import { buildConfigApplyArgs } from "../../src/tools/config.js";
+import { describe, expect, it } from "vitest";
 import {
-  generateTypeScriptConfig,
+  buildConfigApplyArgs,
+  buildConfigOptionsSnippet,
   generateJavaScriptConfig,
   generateJsonConfig,
-  buildConfigOptionsSnippet
+  generateTypeScriptConfig,
 } from "../../src/tools/config.js";
 
-type ConfigInitParams = {
+interface ConfigInitParams {
   format: "typescript" | "javascript" | "json";
-  source: string;
-  satelliteId: string;
   multiEnv: boolean;
-  stagingSatelliteId?: string;
   orbiterId?: string;
-  writeFile: boolean;
   path?: string;
-};
+  satelliteId: string;
+  source: string;
+  stagingSatelliteId?: string;
+  writeFile: boolean;
+}
 
 describe("buildConfigApplyArgs", () => {
   it("returns empty array when force is false", () => {
@@ -38,7 +38,7 @@ describe("buildConfigOptionsSnippet", () => {
     source: "dist",
     satelliteId: "abc-123",
     multiEnv: false,
-    writeFile: false
+    writeFile: false,
   };
 
   it("generates single-env satellite block", () => {
@@ -55,7 +55,10 @@ describe("buildConfigOptionsSnippet", () => {
   });
 
   it("includes orbiterId when provided", () => {
-    const result = buildConfigOptionsSnippet({ ...baseParams, orbiterId: "orb-1" });
+    const result = buildConfigOptionsSnippet({
+      ...baseParams,
+      orbiterId: "orb-1",
+    });
     expect(result).toContain("orbiter");
     expect(result).toContain("orb-1");
   });
@@ -64,7 +67,7 @@ describe("buildConfigOptionsSnippet", () => {
     const result = buildConfigOptionsSnippet({
       ...baseParams,
       multiEnv: true,
-      stagingSatelliteId: "stg-123"
+      stagingSatelliteId: "stg-123",
     });
     expect(result).toContain("stg-123");
   });
@@ -73,7 +76,7 @@ describe("buildConfigOptionsSnippet", () => {
     const result = buildConfigOptionsSnippet({
       ...baseParams,
       multiEnv: true,
-      orbiterId: "orb-1"
+      orbiterId: "orb-1",
     });
     expect(result).toContain("orbiter");
     expect(result).toContain("production:");
@@ -87,7 +90,7 @@ describe("generateTypeScriptConfig", () => {
       source: "dist",
       satelliteId: "abc-123",
       multiEnv: false,
-      writeFile: false
+      writeFile: false,
     };
     const result = generateTypeScriptConfig(params);
     expect(result).toContain("defineConfig");
@@ -103,7 +106,7 @@ describe("generateJavaScriptConfig", () => {
       source: "build",
       satelliteId: "abc-123",
       multiEnv: false,
-      writeFile: false
+      writeFile: false,
     };
     const result = generateJavaScriptConfig(params);
     expect(result).toContain("defineConfig");
@@ -119,7 +122,7 @@ describe("generateJsonConfig", () => {
       source: "out",
       satelliteId: "abc-123",
       multiEnv: false,
-      writeFile: false
+      writeFile: false,
     };
     const result = generateJsonConfig(params);
     expect(result).toContain("abc-123");
@@ -135,7 +138,7 @@ describe("generateJsonConfig", () => {
       satelliteId: "prod-123",
       multiEnv: true,
       stagingSatelliteId: "stg-456",
-      writeFile: false
+      writeFile: false,
     };
     const result = generateJsonConfig(params);
     const parsed = JSON.parse(result);

@@ -1,25 +1,27 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { randomUUID } from "node:crypto";
+import { mkdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  formatResponse,
   buildFlagArgs,
+  execCli,
+  execCommand,
+  execWithRetry,
+  execWithStreaming,
+  formatResponse,
   makeProgressCallback,
   resetCliPathCache,
-  execCommand,
-  execCli,
-  execWithRetry,
-  execWithStreaming
 } from "../../src/cli.js";
+import { CHARACTER_LIMIT } from "../../src/constants.js";
 import {
-  stripProgressChars,
+  execCommandNonInteractive,
   isTransientError,
   parseProgress,
-  execCommandNonInteractive
+  stripProgressChars,
 } from "../../src/executor.js";
-import { CHARACTER_LIMIT } from "../../src/constants.js";
-import { rmSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
-import { randomUUID } from "node:crypto";
+
+const ZZZ_REGEX = /^zzz$/m;
 
 describe("buildFlagArgs", () => {
   it("returns empty array when flags undefined", () => {
@@ -43,7 +45,7 @@ describe("buildFlagArgs", () => {
       "--mode",
       "production",
       "--profile",
-      "main"
+      "main",
     ]);
   });
 
@@ -53,7 +55,7 @@ describe("buildFlagArgs", () => {
         mode: "development",
         profile: "dev",
         containerUrl: "https://container.example.com",
-        consoleUrl: "https://console.example.com"
+        consoleUrl: "https://console.example.com",
       })
     ).toEqual([
       "--mode",
@@ -63,7 +65,7 @@ describe("buildFlagArgs", () => {
       "--container-url",
       "https://container.example.com",
       "--console-url",
-      "https://console.example.com"
+      "https://console.example.com",
     ]);
   });
 });
@@ -76,7 +78,10 @@ describe("formatResponse", () => {
   });
 
   it("returns success output with label", () => {
-    const result = formatResponse({ stdout: "deployed", stderr: "", exitCode: 0 }, "Deploy");
+    const result = formatResponse(
+      { stdout: "deployed", stderr: "", exitCode: 0 },
+      "Deploy"
+    );
     expect(result.text).toBe("## Deploy\n\ndeployed");
     expect(result.isError).toBe(false);
   });
@@ -93,14 +98,22 @@ describe("formatResponse", () => {
   });
 
   it("returns stderr on error when present", () => {
-    const result = formatResponse({ stdout: "", stderr: "file not found", exitCode: 1 });
+    const result = formatResponse({
+      stdout: "",
+      stderr: "file not found",
+      exitCode: 1,
+    });
     expect(result.text).toContain("Error (exit code 1)");
     expect(result.text).toContain("file not found");
     expect(result.isError).toBe(true);
   });
 
   it("falls back to stdout on error when stderr empty", () => {
-    const result = formatResponse({ stdout: "something went wrong", stderr: "", exitCode: 2 });
+    const result = formatResponse({
+      stdout: "something went wrong",
+      stderr: "",
+      exitCode: 2,
+    });
     expect(result.text).toContain("Error (exit code 2)");
     expect(result.text).toContain("something went wrong");
   });
@@ -112,7 +125,11 @@ describe("formatResponse", () => {
   });
 
   it("strips ANSI codes from output", () => {
-    const result = formatResponse({ stdout: "\x1b[32mok\x1b[0m", stderr: "", exitCode: 0 });
+    const result = formatResponse({
+      stdout: "\x1b[32mok\x1b[0m",
+      stderr: "",
+      exitCode: 0,
+    });
     expect(result.text).toBe("ok");
   });
 
@@ -145,7 +162,7 @@ describe("stripProgressChars", () => {
   it("removes repeated z characters", () => {
     const input = "zzz\nreal line";
     expect(stripProgressChars(input)).toContain("real line");
-    expect(stripProgressChars(input)).not.toMatch(/^zzz$/m);
+    expect(stripProgressChars(input)).not.toMatch(ZZZ_REGEX);
   });
 
   it("does not remove single z", () => {
@@ -173,7 +190,7 @@ describe("isTransientError", () => {
   const mkResult = (stdout: string, stderr: string, exitCode: number) => ({
     stdout,
     stderr,
-    exitCode
+    exitCode,
   });
 
   it("returns false for exitCode 0", () => {
@@ -192,7 +209,7 @@ describe("isTransientError", () => {
     ["429"],
     ["502 Bad Gateway"],
     ["503 Service Unavailable"],
-    ["504 Gateway Timeout"]
+    ["504 Gateway Timeout"],
   ])("detects transient pattern: %s", (pattern) => {
     expect(isTransientError(mkResult("", pattern, 1))).toBe(true);
     expect(isTransientError(mkResult(pattern, "", 1))).toBe(true);
@@ -214,22 +231,22 @@ describe("parseProgress", () => {
   it("parses [1/10] Initializing correctly", () => {
     const parsed = parseProgress("[1/10] Initializing");
     expect(parsed).not.toBeNull();
-    expect(parsed!.progress).toBe(3);
-    expect(parsed!.message).toBe("Initializing batch 1/10");
+    expect(parsed?.progress).toBe(3);
+    expect(parsed?.message).toBe("Initializing batch 1/10");
   });
 
   it("parses [5/10] Uploading correctly", () => {
     const parsed = parseProgress("[5/10] Uploading batch files");
     expect(parsed).not.toBeNull();
-    expect(parsed!.progress).toBe(47);
-    expect(parsed!.message).toBe("Uploading batch 5/10");
+    expect(parsed?.progress).toBe(47);
+    expect(parsed?.message).toBe("Uploading batch 5/10");
   });
 
   it("parses [10/10] Committing at 99% capped", () => {
     const parsed = parseProgress("[10/10] Committing changes");
     expect(parsed).not.toBeNull();
-    expect(parsed!.progress).toBe(99);
-    expect(parsed!.message).toBe("Committing batch 10/10");
+    expect(parsed?.progress).toBe(99);
+    expect(parsed?.message).toBe("Committing batch 10/10");
   });
 
   it("returns null for lines without batch notation", () => {
@@ -244,13 +261,13 @@ describe("parseProgress", () => {
   it("defaults to Processing phase when unknown", () => {
     const parsed = parseProgress("[2/5] Compiling assets");
     expect(parsed).not.toBeNull();
-    expect(parsed!.message).toBe("Processing batch 2/5");
+    expect(parsed?.message).toBe("Processing batch 2/5");
   });
 
   it("handles single batch [1/1]", () => {
     const parsed = parseProgress("[1/1] Uploading");
     expect(parsed).not.toBeNull();
-    expect(parsed!.progress).toBe(67);
+    expect(parsed?.progress).toBe(67);
   });
 });
 
@@ -263,7 +280,7 @@ describe("makeProgressCallback", () => {
   it("returns a function when progressToken exists", () => {
     const cb = makeProgressCallback({
       _meta: { progressToken: "abc123" },
-      sendNotification: vi.fn().mockResolvedValue(undefined)
+      sendNotification: vi.fn().mockResolvedValue(undefined),
     });
     expect(typeof cb).toBe("function");
   });
@@ -272,10 +289,10 @@ describe("makeProgressCallback", () => {
     const sendNotification = vi.fn().mockResolvedValue(undefined);
     const cb = makeProgressCallback({
       _meta: { progressToken: 42 },
-      sendNotification
+      sendNotification,
     });
 
-    cb!(50, "Uploading");
+    cb?.(50, "Uploading");
     await new Promise((r) => setTimeout(r, 10));
 
     expect(sendNotification).toHaveBeenCalledWith({
@@ -284,31 +301,31 @@ describe("makeProgressCallback", () => {
         progressToken: 42,
         progress: 50,
         total: 100,
-        message: "Uploading"
-      }
+        message: "Uploading",
+      },
     });
   });
 
-  it("swallows sendNotification rejection", async () => {
+  it("swallows sendNotification rejection", () => {
     const sendNotification = vi.fn().mockRejectedValue(new Error("boom"));
     const cb = makeProgressCallback({
       _meta: { progressToken: "x" },
-      sendNotification
+      sendNotification,
     });
 
-    expect(() => cb!(10, "test")).not.toThrow();
+    expect(() => cb?.(10, "test")).not.toThrow();
   });
 });
 
 describe("execCommandNonInteractive", () => {
   it("runs a simple command successfully", async () => {
-    const result = await execCommandNonInteractive("echo", ["hello"], 5_000);
+    const result = await execCommandNonInteractive("echo", ["hello"], 5000);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("hello");
   });
 
   it("respects timeout and kills process", async () => {
-    const result = await execCommandNonInteractive("sleep", ["10"], 1_000);
+    const result = await execCommandNonInteractive("sleep", ["10"], 1000);
     expect(result.exitCode).not.toBe(0);
   });
 
@@ -316,7 +333,7 @@ describe("execCommandNonInteractive", () => {
     const testDir = join(tmpdir(), `juno-test-cwd-${randomUUID()}`);
     mkdirSync(testDir, { recursive: true });
     try {
-      const result = await execCommandNonInteractive("pwd", [], 5_000, testDir);
+      const result = await execCommandNonInteractive("pwd", [], 5000, testDir);
       expect(result.exitCode).toBe(0);
       expect(result.stdout.trim()).toBe(testDir);
     } finally {
@@ -325,7 +342,13 @@ describe("execCommandNonInteractive", () => {
   });
 
   it("pipes stdin answers to interactive command", async () => {
-    const result = await execCommandNonInteractive("cat", [], 10_000, undefined, ["hello"]);
+    const result = await execCommandNonInteractive(
+      "cat",
+      [],
+      10_000,
+      undefined,
+      ["hello"]
+    );
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("hello");
   });
@@ -360,13 +383,13 @@ describe("execCli + execWithRetry + execWithStreaming", () => {
   });
 
   it("execCli falls back to npx when juno is not found", async () => {
-    const result = await execCli("version", [], undefined, 5_000);
+    const result = await execCli("version", [], undefined, 5000);
     expect(result).toHaveProperty("exitCode");
     expect(typeof result.exitCode).toBe("number");
   });
 
   it("execWithRetry returns a CliResult for Juno CLI commands", async () => {
-    const result = await execWithRetry("version", [], undefined, 5_000, 0);
+    const result = await execWithRetry("version", [], undefined, 5000, 0);
     expect(result).toHaveProperty("exitCode");
     expect(typeof result.exitCode).toBe("number");
     expect(result).toHaveProperty("stdout");
@@ -375,7 +398,7 @@ describe("execCli + execWithRetry + execWithStreaming", () => {
 
   it("execWithRetry does not invoke backoff for non-transient errors", async () => {
     const spy = vi.spyOn(global, "setTimeout");
-    const result = await execWithRetry("version", [], undefined, 5_000, 0, 10);
+    const result = await execWithRetry("version", [], undefined, 5000, 0, 10);
     expect(typeof result.exitCode).toBe("number");
     spy.mockRestore();
   });
@@ -396,7 +419,13 @@ describe("execCli + execWithRetry + execWithStreaming", () => {
       progressCalls.push({ progress, message });
     };
 
-    const result = await execWithStreaming("version", [], undefined, 5_000, onProgress);
+    const result = await execWithStreaming(
+      "version",
+      [],
+      undefined,
+      5000,
+      onProgress
+    );
     expect(result).toHaveProperty("exitCode");
     expect(typeof result.exitCode).toBe("number");
     expect(result).toHaveProperty("stdout");

@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { versionSchema, runScriptSchema, statusSchema } from "../../src/schemas/identity.js";
+import { describe, expect, it } from "vitest";
+import {
+  runScriptSchema,
+  statusSchema,
+  versionSchema,
+} from "../../src/schemas/identity.js";
 
 describe("versionSchema", () => {
   it("accepts empty object", () => {
@@ -23,7 +27,7 @@ describe("runScriptSchema", () => {
       src: "test.js",
       mode: "development",
       profile: "dev",
-      containerUrl: "https://container.example.com"
+      containerUrl: "https://container.example.com",
     });
     expect(result.src).toBe("test.js");
     expect(result.mode).toBe("development");
@@ -52,14 +56,16 @@ describe("statusSchema", () => {
   });
 
   it("accepts consoleUrl", () => {
-    const result = statusSchema.parse({ consoleUrl: "https://console.example.com" });
+    const result = statusSchema.parse({
+      consoleUrl: "https://console.example.com",
+    });
     expect(result.consoleUrl).toBe("https://console.example.com");
   });
 
   it("accepts both urls", () => {
     const result = statusSchema.parse({
       containerUrl: "https://container.example.com",
-      consoleUrl: "https://console.example.com"
+      consoleUrl: "https://console.example.com",
     });
     expect(result.containerUrl).toBe("https://container.example.com");
     expect(result.consoleUrl).toBe("https://console.example.com");

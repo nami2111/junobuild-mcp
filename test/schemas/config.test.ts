@@ -1,5 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { configInitSchema, configApplySchema } from "../../src/schemas/config.js";
+import { describe, expect, it } from "vitest";
+import {
+  configApplySchema,
+  configInitSchema,
+} from "../../src/schemas/config.js";
 import { createProjectSchema } from "../../src/schemas/project.js";
 
 describe("configInitSchema", () => {
@@ -21,7 +24,7 @@ describe("configInitSchema", () => {
       stagingSatelliteId: "staging-id",
       orbiterId: "orbiter-1",
       writeFile: true,
-      path: "juno.config.json"
+      path: "juno.config.json",
     });
     expect(result.format).toBe("json");
     expect(result.source).toBe("build");
@@ -71,7 +74,7 @@ describe("configApplySchema", () => {
     const result = configApplySchema.parse({
       mode: "development",
       containerUrl: "https://container.example.com",
-      consoleUrl: "https://console.example.com"
+      consoleUrl: "https://console.example.com",
     });
     expect(result.mode).toBe("development");
     expect(result.containerUrl).toBe("https://container.example.com");
@@ -94,7 +97,7 @@ describe("createProjectSchema", () => {
     const result = createProjectSchema.parse({
       directory: "my-app",
       template: "sveltekit-starter",
-      packageManager: "pnpm"
+      packageManager: "pnpm",
     });
     expect(result.directory).toBe("my-app");
     expect(result.template).toBe("sveltekit-starter");
@@ -106,6 +109,8 @@ describe("createProjectSchema", () => {
   });
 
   it("rejects invalid package manager", () => {
-    expect(() => createProjectSchema.parse({ directory: "a", packageManager: "bun" })).toThrow();
+    expect(() =>
+      createProjectSchema.parse({ directory: "a", packageManager: "bun" })
+    ).toThrow();
   });
 });

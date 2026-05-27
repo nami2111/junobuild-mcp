@@ -13,7 +13,8 @@ export const TOPICS = {
   build_authentication: "/build/authentication/index.md",
   build_authentication_google: "/build/authentication/google.mdx",
   build_authentication_github: "/build/authentication/github.mdx",
-  build_authentication_internet_identity: "/build/authentication/internet-identity.md",
+  build_authentication_internet_identity:
+    "/build/authentication/internet-identity.md",
   build_authentication_passkeys: "/build/authentication/passkeys.md",
   build_authentication_management: "/build/authentication/management.md",
   build_authentication_utilities: "/build/authentication/utilities.md",
@@ -34,7 +35,8 @@ export const TOPICS = {
   build_functions: "/build/functions/index.md",
   build_functions_development: "/build/functions/development/index.mdx",
   build_functions_development_rust: "/build/functions/development/rust.mdx",
-  build_functions_development_typescript: "/build/functions/development/typescript.mdx",
+  build_functions_development_typescript:
+    "/build/functions/development/typescript.mdx",
   build_functions_lifecycle: "/build/functions/lifecycle.md",
   build_functions_logs: "/build/functions/logs.md",
 
@@ -43,7 +45,8 @@ export const TOPICS = {
   build_analytics_development: "/build/analytics/development.md",
 
   build_components_analytics: "/build/components/analytics.mdx",
-  build_components_apply_configuration: "/build/components/apply_configuration.mdx",
+  build_components_apply_configuration:
+    "/build/components/apply_configuration.mdx",
   build_components_assertions: "/build/components/assertions.mdx",
   build_components_certified_reads: "/build/components/certified-reads.md",
   build_components_client_side: "/build/components/client-side.mdx",
@@ -103,13 +106,18 @@ export const TOPICS = {
   reference_functions_rust: "/reference/functions/rust/ic-cdk.mdx",
   reference_functions_rust_sdk: "/reference/functions/rust/sdk.mdx",
   reference_functions_rust_utils: "/reference/functions/rust/utils.mdx",
-  reference_functions_rust_crate_versions: "/reference/functions/rust/crate-versions.md",
+  reference_functions_rust_crate_versions:
+    "/reference/functions/rust/crate-versions.md",
   reference_functions_typescript: "/reference/functions/typescript/ic-cdk.mdx",
   reference_functions_typescript_sdk: "/reference/functions/typescript/sdk.mdx",
-  reference_functions_typescript_utils: "/reference/functions/typescript/utils.mdx",
-  reference_functions_typescript_canisters: "/reference/functions/typescript/canisters.mdx",
-  reference_functions_typescript_schema: "/reference/functions/typescript/schema.md",
-  reference_functions_typescript_node: "/reference/functions/typescript/node.md",
+  reference_functions_typescript_utils:
+    "/reference/functions/typescript/utils.mdx",
+  reference_functions_typescript_canisters:
+    "/reference/functions/typescript/canisters.mdx",
+  reference_functions_typescript_schema:
+    "/reference/functions/typescript/schema.md",
+  reference_functions_typescript_node:
+    "/reference/functions/typescript/node.md",
 
   reference_configuration: "/reference/configuration.mdx",
   reference_settings: "/reference/settings.md",
@@ -123,9 +131,12 @@ export const TOPICS = {
   guides_nodejs: "/guides/nodejs.mdx",
   guides_rust: "/guides/rust.mdx",
   guides_github_actions: "/guides/github-actions/index.mdx",
-  guides_github_actions_deploy_frontend: "/guides/github-actions/deploy-frontend.mdx",
-  guides_github_actions_publish_functions: "/guides/github-actions/publish-functions.mdx",
-  guides_github_actions_upgrade_functions: "/guides/github-actions/upgrade-functions.mdx",
+  guides_github_actions_deploy_frontend:
+    "/guides/github-actions/deploy-frontend.mdx",
+  guides_github_actions_publish_functions:
+    "/guides/github-actions/publish-functions.mdx",
+  guides_github_actions_upgrade_functions:
+    "/guides/github-actions/upgrade-functions.mdx",
   guides_react: "/guides/react/build.mdx",
   guides_react_deploy: "/guides/react/deploy.mdx",
   guides_nextjs: "/guides/nextjs/build.mdx",
@@ -169,14 +180,20 @@ export const TOPICS = {
   examples_frontend_angular: "/examples/frontend/angular.mdx",
   examples_frontend_sveltekit: "/examples/frontend/sveltekit.mdx",
   examples_frontend_vue: "/examples/frontend/vue.mdx",
-  examples_frontend_vanilla_javascript: "/examples/frontend/vanilla-javascript.mdx",
+  examples_frontend_vanilla_javascript:
+    "/examples/frontend/vanilla-javascript.mdx",
   examples_functions_rust: "/examples/functions/rust/assertion.mdx",
-  examples_functions_rust_canister_calls: "/examples/functions/rust/canister-calls.mdx",
-  examples_functions_rust_generating_assets: "/examples/functions/rust/generating-assets.mdx",
-  examples_functions_rust_mutating_docs: "/examples/functions/rust/mutating-docs.mdx",
+  examples_functions_rust_canister_calls:
+    "/examples/functions/rust/canister-calls.mdx",
+  examples_functions_rust_generating_assets:
+    "/examples/functions/rust/generating-assets.mdx",
+  examples_functions_rust_mutating_docs:
+    "/examples/functions/rust/mutating-docs.mdx",
   examples_functions_typescript: "/examples/functions/typescript/assertion.mdx",
-  examples_functions_typescript_canister_calls: "/examples/functions/typescript/canister-calls.mdx",
-  examples_functions_typescript_mutating_docs: "/examples/functions/typescript/mutating-docs.mdx"
+  examples_functions_typescript_canister_calls:
+    "/examples/functions/typescript/canister-calls.mdx",
+  examples_functions_typescript_mutating_docs:
+    "/examples/functions/typescript/mutating-docs.mdx",
 } as const;
 
 export type TopicKey = keyof typeof TOPICS;
@@ -187,6 +204,6 @@ export const junoDocsSchema = z
       .enum(Object.keys(TOPICS) as [TopicKey, ...TopicKey[]])
       .describe(
         "Documentation topic to retrieve. Full Juno docs from GitHub repo: https://github.com/junobuild/docs/tree/main/docs"
-      )
+      ),
   })
   .strict();

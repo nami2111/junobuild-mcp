@@ -1,9 +1,14 @@
-import { describe, it, expect } from "vitest";
-import { CHARACTER_LIMIT, DEFAULT_TIMEOUT, NETWORK_TIMEOUT, CLI_PACKAGE } from "../../src/constants.js";
+import { describe, expect, it } from "vitest";
+import {
+  CHARACTER_LIMIT,
+  CLI_PACKAGE,
+  DEFAULT_TIMEOUT,
+  NETWORK_TIMEOUT,
+} from "../../src/constants.js";
 
 describe("constants", () => {
   it("CHARACTER_LIMIT is 25000", () => {
-    expect(CHARACTER_LIMIT).toBe(25000);
+    expect(CHARACTER_LIMIT).toBe(25_000);
   });
 
   it("DEFAULT_TIMEOUT is 120000", () => {

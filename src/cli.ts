@@ -1,12 +1,7 @@
 import { exec } from "node:child_process";
-import { CLI_PACKAGE, DEFAULT_TIMEOUT, CHARACTER_LIMIT } from "./constants.js";
-import {
-  runProcess,
-  isTransientError,
-  stripAnsi,
-  sleep,
-  type ProgressCallback
-} from "./executor.js";
+import { CHARACTER_LIMIT, CLI_PACKAGE, DEFAULT_TIMEOUT } from "./constants.js";
+import type { ProgressCallback } from "./executor.js";
+import { isTransientError, runProcess, sleep, stripAnsi } from "./executor.js";
 import { buildJunoContextArgs } from "./juno-context.js";
 import type { CliResult, GlobalFlags } from "./types.js";
 
@@ -17,7 +12,9 @@ export function buildFlagArgs(flags?: GlobalFlags): string[] {
 let cachedCliPath: string | null = null;
 
 async function resolveCliPath(): Promise<string> {
-  if (cachedCliPath) return cachedCliPath;
+  if (cachedCliPath) {
+    return cachedCliPath;
+  }
 
   try {
     const result = await new Promise<string>((resolve, reject) => {
@@ -62,18 +59,22 @@ export async function execCli(
   return runProcess(cliCmd, allArgs, timeout);
 }
 
-export async function execCommand(
+export function execCommand(
   cmd: string,
   timeout: number = DEFAULT_TIMEOUT
 ): Promise<CliResult> {
   return new Promise<CliResult>((resolve) => {
-    exec(cmd, { timeout, maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
-      resolve({
-        stdout: stripAnsi(stdout ?? ""),
-        stderr: stripAnsi(stderr ?? ""),
-        exitCode: error ? 1 : 0
-      });
-    });
+    exec(
+      cmd,
+      { timeout, maxBuffer: 10 * 1024 * 1024 },
+      (error, stdout, stderr) => {
+        resolve({
+          stdout: stripAnsi(stdout ?? ""),
+          stderr: stripAnsi(stderr ?? ""),
+          exitCode: error ? 1 : 0,
+        });
+      }
+    );
   });
 }
 
@@ -82,14 +83,14 @@ export async function execWithRetry(
   args: string[] = [],
   flags?: GlobalFlags,
   timeout: number = DEFAULT_TIMEOUT,
-  maxRetries: number = 3,
-  baseDelay: number = 1000
+  maxRetries = 3,
+  baseDelay = 1000
 ): Promise<CliResult> {
   let lastResult: CliResult | null = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0) {
-      const delay = baseDelay * Math.pow(2, attempt - 1);
+      const delay = baseDelay * 2 ** (attempt - 1);
       await sleep(delay);
     }
 
@@ -100,7 +101,7 @@ export async function execWithRetry(
     }
   }
 
-  return lastResult!;
+  return lastResult ?? { stdout: "", stderr: "", exitCode: 1 };
 }
 
 export async function execWithStreaming(
@@ -116,21 +117,25 @@ export async function execWithStreaming(
   return runProcess(cliCmd, allArgs, timeout, { onProgress });
 }
 
-export type { ProgressCallback };
-
-export function makeProgressCallback(extra: unknown): ProgressCallback | undefined {
+export function makeProgressCallback(
+  extra: unknown
+): ProgressCallback | undefined {
   const e = extra as {
     _meta?: Record<string, unknown>;
     sendNotification: (n: unknown) => Promise<void>;
   };
   const token = e._meta?.progressToken as string | number | undefined;
-  if (!token) return undefined;
+  if (!token) {
+    return;
+  }
 
   return (progress: number, message: string) => {
     e.sendNotification({
       method: "notifications/progress",
-      params: { progressToken: token, progress, total: 100, message }
-    }).catch(() => {});
+      params: { progressToken: token, progress, total: 100, message },
+    }).catch(() => {
+      // Intentionally consumed - fire-and-forget notification
+    });
   };
 }
 
@@ -139,27 +144,35 @@ export function formatResponse(
   label?: string
 ): { text: string; isError: boolean } {
   const parts: string[] = [];
-  if (label) parts.push(`## ${label}\n`);
+  if (label) {
+    parts.push(`## ${label}\n`);
+  }
 
   const stdout = stripAnsi(result.stdout).trim();
   const stderr = stripAnsi(result.stderr).trim();
 
-  if (result.exitCode !== 0) {
+  if (result.exitCode === 0) {
+    if (stdout) {
+      parts.push(stdout);
+    }
+    if (stderr) {
+      parts.push(`\n**Warnings:**\n${stderr}`);
+    }
+  } else {
     parts.push(`**Error (exit code ${result.exitCode})**`);
     if (stderr) {
       parts.push(stderr);
     } else if (stdout) {
       parts.push(stdout);
     }
-  } else {
-    if (stdout) parts.push(stdout);
-    if (stderr) parts.push(`\n**Warnings:**\n${stderr}`);
   }
 
   const text = parts.join("\n");
   return {
     text:
-      text.length > CHARACTER_LIMIT ? text.slice(0, CHARACTER_LIMIT) + "\n...(truncated)" : text,
-    isError: result.exitCode !== 0
+      text.length > CHARACTER_LIMIT
+        ? `${text.slice(0, CHARACTER_LIMIT)}\n...(truncated)`
+        : text,
+    isError: result.exitCode !== 0,
   };
 }

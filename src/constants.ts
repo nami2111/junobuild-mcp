@@ -1,4 +1,4 @@
-export const CHARACTER_LIMIT = 25000;
+export const CHARACTER_LIMIT = 25_000;
 
 export const DEFAULT_TIMEOUT = 120_000;
 export const NETWORK_TIMEOUT = 300_000;

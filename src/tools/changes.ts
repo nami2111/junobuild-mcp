@@ -1,16 +1,30 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   buildChangeApplyArgs as buildWorkflowChangeApplyArgs,
-  buildChangeRejectArgs as buildWorkflowChangeRejectArgs
+  buildChangeRejectArgs as buildWorkflowChangeRejectArgs,
 } from "../change-workflow.js";
-import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
+import {
+  type RegisteredJunoTool,
+  registerJunoTools,
+} from "../registered-tool.js";
+import {
+  changesApplySchema,
+  changesListSchema,
+  changesRejectSchema,
+} from "../schemas/changes.js";
 import { makeToolHandler } from "../tool-handler.js";
-import { changesListSchema, changesApplySchema, changesRejectSchema } from "../schemas/changes.js";
 
-export function buildChangesListArgs(params: { all?: boolean; every?: boolean }): string[] {
+export function buildChangesListArgs(params: {
+  all?: boolean;
+  every?: boolean;
+}): string[] {
   const args: string[] = [];
-  if (params.all) args.push("-a");
-  if (params.every) args.push("-e");
+  if (params.all) {
+    args.push("-a");
+  }
+  if (params.every) {
+    args.push("-e");
+  }
   return args;
 }
 
@@ -35,7 +49,8 @@ export const handleChangesList = makeToolHandler({
   command: "changes",
   subcommand: "list",
   label: "Changes List",
-  argsFromParams: (p) => buildChangesListArgs(p as { all?: boolean; every?: boolean })
+  argsFromParams: (p) =>
+    buildChangesListArgs(p as { all?: boolean; every?: boolean }),
 });
 
 export const handleChangesApply = makeToolHandler({
@@ -44,8 +59,13 @@ export const handleChangesApply = makeToolHandler({
   label: "Changes Apply",
   argsFromParams: (p) =>
     buildChangesApplyArgs(
-      p as { id: string; snapshot?: boolean; hash?: string; keepStaged?: boolean }
-    )
+      p as {
+        id: string;
+        snapshot?: boolean;
+        hash?: string;
+        keepStaged?: boolean;
+      }
+    ),
 });
 
 export const handleChangesReject = makeToolHandler({
@@ -53,7 +73,9 @@ export const handleChangesReject = makeToolHandler({
   subcommand: "reject",
   label: "Changes Reject",
   argsFromParams: (p) =>
-    buildChangesRejectArgs(p as { id: string; hash?: string; keepStaged?: boolean })
+    buildChangesRejectArgs(
+      p as { id: string; hash?: string; keepStaged?: boolean }
+    ),
 });
 
 export const changesTools: readonly RegisteredJunoTool[] = [
@@ -67,9 +89,9 @@ export const changesTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: true,
       destructiveHint: false,
       idempotentHint: true,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleChangesList
+    handler: handleChangesList,
   },
   {
     name: "juno_changes_apply",
@@ -81,9 +103,9 @@ export const changesTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleChangesApply
+    handler: handleChangesApply,
   },
   {
     name: "juno_changes_reject",
@@ -95,10 +117,10 @@ export const changesTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: true,
       idempotentHint: false,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleChangesReject
-  }
+    handler: handleChangesReject,
+  },
 ];
 
 export function registerChangesTools(server: McpServer): void {

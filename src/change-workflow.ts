@@ -1,6 +1,6 @@
 export interface ChangeSubmissionParams {
-  noApply?: boolean;
   keepStaged?: boolean;
+  noApply?: boolean;
 }
 
 export interface InstantChangeParams extends ChangeSubmissionParams {
@@ -8,8 +8,8 @@ export interface InstantChangeParams extends ChangeSubmissionParams {
 }
 
 export interface ChangeTargetParams {
-  id: string;
   hash?: string;
+  id: string;
   keepStaged?: boolean;
 }
 
@@ -17,23 +17,33 @@ export interface ChangeApplyParams extends ChangeTargetParams {
   snapshot?: boolean;
 }
 
-export function buildChangeSubmissionArgs(params: ChangeSubmissionParams): string[] {
+export function buildChangeSubmissionArgs(
+  params: ChangeSubmissionParams
+): string[] {
   const args: string[] = [];
-  if (params.noApply) args.push("--no-apply");
-  if (params.keepStaged && !params.noApply) args.push("-k");
+  if (params.noApply) {
+    args.push("--no-apply");
+  }
+  if (params.keepStaged && !params.noApply) {
+    args.push("-k");
+  }
   return args;
 }
 
 export function buildInstantChangeArgs(params: InstantChangeParams): string[] {
   const args: string[] = [];
-  if (params.immediate) args.push("-i");
+  if (params.immediate) {
+    args.push("-i");
+  }
   args.push(...buildChangeSubmissionArgs(params));
   return args;
 }
 
 export function buildChangeApplyArgs(params: ChangeApplyParams): string[] {
   const args = ["-i", params.id];
-  if (params.snapshot) args.push("--snapshot");
+  if (params.snapshot) {
+    args.push("--snapshot");
+  }
   args.push(...buildChangeVerificationArgs(params));
   return args;
 }
@@ -46,7 +56,11 @@ export function buildChangeRejectArgs(params: ChangeTargetParams): string[] {
 
 function buildChangeVerificationArgs(params: ChangeTargetParams): string[] {
   const args: string[] = [];
-  if (params.hash) args.push("--hash", params.hash);
-  if (params.keepStaged) args.push("-k");
+  if (params.hash) {
+    args.push("--hash", params.hash);
+  }
+  if (params.keepStaged) {
+    args.push("-k");
+  }
   return args;
 }

@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  buildHostingDeployArgs,
   buildHostingClearArgs,
-  buildHostingPruneArgs
+  buildHostingDeployArgs,
+  buildHostingPruneArgs,
 } from "../../src/tools/hosting.js";
 
 describe("buildHostingDeployArgs", () => {
@@ -53,7 +53,11 @@ describe("buildHostingDeployArgs", () => {
   });
 
   it("does not add -k when noApply is true", () => {
-    const args = buildHostingDeployArgs({ batch: 50, noApply: true, keepStaged: true });
+    const args = buildHostingDeployArgs({
+      batch: 50,
+      noApply: true,
+      keepStaged: true,
+    });
     expect(args).toEqual(["--batch", "50", "--no-apply"]);
   });
 
@@ -64,15 +68,16 @@ describe("buildHostingDeployArgs", () => {
       prune: true,
       immediate: true,
       keepStaged: true,
-      config: true
+      config: true,
     });
     expect(args).toEqual([
-      "--batch", "10",
+      "--batch",
+      "10",
       "--clear",
       "--prune",
       "-i",
       "-k",
-      "--config"
+      "--config",
     ]);
   });
 
@@ -93,7 +98,10 @@ describe("buildHostingClearArgs", () => {
   });
 
   it("adds -f with fullPath", () => {
-    expect(buildHostingClearArgs({ fullPath: "/index.html" })).toEqual(["-f", "/index.html"]);
+    expect(buildHostingClearArgs({ fullPath: "/index.html" })).toEqual([
+      "-f",
+      "/index.html",
+    ]);
   });
 });
 

@@ -1,16 +1,31 @@
-import { describe, it, expect, vi } from "vitest";
-import { handleHostingDeploy, handleHostingClear, handleHostingPrune } from "../../src/tools/hosting.js";
+import { describe, expect, it, vi } from "vitest";
 import { NETWORK_TIMEOUT } from "../../src/constants.js";
+import {
+  handleHostingClear,
+  handleHostingDeploy,
+  handleHostingPrune,
+} from "../../src/tools/hosting.js";
 
 vi.mock("../../src/cli.js", () => ({
   execCli: vi.fn().mockResolvedValue({ stdout: "ok", stderr: "", exitCode: 0 }),
-  execWithRetry: vi.fn().mockResolvedValue({ stdout: "retry ok", stderr: "", exitCode: 0 }),
-  execWithStreaming: vi.fn().mockResolvedValue({ stdout: "stream ok", stderr: "", exitCode: 0 }),
+  execWithRetry: vi
+    .fn()
+    .mockResolvedValue({ stdout: "retry ok", stderr: "", exitCode: 0 }),
+  execWithStreaming: vi
+    .fn()
+    .mockResolvedValue({ stdout: "stream ok", stderr: "", exitCode: 0 }),
   formatResponse: vi.fn().mockReturnValue({ text: "ok", isError: false }),
-  makeProgressCallback: vi.fn().mockReturnValue(vi.fn())
+  makeProgressCallback: vi.fn().mockReturnValue(vi.fn()),
 }));
 
-import { execCli, execWithRetry, execWithStreaming, formatResponse, makeProgressCallback } from "../../src/cli.js";
+import {
+  execCli,
+  execWithRetry,
+  execWithStreaming,
+  formatResponse,
+  makeProgressCallback,
+} from "../../src/cli.js";
+
 const mockExecCli = vi.mocked(execCli);
 const mockExecWithRetry = vi.mocked(execWithRetry);
 const mockExecWithStreaming = vi.mocked(execWithStreaming);
@@ -20,8 +35,10 @@ describe("handleHostingDeploy", () => {
   it("calls execCli by default", async () => {
     await handleHostingDeploy({ batch: 50 });
     expect(mockExecCli).toHaveBeenCalledWith(
-      "hosting", ["deploy", "--batch", "50"],
-      {}, NETWORK_TIMEOUT
+      "hosting",
+      ["deploy", "--batch", "50"],
+      {},
+      NETWORK_TIMEOUT
     );
     expect(mockFormatResponse).toHaveBeenCalledWith(
       { stdout: "ok", stderr: "", exitCode: 0 },
@@ -30,10 +47,15 @@ describe("handleHostingDeploy", () => {
   });
 
   it("calls execWithStreaming when progress is true", async () => {
-    await handleHostingDeploy({ batch: 50, progress: true }, { _meta: { progressToken: "x" } });
+    await handleHostingDeploy(
+      { batch: 50, progress: true },
+      { _meta: { progressToken: "x" } }
+    );
     expect(mockExecWithStreaming).toHaveBeenCalledWith(
-      "hosting", ["deploy", "--batch", "50"],
-      {}, NETWORK_TIMEOUT,
+      "hosting",
+      ["deploy", "--batch", "50"],
+      {},
+      NETWORK_TIMEOUT,
       expect.any(Function)
     );
     expect(makeProgressCallback).toHaveBeenCalled();
@@ -42,8 +64,10 @@ describe("handleHostingDeploy", () => {
   it("calls execWithRetry when retry is true", async () => {
     await handleHostingDeploy({ batch: 50, retry: true });
     expect(mockExecWithRetry).toHaveBeenCalledWith(
-      "hosting", ["deploy", "--batch", "50"],
-      {}, NETWORK_TIMEOUT
+      "hosting",
+      ["deploy", "--batch", "50"],
+      {},
+      NETWORK_TIMEOUT
     );
   });
 
@@ -55,11 +79,20 @@ describe("handleHostingDeploy", () => {
       immediate: true,
       keepStaged: true,
       noApply: true,
-      config: true
+      config: true,
     });
     expect(mockExecCli).toHaveBeenCalledWith(
       "hosting",
-      ["deploy", "--batch", "10", "--clear", "--prune", "-i", "--no-apply", "--config"],
+      [
+        "deploy",
+        "--batch",
+        "10",
+        "--clear",
+        "--prune",
+        "-i",
+        "--no-apply",
+        "--config",
+      ],
       {},
       NETWORK_TIMEOUT
     );
@@ -71,15 +104,16 @@ describe("handleHostingDeploy", () => {
       mode: "production",
       profile: "main",
       containerUrl: "https://container.example.com",
-      consoleUrl: "https://console.example.com"
+      consoleUrl: "https://console.example.com",
     });
     expect(mockExecCli).toHaveBeenCalledWith(
-      "hosting", ["deploy", "--batch", "50"],
+      "hosting",
+      ["deploy", "--batch", "50"],
       {
         mode: "production",
         profile: "main",
         containerUrl: "https://container.example.com",
-        consoleUrl: "https://console.example.com"
+        consoleUrl: "https://console.example.com",
       },
       NETWORK_TIMEOUT
     );
@@ -90,15 +124,20 @@ describe("handleHostingClear", () => {
   it("calls execCli with hosting clear", async () => {
     await handleHostingClear({ fullPath: "/index.html" });
     expect(mockExecCli).toHaveBeenCalledWith(
-      "hosting", ["clear", "-f", "/index.html"],
-      {}, NETWORK_TIMEOUT
+      "hosting",
+      ["clear", "-f", "/index.html"],
+      {},
+      NETWORK_TIMEOUT
     );
   });
 
   it("works without fullPath", async () => {
     await handleHostingClear({});
     expect(mockExecCli).toHaveBeenCalledWith(
-      "hosting", ["clear"], {}, NETWORK_TIMEOUT
+      "hosting",
+      ["clear"],
+      {},
+      NETWORK_TIMEOUT
     );
   });
 });
@@ -107,16 +146,20 @@ describe("handleHostingPrune", () => {
   it("calls execCli with hosting prune", async () => {
     await handleHostingPrune({ batch: 100 });
     expect(mockExecCli).toHaveBeenCalledWith(
-      "hosting", ["prune", "--batch", "100"],
-      {}, NETWORK_TIMEOUT
+      "hosting",
+      ["prune", "--batch", "100"],
+      {},
+      NETWORK_TIMEOUT
     );
   });
 
   it("passes dry-run flag", async () => {
     await handleHostingPrune({ batch: 50, dryRun: true });
     expect(mockExecCli).toHaveBeenCalledWith(
-      "hosting", ["prune", "--batch", "50", "--dry-run"],
-      {}, NETWORK_TIMEOUT
+      "hosting",
+      ["prune", "--batch", "50", "--dry-run"],
+      {},
+      NETWORK_TIMEOUT
     );
   });
 });

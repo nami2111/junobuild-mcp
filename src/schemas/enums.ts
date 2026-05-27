@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-export const FunctionLanguageEnum = z.enum(["rust", "rs", "typescript", "ts", "javascript", "mjs"]);
+export const FunctionLanguageEnum = z.enum([
+  "rust",
+  "rs",
+  "typescript",
+  "ts",
+  "javascript",
+  "mjs",
+]);
 
 export const PackageManagerEnum = z.enum(["npm", "yarn", "pnpm"]);
 

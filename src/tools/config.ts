@@ -2,19 +2,22 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { environmentContext } from "../juno-context.js";
-import { registerJunoTools, type RegisteredJunoTool } from "../registered-tool.js";
+import {
+  type RegisteredJunoTool,
+  registerJunoTools,
+} from "../registered-tool.js";
+import { configApplySchema, configInitSchema } from "../schemas/config.js";
 import { makeToolHandler } from "../tool-handler.js";
-import { configInitSchema, configApplySchema } from "../schemas/config.js";
 
 export interface ConfigInitParams {
   format: "typescript" | "javascript" | "json";
-  source: string;
-  satelliteId: string;
   multiEnv: boolean;
-  stagingSatelliteId?: string;
   orbiterId?: string;
-  writeFile: boolean;
   path?: string;
+  satelliteId: string;
+  source: string;
+  stagingSatelliteId?: string;
+  writeFile: boolean;
 }
 
 export function buildConfigOptionsSnippet(params: ConfigInitParams): string {
@@ -31,8 +34,9 @@ export function buildConfigOptionsSnippet(params: ConfigInitParams): string {
     source: "${params.source}"
   }`;
 
-  const orbiterBlock = params.orbiterId
-    ? params.multiEnv
+  let orbiterBlock: string | null = null;
+  if (params.orbiterId) {
+    orbiterBlock = params.multiEnv
       ? `  orbiter: {
     ids: {
       production: "${params.orbiterId}"
@@ -40,11 +44,13 @@ export function buildConfigOptionsSnippet(params: ConfigInitParams): string {
   }`
       : `  orbiter: {
     id: "${params.orbiterId}"
-  }`
-    : null;
+  }`;
+  }
 
   const parts = [satelliteBlock];
-  if (orbiterBlock) parts.push(orbiterBlock);
+  if (orbiterBlock) {
+    parts.push(orbiterBlock);
+  }
 
   return parts.join(",\n");
 }
@@ -72,14 +78,14 @@ export function generateJsonConfig(params: ConfigInitParams): string {
     config.satellite = {
       ids: {
         production: params.satelliteId,
-        staging: params.stagingSatelliteId ?? "bbbbb-ccccc-ddddd-eeeee-cai"
+        staging: params.stagingSatelliteId ?? "bbbbb-ccccc-ddddd-eeeee-cai",
       },
-      source: params.source
+      source: params.source,
     };
   } else {
     config.satellite = {
       id: params.satelliteId,
-      source: params.source
+      source: params.source,
     };
   }
 
@@ -99,17 +105,29 @@ function generateConfigContent(params: ConfigInitParams): {
 } {
   switch (params.format) {
     case "typescript":
-      return { content: generateTypeScriptConfig(params), ext: "ts", lang: "typescript" };
+      return {
+        content: generateTypeScriptConfig(params),
+        ext: "ts",
+        lang: "typescript",
+      };
     case "javascript":
-      return { content: generateJavaScriptConfig(params), ext: "js", lang: "javascript" };
+      return {
+        content: generateJavaScriptConfig(params),
+        ext: "js",
+        lang: "javascript",
+      };
     case "json":
       return { content: generateJsonConfig(params), ext: "json", lang: "json" };
+    default:
+      throw new Error(`Unknown format: ${params.format satisfies never}`);
   }
 }
 
 export function buildConfigApplyArgs(params: { force?: boolean }): string[] {
   const args: string[] = [];
-  if (params.force) args.push("--force");
+  if (params.force) {
+    args.push("--force");
+  }
   return args;
 }
 
@@ -127,10 +145,10 @@ export async function handleConfigInit(
         content: [
           {
             type: "text",
-            text: "Error: Path traversal detected. The provided path must be within the project directory."
-          }
+            text: "Error: Path traversal detected. The provided path must be within the project directory.",
+          },
         ],
-        isError: true
+        isError: true,
       };
     }
 
@@ -144,9 +162,9 @@ export async function handleConfigInit(
       content: [
         {
           type: "text",
-          text: `Config written to ${filename}\n\n## Next Steps\n\n1. Replace the placeholder satellite ID (\`aaaaa-bbbbb-ccccc-ddddd-cai\`) with your actual satellite ID from [Juno Console](https://console.juno.build)\n2. Run \`juno config apply\` to apply the configuration\n3. Run \`juno hosting deploy\` to deploy your static site\n\n**Note for authenticated deployments:** Set \`JUNO_TOKEN\` env var or use \`juno login\` in a browser first, then use the MCP tool with \`mode\` and \`profile\` parameters.`
-        }
-      ]
+          text: `Config written to ${filename}\n\n## Next Steps\n\n1. Replace the placeholder satellite ID (\`aaaaa-bbbbb-ccccc-ddddd-cai\`) with your actual satellite ID from [Juno Console](https://console.juno.build)\n2. Run \`juno config apply\` to apply the configuration\n3. Run \`juno hosting deploy\` to deploy your static site\n\n**Note for authenticated deployments:** Set \`JUNO_TOKEN\` env var or use \`juno login\` in a browser first, then use the MCP tool with \`mode\` and \`profile\` parameters.`,
+        },
+      ],
     };
   }
 
@@ -160,7 +178,7 @@ export const handleConfigApply = makeToolHandler({
   subcommand: "apply",
   label: "Config Apply",
   context: environmentContext,
-  argsFromParams: (p) => buildConfigApplyArgs(p as { force?: boolean })
+  argsFromParams: (p) => buildConfigApplyArgs(p as { force?: boolean }),
 });
 
 export const configTools: readonly RegisteredJunoTool[] = [
@@ -174,10 +192,10 @@ export const configTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: true,
-      openWorldHint: false
+      openWorldHint: false,
     },
     handler: async (params: Record<string, unknown>) =>
-      handleConfigInit(params as unknown as ConfigInitParams)
+      handleConfigInit(params as unknown as ConfigInitParams),
   },
   {
     name: "juno_config_apply",
@@ -189,10 +207,10 @@ export const configTools: readonly RegisteredJunoTool[] = [
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,
-      openWorldHint: true
+      openWorldHint: true,
     },
-    handler: handleConfigApply
-  }
+    handler: handleConfigApply,
+  },
 ];
 
 export function registerConfigTools(server: McpServer): void {

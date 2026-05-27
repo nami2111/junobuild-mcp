@@ -1,9 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   functionsBuildSchema,
   functionsEjectSchema,
   functionsPublishSchema,
-  functionsUpgradeSchema
+  functionsUpgradeSchema,
 } from "../../src/schemas/functions.js";
 
 describe("functionsBuildSchema", () => {
@@ -20,7 +20,7 @@ describe("functionsBuildSchema", () => {
       lang: "rust",
       cargoPath: "./Cargo.toml",
       sourcePath: "./src/lib.rs",
-      watch: true
+      watch: true,
     });
     expect(result.lang).toBe("rust");
     expect(result.cargoPath).toBe("./Cargo.toml");
@@ -77,7 +77,7 @@ describe("functionsPublishSchema", () => {
       mode: "staging",
       profile: "test",
       containerUrl: "https://container.example.com",
-      consoleUrl: "https://console.example.com"
+      consoleUrl: "https://console.example.com",
     });
     expect(result.src).toBe("./out.wasm.gz");
     expect(result.noApply).toBe(true);
@@ -117,7 +117,7 @@ describe("functionsUpgradeSchema", () => {
       reset: true,
       retry: true,
       progress: true,
-      mode: "production"
+      mode: "production",
     });
     expect(result.src).toBe("./new.wasm.gz");
     expect(result.cdn).toBe(true);

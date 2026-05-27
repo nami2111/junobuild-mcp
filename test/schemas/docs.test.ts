@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { junoDocsSchema, TOPICS } from "../../src/schemas/docs.js";
 
 describe("junoDocsSchema", () => {
@@ -13,7 +13,9 @@ describe("junoDocsSchema", () => {
   });
 
   it("rejects invalid topic", () => {
-    expect(() => junoDocsSchema.parse({ topic: "nonexistent_topic" })).toThrow();
+    expect(() =>
+      junoDocsSchema.parse({ topic: "nonexistent_topic" })
+    ).toThrow();
   });
 
   it("rejects missing topic", () => {
@@ -21,7 +23,9 @@ describe("junoDocsSchema", () => {
   });
 
   it("rejects extra keys due to strict", () => {
-    expect(() => junoDocsSchema.parse({ topic: "intro", extra: true })).toThrow();
+    expect(() =>
+      junoDocsSchema.parse({ topic: "intro", extra: true })
+    ).toThrow();
   });
 
   it("TOPICS contains intro mapping", () => {

@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { hostingDeploySchema, hostingClearSchema, hostingPruneSchema } from "../../src/schemas/hosting.js";
+import { describe, expect, it } from "vitest";
+import {
+  hostingClearSchema,
+  hostingDeploySchema,
+  hostingPruneSchema,
+} from "../../src/schemas/hosting.js";
 
 describe("hostingDeploySchema", () => {
   it("applies defaults", () => {
@@ -25,7 +29,7 @@ describe("hostingDeploySchema", () => {
       noApply: true,
       config: true,
       retry: true,
-      progress: true
+      progress: true,
     });
     expect(result.batch).toBe(10);
     expect(result.clear).toBe(true);

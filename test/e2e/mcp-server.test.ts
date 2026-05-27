@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createTestClient, createTestDir } from "../test-utils.js";
-import { join } from "node:path";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { join } from "node:path";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createTestClient, createTestDir } from "../test-utils.js";
 
 describe.runIf(process.env.JUNO_E2E)("MCP Server E2E", () => {
   let clientWrapper: Awaited<ReturnType<typeof createTestClient>>;
@@ -39,8 +39,8 @@ describe.runIf(process.env.JUNO_E2E)("MCP Server E2E", () => {
       arguments: {
         directory: "my-juno-app",
         template: "react-ts-starter",
-        packageManager: "npm"
-      }
+        packageManager: "npm",
+      },
     });
 
     expect(result.isError).not.toBe(true);

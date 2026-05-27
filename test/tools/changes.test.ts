@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  buildChangesListArgs,
   buildChangesApplyArgs,
-  buildChangesRejectArgs
+  buildChangesListArgs,
+  buildChangesRejectArgs,
 } from "../../src/tools/changes.js";
 
 describe("buildChangesListArgs", () => {
@@ -19,7 +19,10 @@ describe("buildChangesListArgs", () => {
   });
 
   it("adds both flags", () => {
-    expect(buildChangesListArgs({ all: true, every: true })).toEqual(["-a", "-e"]);
+    expect(buildChangesListArgs({ all: true, every: true })).toEqual([
+      "-a",
+      "-e",
+    ]);
   });
 });
 
@@ -30,41 +33,45 @@ describe("buildChangesApplyArgs", () => {
 
   it("adds --snapshot", () => {
     expect(buildChangesApplyArgs({ id: "abc", snapshot: true })).toEqual([
-      "-i", "abc",
-      "--snapshot"
+      "-i",
+      "abc",
+      "--snapshot",
     ]);
   });
 
   it("adds --hash", () => {
     expect(buildChangesApplyArgs({ id: "abc", hash: "0x123" })).toEqual([
-      "-i", "abc",
-      "--hash", "0x123"
+      "-i",
+      "abc",
+      "--hash",
+      "0x123",
     ]);
   });
 
   it("adds -k for keepStaged", () => {
     expect(buildChangesApplyArgs({ id: "abc", keepStaged: true })).toEqual([
-      "-i", "abc",
-      "-k"
+      "-i",
+      "abc",
+      "-k",
     ]);
   });
 
   it("adds all optional flags", () => {
-    expect(buildChangesApplyArgs({
-      id: "abc",
-      snapshot: true,
-      hash: "0x123",
-      keepStaged: true
-    })).toEqual([
-      "-i", "abc",
-      "--snapshot",
-      "--hash", "0x123",
-      "-k"
-    ]);
+    expect(
+      buildChangesApplyArgs({
+        id: "abc",
+        snapshot: true,
+        hash: "0x123",
+        keepStaged: true,
+      })
+    ).toEqual(["-i", "abc", "--snapshot", "--hash", "0x123", "-k"]);
   });
 
   it("omits snapshot when false", () => {
-    expect(buildChangesApplyArgs({ id: "abc", snapshot: false })).toEqual(["-i", "abc"]);
+    expect(buildChangesApplyArgs({ id: "abc", snapshot: false })).toEqual([
+      "-i",
+      "abc",
+    ]);
   });
 });
 
@@ -75,27 +82,28 @@ describe("buildChangesRejectArgs", () => {
 
   it("adds --hash", () => {
     expect(buildChangesRejectArgs({ id: "abc", hash: "0x456" })).toEqual([
-      "-i", "abc",
-      "--hash", "0x456"
+      "-i",
+      "abc",
+      "--hash",
+      "0x456",
     ]);
   });
 
   it("adds -k for keepStaged", () => {
     expect(buildChangesRejectArgs({ id: "abc", keepStaged: true })).toEqual([
-      "-i", "abc",
-      "-k"
+      "-i",
+      "abc",
+      "-k",
     ]);
   });
 
   it("adds all optional flags", () => {
-    expect(buildChangesRejectArgs({
-      id: "abc",
-      hash: "0x456",
-      keepStaged: true
-    })).toEqual([
-      "-i", "abc",
-      "--hash", "0x456",
-      "-k"
-    ]);
+    expect(
+      buildChangesRejectArgs({
+        id: "abc",
+        hash: "0x456",
+        keepStaged: true,
+      })
+    ).toEqual(["-i", "abc", "--hash", "0x456", "-k"]);
   });
 });

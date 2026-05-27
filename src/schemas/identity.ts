@@ -5,7 +5,7 @@ export const versionSchema = z.object({}).strict();
 
 export const runScriptSchema = containerFlagsBase
   .extend({
-    src: z.string().describe("Path to your JavaScript or TypeScript script")
+    src: z.string().describe("Path to your JavaScript or TypeScript script"),
   })
   .strict();
 

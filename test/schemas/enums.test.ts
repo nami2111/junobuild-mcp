@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { FunctionLanguageEnum, PackageManagerEnum, ConfigFormatEnum } from "../../src/schemas/enums.js";
+import { describe, expect, it } from "vitest";
+import {
+  ConfigFormatEnum,
+  FunctionLanguageEnum,
+  PackageManagerEnum,
+} from "../../src/schemas/enums.js";
 
 describe("FunctionLanguageEnum", () => {
   it("accepts valid languages", () => {

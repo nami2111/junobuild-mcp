@@ -1,5 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { environmentFlagsBase, globalFlagsBase } from "../../src/schemas/common.js";
+import { describe, expect, it } from "vitest";
+import {
+  environmentFlagsBase,
+  globalFlagsBase,
+} from "../../src/schemas/common.js";
 
 describe("globalFlagsBase", () => {
   it("accepts empty object (all optional)", () => {
@@ -37,7 +40,10 @@ describe("globalFlagsBase", () => {
   });
 
   it("accepts both mode and profile", () => {
-    const result = globalFlagsBase.parse({ mode: "production", profile: "main" });
+    const result = globalFlagsBase.parse({
+      mode: "production",
+      profile: "main",
+    });
     expect(result.mode).toBe("production");
     expect(result.profile).toBe("main");
   });
@@ -49,7 +55,7 @@ describe("environmentFlagsBase", () => {
       mode: "development",
       profile: "dev",
       containerUrl: "https://container.example.com",
-      consoleUrl: "https://console.example.com"
+      consoleUrl: "https://console.example.com",
     });
 
     expect(result.mode).toBe("development");

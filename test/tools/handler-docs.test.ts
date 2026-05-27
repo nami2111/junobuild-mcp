@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { handleDocFetch } from "../../src/tools/docs.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CHARACTER_LIMIT } from "../../src/constants.js";
+import { handleDocFetch } from "../../src/tools/docs.js";
 
 describe("handleDocFetch", () => {
   beforeEach(() => {
@@ -12,7 +12,7 @@ describe("handleDocFetch", () => {
       ok: true,
       status: 200,
       statusText: "OK",
-      text: () => Promise.resolve("# Intro\n\nWelcome to Juno")
+      text: () => Promise.resolve("# Intro\n\nWelcome to Juno"),
     });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -27,7 +27,7 @@ describe("handleDocFetch", () => {
       ok: true,
       status: 200,
       statusText: "OK",
-      text: () => Promise.resolve("content")
+      text: () => Promise.resolve("content"),
     });
     vi.stubGlobal("fetch", fetchFn);
 
@@ -42,7 +42,7 @@ describe("handleDocFetch", () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
-      statusText: "Internal Server Error"
+      statusText: "Internal Server Error",
     });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -57,7 +57,7 @@ describe("handleDocFetch", () => {
       ok: true,
       status: 200,
       statusText: "OK",
-      text: () => Promise.resolve(longContent)
+      text: () => Promise.resolve(longContent),
     });
     vi.stubGlobal("fetch", mockFetch);
 

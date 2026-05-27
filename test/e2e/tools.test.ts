@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createTestClient, createTestDir } from "../test-utils.js";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import type { TextContent } from "@modelcontextprotocol/sdk/types.js";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createTestClient, createTestDir } from "../test-utils.js";
 
 describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
   let clientWrapper: Awaited<ReturnType<typeof createTestClient>>;
@@ -29,8 +29,8 @@ describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
         source: "dist",
         satelliteId: "test-satellite-id",
         multiEnv: false,
-        writeFile: false
-      }
+        writeFile: false,
+      },
     });
 
     expect(!!result.isError).toBe(false);
@@ -47,8 +47,8 @@ describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
         satelliteId: "aaaaa-bbbbb-ccccc-ddddd-cai",
         multiEnv: false,
         writeFile: true,
-        path: "juno.config.json"
-      }
+        path: "juno.config.json",
+      },
     });
 
     expect(!!result.isError).toBe(false);
@@ -65,8 +65,8 @@ describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
         satelliteId: "aaaaa-bbbbb-ccccc-ddddd-cai",
         multiEnv: false,
         writeFile: true,
-        path: "../../../etc/passwd"
-      }
+        path: "../../../etc/passwd",
+      },
     });
 
     expect(result.isError).toBe(true);
@@ -77,7 +77,7 @@ describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
   it("should call config apply", async () => {
     const result = await clientWrapper.client.callTool({
       name: "juno_config_apply",
-      arguments: {}
+      arguments: {},
     });
 
     const content = result.content as TextContent[];
@@ -87,7 +87,7 @@ describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
   it("should deploy hosting", async () => {
     const result = await clientWrapper.client.callTool({
       name: "juno_hosting_deploy",
-      arguments: { batch: 10 }
+      arguments: { batch: 10 },
     });
 
     const content = result.content as TextContent[];
@@ -97,7 +97,7 @@ describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
   it("should list changes", async () => {
     const result = await clientWrapper.client.callTool({
       name: "juno_changes_list",
-      arguments: {}
+      arguments: {},
     });
 
     const content = result.content as TextContent[];
@@ -107,7 +107,7 @@ describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
   it("should fetch docs", async () => {
     const result = await clientWrapper.client.callTool({
       name: "juno_docs",
-      arguments: { topic: "intro" }
+      arguments: { topic: "intro" },
     });
 
     expect(!!result.isError).toBe(false);
@@ -118,7 +118,7 @@ describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
   it("should return version information", async () => {
     const result = await clientWrapper.client.callTool({
       name: "juno_version",
-      arguments: {}
+      arguments: {},
     });
 
     expect(!!result.isError).toBe(false);
@@ -130,7 +130,7 @@ describe.runIf(process.env.JUNO_E2E)("Tools E2E", () => {
   it("should call run script successfully", async () => {
     const result = await clientWrapper.client.callTool({
       name: "juno_run",
-      arguments: { src: "nonexistent.js" }
+      arguments: { src: "nonexistent.js" },
     });
 
     const content = result.content as TextContent[];
