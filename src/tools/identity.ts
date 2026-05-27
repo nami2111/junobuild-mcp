@@ -16,7 +16,7 @@ export function buildRunScriptArgs(params: { src: string }): string[] {
 }
 
 export const handleVersion = makeToolHandler({
-  command: "version",
+  command: "--version",
   subcommand: "",
   label: "Version",
   hasMode: false,
