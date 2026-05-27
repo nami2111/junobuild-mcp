@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.4.2
+
+### Patch Changes
+
+- fix cli command for version check
+
 ## 1.4.1
 
 ### Patch Changes
