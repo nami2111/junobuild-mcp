@@ -91,29 +91,21 @@
 
 **Files:** `src/tools/identity.ts`, `src/schemas/identity.ts`, `test/tools/identity.test.ts`
 
-### 10. Add Test Coverage Reporting
+### 10. Add Test Coverage Reporting ✅
 **Problem:** 289 tests pass but coverage percentage unknown.
-**Action:**
-- Enable Vitest coverage with `v8` provider
-- Add `npm run test:coverage` script
-- Set minimum thresholds: 80% lines, 75% branches
-- Add coverage badge to README
-- Exclude `dist/` and `test/` from coverage
+**Status:** ✅ DONE — `vitest.config.ts` configured with v8 provider, reporters `text/html/json/lcov`, includes `src/**/*.ts`, excludes `*.d.ts`/`index.ts`/`types.ts`/`schemas/**`. Thresholds enforced: 80% lines/funcs/statements, 75% branches. `npm run test:coverage` script added. `@vitest/coverage-v8@^4.1.7` devDep. `coverage/` in `.gitignore`. README "Coverage thresholds" section. Current run: 90.04% stmts / 86.55% branch / 87.9% funcs / 90.08% lines.
 
-**Files:** `vitest.config.ts`, `package.json`, `README.md`
+**Files:** `vitest.config.ts`, `package.json`, `.gitignore`, `README.md`
 
 ---
 
 ## Low Priority (Polish)
 
-### 11. Make Timeouts/Limits Configurable
-**Problem:** Hardcoded `CHARACTER_LIMIT = 50000`, `NETWORK_TIMEOUT = 300000`.
-**Action:**
-- Add environment variables: `JUNO_MCP_CHAR_LIMIT`, `JUNO_MCP_TIMEOUT`
-- Parse in `src/constants.ts` with defaults
-- Document in README under "Environment Variables"
+### 11. Make Timeouts/Limits Configurable ✅
+**Problem:** Hardcoded `CHARACTER_LIMIT = 25000`, `DEFAULT_TIMEOUT = 120000`, `NETWORK_TIMEOUT = 300000`.
+**Status:** ✅ DONE — `parseEnvNumber(name, fallback)` in `src/constants.ts`. Env vars: `JUNO_MCP_CHAR_LIMIT`, `JUNO_MCP_TIMEOUT`, `JUNO_MCP_NETWORK_TIMEOUT`. Invalid values (non-numeric, zero, negative) fall back to defaults. Documented in README under "Server Tuning". 7 new tests covering parsing edge cases.
 
-**Files:** `src/constants.ts`, `README.md`
+**Files:** `src/constants.ts`, `test/helpers/constants.test.ts`, `README.md`
 
 ### 12. Batch Size Auto-Tuning Based on File Count
 **Problem:** User sets `batch=200` for 5 files. Wasteful.

@@ -389,6 +389,17 @@ For non-interactive environments (CI, headless), authenticate using environment 
 export JUNO_TOKEN="your-juno-token"
 ```
 
+### Server Tuning
+
+Override defaults to tune resource limits without rebuilding. Values must be positive integers; invalid values fall back to defaults.
+
+| Variable                   | Default   | Description                                                          |
+| -------------------------- | --------- | -------------------------------------------------------------------- |
+| `JUNO_MCP_CHAR_LIMIT`      | `25000`   | Max characters returned in a single tool response (truncates beyond) |
+| `JUNO_MCP_TIMEOUT`         | `120000`  | Default subprocess timeout in milliseconds                           |
+| `JUNO_MCP_NETWORK_TIMEOUT` | `300000`  | Timeout for network-bound operations (deploy, publish, upgrade) in ms |
+| `JUNO_MCP_DEBUG`           | `false`   | When `true`, logs internal errors to stderr (silent catches, notifications) |
+
 **Note:** The `juno_create_project` tool does NOT use the interactive `create-juno` CLI. Instead it:
 
 1. Scaffolds a Vite project (React, Next.js, Svelte, Angular, or Vue)
@@ -439,11 +450,24 @@ Several tools support optional parameters for enhanced reliability and UX:
 ## Development
 
 ```bash
-npm run build        # Compile TypeScript to dist/
-npm run dev          # Watch mode (development)
-npm run start        # Run compiled dist/index.js
-npm run clean        # Remove dist/
+npm run build           # Compile TypeScript to dist/
+npm run dev             # Watch mode (development)
+npm run start           # Run compiled dist/index.js
+npm run clean           # Remove dist/
+npm test                # Run unit tests
+npm run test:coverage   # Run tests with coverage report (v8 provider)
 ```
+
+### Coverage thresholds
+
+The suite enforces the following minimum coverage (configured in `vitest.config.ts`):
+
+- Lines: 80%
+- Statements: 80%
+- Functions: 80%
+- Branches: 75%
+
+Coverage reports are written to `coverage/` (html, lcov, json, plus text summary).
 
 ## Publishing
 

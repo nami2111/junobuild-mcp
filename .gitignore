@@ -1,5 +1,6 @@
 node_modules/
 dist/
+coverage/
 *.tsbuildinfo
 *.d.ts.map
 *.js.map
