@@ -24,11 +24,118 @@ export type ProgressCallback = (progress: number, message: string) => void;
 export type LogLevel = "info" | "error";
 export type LogCallback = (level: LogLevel, message: string) => void;
 
+export interface StdinConfig {
+  answerDelay?: number;
+  answers: string[];
+  initialDelay?: number;
+  prompts?: (string | RegExp)[];
+  promptTimeout?: number;
+}
+
+const DEFAULT_STDIN_INITIAL_DELAY = 5000;
+const DEFAULT_STDIN_ANSWER_DELAY = 3000;
+const DEFAULT_STDIN_PROMPT_TIMEOUT = 10_000;
+
 export interface RunProcessOptions {
   cwd?: string;
   onLog?: LogCallback;
   onProgress?: ProgressCallback;
   stdinAnswers?: string[];
+  stdinConfig?: StdinConfig;
+}
+
+function matchesPrompt(line: string, pattern: string | RegExp): boolean {
+  if (typeof pattern === "string") {
+    return line.toLowerCase().includes(pattern.toLowerCase());
+  }
+  return pattern.test(line);
+}
+
+interface StdinController {
+  onLine: (line: string) => void;
+}
+
+function resolveStdinConfig(
+  options: RunProcessOptions | undefined
+): StdinConfig | undefined {
+  if (options?.stdinConfig) {
+    return options.stdinConfig;
+  }
+  if (options?.stdinAnswers && options.stdinAnswers.length > 0) {
+    return { answers: options.stdinAnswers };
+  }
+  return;
+}
+
+function setupStdinAutomation(
+  child: ReturnType<typeof spawn>,
+  options: RunProcessOptions | undefined
+): StdinController | undefined {
+  const config = resolveStdinConfig(options);
+  if (!(config && child.stdin) || config.answers.length === 0) {
+    return;
+  }
+
+  const { answers } = config;
+  const prompts = config.prompts ?? [];
+  const initialDelay = config.initialDelay ?? DEFAULT_STDIN_INITIAL_DELAY;
+  const answerDelay = config.answerDelay ?? DEFAULT_STDIN_ANSWER_DELAY;
+  const promptTimeout = config.promptTimeout ?? DEFAULT_STDIN_PROMPT_TIMEOUT;
+  const promptMode = prompts.length > 0;
+
+  let idx = 0;
+  let waiting = false;
+  let fallbackTimer: NodeJS.Timeout | undefined;
+
+  const clearFallback = (): void => {
+    if (fallbackTimer) {
+      clearTimeout(fallbackTimer);
+      fallbackTimer = undefined;
+    }
+  };
+
+  const send = (): void => {
+    if (idx >= answers.length || !child.stdin) {
+      return;
+    }
+    waiting = false;
+    clearFallback();
+    child.stdin.write(`${answers[idx]}\n`);
+    idx++;
+    if (idx >= answers.length) {
+      child.stdin.end();
+      return;
+    }
+    if (promptMode) {
+      waiting = true;
+      fallbackTimer = setTimeout(send, promptTimeout);
+    } else {
+      setTimeout(send, answerDelay);
+    }
+  };
+
+  if (promptMode) {
+    waiting = true;
+    fallbackTimer = setTimeout(send, promptTimeout);
+  } else {
+    setTimeout(send, initialDelay);
+  }
+
+  return {
+    onLine: (line: string): void => {
+      if (!waiting) {
+        return;
+      }
+      const promptIdx = Math.min(idx, prompts.length - 1);
+      const pattern = prompts[promptIdx];
+      if (!pattern) {
+        return;
+      }
+      if (matchesPrompt(line, pattern)) {
+        send();
+      }
+    },
+  };
 }
 
 function handleProgress(
@@ -88,22 +195,7 @@ export function runProcess(
       }
     }, timeout);
 
-    const stdinAnswers = options?.stdinAnswers;
-    if (stdinAnswers && child.stdin && stdinAnswers.length > 0) {
-      let answerIndex = 0;
-      const sendNextAnswer = () => {
-        if (answerIndex < stdinAnswers.length && child.stdin) {
-          child.stdin.write(`${stdinAnswers[answerIndex]}\n`);
-          answerIndex++;
-          if (answerIndex < stdinAnswers.length) {
-            setTimeout(sendNextAnswer, 3000);
-          } else {
-            child.stdin.end();
-          }
-        }
-      };
-      setTimeout(sendNextAnswer, 5000);
-    }
+    const stdinController = setupStdinAutomation(child, options);
 
     if (child.stdout) {
       const rlStdout = createInterface({
@@ -116,6 +208,7 @@ export function runProcess(
           stdout += `${text}\n`;
           options?.onLog?.("info", text);
         }
+        stdinController?.onLine(text);
         handleProgress(
           text,
           options,
@@ -139,6 +232,7 @@ export function runProcess(
           stderr += `${text}\n`;
           options?.onLog?.("error", text);
         }
+        stdinController?.onLine(text);
       });
     }
 

@@ -142,25 +142,17 @@
 
 ## Bug Fixes
 
-### 15. Fix Failing Test: handleVersion
+### 15. Fix Failing Test: handleVersion ✅
 **Problem:** Test expects `"version"` but code calls `"--version"`.
-**Action:**
-- Update test expectation in `test/tools/handler-identity.test.ts:22`
-- Change `"version"` to `"--version"`
-- Verify test passes
+**Status:** ✅ DONE — `test/tools/handler-identity.test.ts:24` updated to `"--version"`. Commit `428fb1c`.
 
 **Files:** `test/tools/handler-identity.test.ts`
 
-### 16. Fix Stdin Automation Timing
+### 16. Fix Stdin Automation Timing ✅
 **Problem:** Hardcoded 5s initial delay, 3s between answers. Fragile.
-**Action:**
-- Replace fixed delays with prompt detection
-- Listen for specific prompt strings (e.g., "Enter satellite ID:")
-- Send answer when prompt detected
-- Add timeout fallback (10s) if prompt never appears
-- Make delays configurable via `stdinConfig`
+**Status:** ✅ DONE — `StdinConfig` interface in `src/executor.ts` with `answers`, `prompts?: (string | RegExp)[]`, `initialDelay`, `answerDelay`, `promptTimeout`. `setupStdinAutomation()` listens for prompt patterns on stdout/stderr; sends next answer when match detected; falls back to `promptTimeout` (default 10s) if pattern never appears. Backward-compat: `stdinAnswers?: string[]` still works (maps to default config). Reuses last prompt pattern when `prompts.length < answers.length`. 7 tests in `test/helpers/executor-stdin.test.ts` cover string/regex match, fallback timeout, multi-prompt sequencing, configurable delays, backward-compat.
 
-**Files:** `src/executor.ts`, `test/helpers/executor.test.ts`
+**Files:** `src/executor.ts`, `test/helpers/executor-stdin.test.ts`
 
 ---
 
