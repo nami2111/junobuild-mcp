@@ -69,8 +69,9 @@
 
 **Files:** `src/schemas/hosting.ts`, `src/tools/hosting.ts`, `test/tools/hosting.test.ts`
 
-### 7. Add Streaming Log Support
+### 7. Add Streaming Log Support ✅
 **Problem:** Progress updates but not full log streaming.
+**Status:** ✅ DONE — `streamLogs?: boolean` on hosting deploy, functions publish/upgrade. Stdout → `notifications/message` level=info; stderr → level=error. Independent of progress. `makeLogCallback(extra, logger)` helper in `cli.ts`. Tests cover callback creation, payload shape, rejection swallowing, streaming-strategy trigger.
 **Action:**
 - Add `streamLogs?: boolean` param to long-running tools
 - Stream stdout/stderr lines as MCP log notifications
@@ -183,8 +184,9 @@
 
 **Files:** `src/registered-tool.ts`
 
-### 18. Add Logging for Silent Error Catches
+### 18. Add Logging for Silent Error Catches ✅
 **Problem:** Progress notification errors silently consumed in `cli.ts:136`.
+**Status:** ✅ DONE — `debugLog(context, error)` helper. Gated on `JUNO_MCP_DEBUG=true` or `DEBUG=true`. Wired into 4 silent catches: resolveCliPath fallback, checkCliVersion catch, progress notification catch, log notification catch. 5 tests cover env gating + payload format.
 **Action:**
 - Add debug logging: `console.error('[DEBUG] Progress notification failed:', error)`
 - Only log if `DEBUG=true` or `JUNO_MCP_DEBUG=true`

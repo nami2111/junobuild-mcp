@@ -3,6 +3,7 @@ import {
   execWithRetry,
   execWithStreaming,
   formatResponse,
+  makeLogCallback,
   makeProgressCallback,
 } from "./cli.js";
 import { NETWORK_TIMEOUT } from "./constants.js";
@@ -57,13 +58,17 @@ export function makeToolHandler(config: ToolHandlerConfig) {
 
     if (strategy === "streaming") {
       const onProgress = makeProgressCallback(extra);
-      if (onProgress) {
+      const onLog = params.streamLogs
+        ? makeLogCallback(extra, `juno_${config.command}`)
+        : undefined;
+      if (onProgress || onLog) {
         result = await execWithStreaming(
           config.command,
           subArgs,
           flags,
           timeout,
-          onProgress
+          onProgress,
+          onLog
         );
       } else {
         result = await execCli(config.command, subArgs, flags, timeout);

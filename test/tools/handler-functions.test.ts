@@ -16,7 +16,13 @@ vi.mock("../../src/cli.js", () => ({
     .fn()
     .mockResolvedValue({ stdout: "stream ok", stderr: "", exitCode: 0 }),
   formatResponse: vi.fn().mockReturnValue({ text: "ok", isError: false }),
-  makeProgressCallback: vi.fn().mockReturnValue(vi.fn()),
+  makeProgressCallback: vi.fn(
+    (extra?: { _meta?: { progressToken?: unknown } }) =>
+      extra?._meta?.progressToken ? vi.fn() : undefined
+  ),
+  makeLogCallback: vi.fn((extra?: { sendNotification?: unknown }) =>
+    typeof extra?.sendNotification === "function" ? vi.fn() : undefined
+  ),
 }));
 
 import {
@@ -105,7 +111,8 @@ describe("handleFunctionsPublish", () => {
       ["publish"],
       { mode: "production" },
       NETWORK_TIMEOUT,
-      expect.any(Function)
+      expect.any(Function),
+      undefined
     );
     expect(makeProgressCallback).toHaveBeenCalled();
   });
@@ -163,7 +170,8 @@ describe("handleFunctionsUpgrade", () => {
       ["upgrade"],
       {},
       NETWORK_TIMEOUT,
-      expect.any(Function)
+      expect.any(Function),
+      undefined
     );
   });
 

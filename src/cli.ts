@@ -6,13 +6,25 @@ import {
   MIN_CLI_VERSION,
 } from "./constants.js";
 import { parseCliError } from "./error-parser.js";
-import type { ProgressCallback } from "./executor.js";
+import type { LogCallback, ProgressCallback } from "./executor.js";
 import { isTransientError, runProcess, sleep, stripAnsi } from "./executor.js";
 import { buildJunoContextArgs } from "./juno-context.js";
 import type { CliResult, GlobalFlags } from "./types.js";
 
 export function buildFlagArgs(flags?: GlobalFlags): string[] {
   return buildJunoContextArgs(flags);
+}
+
+function isDebugEnabled(): boolean {
+  return process.env.JUNO_MCP_DEBUG === "true" || process.env.DEBUG === "true";
+}
+
+export function debugLog(context: string, error: unknown): void {
+  if (!isDebugEnabled()) {
+    return;
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`[DEBUG] ${context}: ${message}`);
 }
 
 let cachedCliPath: string | null = null;
@@ -36,7 +48,8 @@ async function resolveCliPath(): Promise<string> {
     });
     cachedCliPath = result;
     return result;
-  } catch {
+  } catch (error) {
+    debugLog("resolveCliPath fell back to npx", error);
     cachedCliPath = `npx ${CLI_PACKAGE}`;
     return cachedCliPath;
   }
@@ -96,6 +109,7 @@ async function checkCliVersion(): Promise<void> {
     if (error instanceof Error && error.message.includes("too old")) {
       throw error;
     }
+    debugLog("checkCliVersion skipped due to error", error);
     versionCheckSkipped = true;
   }
 }
@@ -173,12 +187,13 @@ export async function execWithStreaming(
   args: string[] = [],
   flags?: GlobalFlags,
   timeout: number = DEFAULT_TIMEOUT,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  onLog?: LogCallback
 ): Promise<CliResult> {
   const { cmd: cliCmd, args: cliArgs } = await resolveCliParts();
   const flagArgs = buildFlagArgs(flags);
   const allArgs = [...cliArgs, command, ...flagArgs, ...args];
-  return runProcess(cliCmd, allArgs, timeout, { onProgress });
+  return runProcess(cliCmd, allArgs, timeout, { onProgress, onLog });
 }
 
 export function makeProgressCallback(
@@ -197,8 +212,30 @@ export function makeProgressCallback(
     e.sendNotification({
       method: "notifications/progress",
       params: { progressToken: token, progress, total: 100, message },
-    }).catch(() => {
-      // Intentionally consumed - fire-and-forget notification
+    }).catch((error) => {
+      debugLog("progress notification failed", error);
+    });
+  };
+}
+
+export function makeLogCallback(
+  extra: unknown,
+  logger?: string
+): LogCallback | undefined {
+  const e = extra as {
+    sendNotification?: (n: unknown) => Promise<void>;
+  };
+  if (typeof e?.sendNotification !== "function") {
+    return;
+  }
+  const send = e.sendNotification;
+
+  return (level, message) => {
+    send({
+      method: "notifications/message",
+      params: { level, data: message, logger },
+    }).catch((error) => {
+      debugLog("log notification failed", error);
     });
   };
 }

@@ -46,6 +46,12 @@ export const hostingDeploySchema = environmentFlagsBase
       .describe(
         "Stream progress updates during deployment (shows build status and upload batch progress)"
       ),
+    streamLogs: z
+      .boolean()
+      .default(false)
+      .describe(
+        "Stream raw stdout/stderr log lines as MCP notifications/message events. Independent from progress."
+      ),
   })
   .strict();
 

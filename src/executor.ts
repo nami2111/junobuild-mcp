@@ -21,9 +21,12 @@ export function stripProgressChars(text: string): string {
 }
 
 export type ProgressCallback = (progress: number, message: string) => void;
+export type LogLevel = "info" | "error";
+export type LogCallback = (level: LogLevel, message: string) => void;
 
 export interface RunProcessOptions {
   cwd?: string;
+  onLog?: LogCallback;
   onProgress?: ProgressCallback;
   stdinAnswers?: string[];
 }
@@ -111,6 +114,7 @@ export function runProcess(
         const text = stripAnsi(stripProgressChars(line));
         if (text) {
           stdout += `${text}\n`;
+          options?.onLog?.("info", text);
         }
         handleProgress(
           text,
@@ -133,6 +137,7 @@ export function runProcess(
         const text = stripAnsi(stripProgressChars(line));
         if (text) {
           stderr += `${text}\n`;
+          options?.onLog?.("error", text);
         }
       });
     }

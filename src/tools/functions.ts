@@ -130,7 +130,7 @@ export const handleFunctionsPublish = makeToolHandler({
       }
     ),
   getStrategy: (p) => {
-    if (p.progress) {
+    if (p.progress || p.streamLogs) {
       return "streaming";
     }
     if (p.retry) {
@@ -159,7 +159,7 @@ export const handleFunctionsUpgrade = makeToolHandler({
       }
     ),
   getStrategy: (p) => {
-    if (p.progress) {
+    if (p.progress || p.streamLogs) {
       return "streaming";
     }
     if (p.retry) {

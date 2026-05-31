@@ -58,6 +58,12 @@ export const functionsPublishSchema = environmentFlagsBase
       .describe(
         "Stream progress updates during publish (shows build status and upload batch progress)"
       ),
+    streamLogs: z
+      .boolean()
+      .default(false)
+      .describe(
+        "Stream raw stdout/stderr log lines as MCP notifications/message events. Independent from progress."
+      ),
   })
   .strict();
 
@@ -97,6 +103,12 @@ export const functionsUpgradeSchema = environmentFlagsBase
       .default(false)
       .describe(
         "Stream progress updates during upgrade (shows build status and upload batch progress)"
+      ),
+    streamLogs: z
+      .boolean()
+      .default(false)
+      .describe(
+        "Stream raw stdout/stderr log lines as MCP notifications/message events. Independent from progress."
       ),
   })
   .strict();

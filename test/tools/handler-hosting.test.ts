@@ -15,7 +15,13 @@ vi.mock("../../src/cli.js", () => ({
     .fn()
     .mockResolvedValue({ stdout: "stream ok", stderr: "", exitCode: 0 }),
   formatResponse: vi.fn().mockReturnValue({ text: "ok", isError: false }),
-  makeProgressCallback: vi.fn().mockReturnValue(vi.fn()),
+  makeProgressCallback: vi.fn(
+    (extra?: { _meta?: { progressToken?: unknown } }) =>
+      extra?._meta?.progressToken ? vi.fn() : undefined
+  ),
+  makeLogCallback: vi.fn((extra?: { sendNotification?: unknown }) =>
+    typeof extra?.sendNotification === "function" ? vi.fn() : undefined
+  ),
 }));
 
 import {
@@ -23,6 +29,7 @@ import {
   execWithRetry,
   execWithStreaming,
   formatResponse,
+  makeLogCallback,
   makeProgressCallback,
 } from "../../src/cli.js";
 
@@ -56,7 +63,8 @@ describe("handleHostingDeploy", () => {
       ["deploy", "--batch", "50"],
       {},
       NETWORK_TIMEOUT,
-      expect.any(Function)
+      expect.any(Function),
+      undefined
     );
     expect(makeProgressCallback).toHaveBeenCalled();
   });
@@ -71,6 +79,40 @@ describe("handleHostingDeploy", () => {
       3,
       1000,
       8000
+    );
+  });
+
+  it("calls execWithStreaming with onLog when streamLogs is true", async () => {
+    await handleHostingDeploy(
+      { batch: 50, streamLogs: true },
+      { sendNotification: vi.fn().mockResolvedValue(undefined) }
+    );
+    expect(mockExecWithStreaming).toHaveBeenCalledWith(
+      "hosting",
+      ["deploy", "--batch", "50"],
+      {},
+      NETWORK_TIMEOUT,
+      undefined,
+      expect.any(Function)
+    );
+    expect(makeLogCallback).toHaveBeenCalled();
+  });
+
+  it("calls execWithStreaming with both onProgress and onLog when both flags set", async () => {
+    await handleHostingDeploy(
+      { batch: 50, progress: true, streamLogs: true },
+      {
+        _meta: { progressToken: "x" },
+        sendNotification: vi.fn().mockResolvedValue(undefined),
+      }
+    );
+    expect(mockExecWithStreaming).toHaveBeenCalledWith(
+      "hosting",
+      ["deploy", "--batch", "50"],
+      {},
+      NETWORK_TIMEOUT,
+      expect.any(Function),
+      expect.any(Function)
     );
   });
 
