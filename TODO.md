@@ -158,13 +158,9 @@
 
 ## Technical Debt
 
-### 17. Remove Type Assertions in registered-tool.ts
+### 17. Remove Type Assertions in registered-tool.ts ✅
 **Problem:** `as Parameters<McpServer["registerTool"]>[2]` indicates SDK type mismatch.
-**Action:**
-- Investigate MCP SDK type definitions
-- Align `RegisteredToolHandler` signature with SDK expectations
-- Remove type assertion
-- Add comment if workaround needed
+**Status:** ✅ DONE — Imported `ToolCallback` from MCP SDK and typed `RegisteredToolHandler = ToolCallback<ZodRawShapeCompat>`. Narrowed `RegisteredToolInputSchema` from `ZodRawShapeCompat | AnySchema | undefined` to `ZodRawShapeCompat` (all current tools use `.shape`, so AnySchema/undefined unused). Type assertion removed. Build clean, 345 tests pass.
 
 **Files:** `src/registered-tool.ts`
 
