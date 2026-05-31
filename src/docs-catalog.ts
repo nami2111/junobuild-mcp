@@ -1,4 +1,5 @@
 import { CHARACTER_LIMIT } from "./constants.js";
+import { LRUCache } from "./lru-cache.js";
 import { TOPICS, type TopicKey } from "./schemas/docs.js";
 
 const BASE_URL = "https://raw.githubusercontent.com/junobuild/docs/main/docs";
@@ -19,7 +20,7 @@ export interface JunoDoc {
   topicKey: TopicKey;
 }
 
-const docCache = new Map<TopicKey, CacheEntry>();
+const docCache = new LRUCache<TopicKey, CacheEntry>(MAX_CACHE_SIZE);
 
 export function resetJunoDocsCatalogCache(): void {
   docCache.clear();
@@ -82,15 +83,13 @@ async function fetchDoc(
 
 function cleanupExpired(): void {
   const now = Date.now();
-  for (const [key, entry] of docCache) {
+  const expired: TopicKey[] = [];
+  for (const [key, entry] of docCache.entries()) {
     if (entry.expiresAt < now) {
-      docCache.delete(key);
+      expired.push(key);
     }
   }
-  while (docCache.size > MAX_CACHE_SIZE) {
-    const oldest = docCache.keys().next().value;
-    if (oldest) {
-      docCache.delete(oldest);
-    }
+  for (const key of expired) {
+    docCache.delete(key);
   }
 }
