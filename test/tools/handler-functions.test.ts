@@ -116,7 +116,10 @@ describe("handleFunctionsPublish", () => {
       "functions",
       ["publish"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      3,
+      1000,
+      8000
     );
   });
 
@@ -170,7 +173,10 @@ describe("handleFunctionsUpgrade", () => {
       "functions",
       ["upgrade"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      3,
+      1000,
+      8000
     );
   });
 

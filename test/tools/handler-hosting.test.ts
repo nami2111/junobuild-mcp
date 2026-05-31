@@ -67,7 +67,10 @@ describe("handleHostingDeploy", () => {
       "hosting",
       ["deploy", "--batch", "50"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      3,
+      1000,
+      8000
     );
   });
 

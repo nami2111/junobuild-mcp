@@ -432,3 +432,22 @@ describe("execCli + execWithRetry + execWithStreaming", () => {
     expect(result).toHaveProperty("stderr");
   });
 });
+
+describe("CLI version checks", () => {
+  beforeEach(() => {
+    resetCliPathCache();
+    delete process.env.JUNO_SKIP_VERSION_CHECK;
+  });
+
+  it("allows compatible CLI version", async () => {
+    const result = await execCli("--version");
+    expect(result.exitCode).toBe(0);
+  });
+
+  it("skips version check when JUNO_SKIP_VERSION_CHECK=true", async () => {
+    process.env.JUNO_SKIP_VERSION_CHECK = "true";
+    resetCliPathCache();
+    const result = await execCli("--version");
+    expect(result.exitCode).toBe(0);
+  });
+});

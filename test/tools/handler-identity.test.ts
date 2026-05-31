@@ -20,7 +20,7 @@ describe("handleVersion", () => {
   it("calls execCli with version command", async () => {
     const result = await handleVersion({});
     expect(mockExecCli).toHaveBeenCalledWith(
-      "version",
+      "--version",
       [],
       undefined,
       NETWORK_TIMEOUT

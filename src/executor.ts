@@ -68,9 +68,21 @@ export function runProcess(
     let stdout = "";
     let stderr = "";
     let buildProgressEmitted = false;
+    let processExited = false;
 
     const timeoutId = setTimeout(() => {
-      child.kill("SIGTERM");
+      if (!processExited) {
+        child.kill("SIGTERM");
+
+        setTimeout(() => {
+          if (!processExited) {
+            console.error(
+              "[WARN] Process did not respond to SIGTERM, sending SIGKILL"
+            );
+            child.kill("SIGKILL");
+          }
+        }, 2000);
+      }
     }, timeout);
 
     const stdinAnswers = options?.stdinAnswers;
@@ -126,6 +138,7 @@ export function runProcess(
     }
 
     child.on("close", (code) => {
+      processExited = true;
       clearTimeout(timeoutId);
       resolve({
         stdout,
@@ -135,6 +148,7 @@ export function runProcess(
     });
 
     child.on("error", (error) => {
+      processExited = true;
       clearTimeout(timeoutId);
       resolve({
         stdout,

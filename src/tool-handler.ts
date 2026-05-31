@@ -15,6 +15,12 @@ import type { GlobalFlags } from "./types.js";
 
 type ExecStrategy = "simple" | "retry" | "streaming";
 
+export interface RetryConfig {
+  baseDelay: number;
+  maxDelay: number;
+  maxRetries: number;
+}
+
 export interface ToolHandlerConfig {
   argsFromParams?: (params: Record<string, unknown>) => string[];
   command: string;
@@ -22,6 +28,7 @@ export interface ToolHandlerConfig {
   getStrategy?: (params: Record<string, unknown>) => ExecStrategy;
   hasMode?: boolean;
   label: string;
+  retryConfig?: RetryConfig;
   strategy?: ExecStrategy;
   subcommand: string;
   timeout?: number;
@@ -62,7 +69,20 @@ export function makeToolHandler(config: ToolHandlerConfig) {
         result = await execCli(config.command, subArgs, flags, timeout);
       }
     } else if (strategy === "retry") {
-      result = await execWithRetry(config.command, subArgs, flags, timeout);
+      const retryConfig = config.retryConfig ?? {
+        maxRetries: 3,
+        baseDelay: 1000,
+        maxDelay: 8000,
+      };
+      result = await execWithRetry(
+        config.command,
+        subArgs,
+        flags,
+        timeout,
+        retryConfig.maxRetries,
+        retryConfig.baseDelay,
+        retryConfig.maxDelay
+      );
     } else {
       result = await execCli(config.command, subArgs, flags, timeout);
     }
