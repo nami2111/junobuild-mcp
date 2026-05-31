@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 1.5.0
+
+### Minor Changes
+
+- Add juno_auth_status tool, log streaming (streamLogs), structured CLI error parsing, CLI version check (min 0.15.0), LRU docs cache, env-tunable limits (JUNO_MCP_CHAR_LIMIT/TIMEOUT/NETWORK_TIMEOUT), debug logging (JUNO_MCP_DEBUG),
+
 ## 1.4.2
 
 ### Patch Changes
