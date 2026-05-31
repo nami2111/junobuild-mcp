@@ -30,4 +30,4 @@ export const NETWORK_TIMEOUT = parseEnvNumber(
 );
 
 export const CLI_PACKAGE = "@junobuild/cli";
-export const MIN_CLI_VERSION = "0.0.50";
+export const MIN_CLI_VERSION = "0.15.0";

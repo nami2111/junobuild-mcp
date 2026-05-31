@@ -6,13 +6,17 @@ Manage satellites, hosting, serverless functions, changes and more through any M
 
 ## Features
 
-- **16 tools** across 6 domains — CLI coverage for identity, config, hosting, functions, changes, and documentation
-- **Progress streaming** — long-running operations (deploy, publish, upgrade) emit real-time progress updates via MCP progress notifications
+- **18 tools** across 6 domains — CLI coverage for identity, config, hosting, functions, changes, and documentation
+- **Progress streaming** — long-running operations (deploy, publish, upgrade) emit real-time progress updates via MCP `notifications/progress`
+- **Log streaming** — `streamLogs: true` mirrors raw stdout/stderr lines as MCP `notifications/message` events, independent of progress
 - **Automatic retry** — network-dependent operations can retry on transient failures with exponential backoff
 - **CLI binary caching** — resolves `juno` binary path once, eliminating npx overhead on every call
-- **Smart error handling** — all tools propagate `isError` based on CLI exit codes, with clean error messages
+- **CLI version check** — verifies installed `@junobuild/cli` meets the minimum supported version on first call
+- **Structured error parsing** — common CLI failures (auth, network, missing config) surface as actionable messages
 - **Config file writing** — `juno_config_init` can write config files directly to disk
-- **Docs caching** — documentation responses cached for 1 hour to reduce latency
+- **Auth verification** — `juno_auth_status` wraps `juno whoami` for read-only identity checks
+- **Docs caching** — documentation responses backed by an LRU cache (50 entries, 1 h TTL)
+- **Tunable limits** — character limit, default timeout, and network timeout overridable via env vars
 
 ## Client Setup
 
@@ -379,7 +383,7 @@ npm i -g @junobuild/cli
 juno login
 ```
 
-For non-interactive environments (CI, headless), set the `JUNO_TOKEN` environment variable or use the `--mode` and `--profile` flags available on every tool.
+For non-interactive environments (CI, headless), set the `JUNO_TOKEN` environment variable instead of running `juno login`. Tools that touch Juno state additionally accept `mode` and `profile` parameters to select an environment and identity per call.
 
 ## Environment Variables
 
@@ -418,13 +422,13 @@ juno_docs({ topic: "reference_cli" })        → CLI reference
 juno_docs({ topic: "guides_local_development" }) → Local development guide
 ```
 
-Topic keys use underscore naming matching folder hierarchy: `build_<feature>`, `reference_cli_<command>`, `guides_<framework>`. Full list: see [TODO.md](./TODO.md) for all 159 topics.
+Topic keys use underscore naming matching folder hierarchy: `build_<feature>`, `reference_cli_<command>`, `guides_<framework>`. Full enumeration of all 159 topics lives in [`src/schemas/docs.ts`](./src/schemas/docs.ts) (`TOPICS` map).
 
 ## Tools
 
 | Domain        | Tools                                                                                              |
 | ------------- | -------------------------------------------------------------------------------------------------- |
-| **Identity**  | `juno_version`, `juno_run`, `juno_status`                                                     |
+| **Identity**  | `juno_version`, `juno_run`, `juno_status`, `juno_auth_status`                                      |
 | **Config**    | `juno_config_init`, `juno_config_apply`, `juno_create_project`                                     |
 | **Hosting**   | `juno_hosting_deploy`, `juno_hosting_clear`, `juno_hosting_prune`                                  |
 | **Functions** | `juno_functions_build`, `juno_functions_eject`, `juno_functions_publish`, `juno_functions_upgrade` |
@@ -439,12 +443,13 @@ Several tools support optional parameters for enhanced reliability and UX:
 | ----------- | --------- | ------------------------ | ----------------------------------------------------------------------------------------------------------- |
 | `retry`     | `boolean` | deploy, publish, upgrade | Automatically retry on transient network failures (up to 3 attempts with exponential backoff: 1s → 2s → 4s) |
 | `progress`  | `boolean` | deploy, publish, upgrade | Stream real-time progress updates during long-running operations (build status + upload batch progress)     |
+| `streamLogs`| `boolean` | deploy, publish, upgrade | Stream raw stdout/stderr lines as MCP `notifications/message` events. Independent from `progress`           |
 | `writeFile` | `boolean` | `juno_config_init`       | Write the config file directly to disk instead of returning text for preview                                |
 
 ## Prerequisites
 
 - **Node.js** >= 18
-- **@junobuild/cli** — installed and authenticated (not needed for `juno_version` or `juno_docs`)
+- **@junobuild/cli** `>= 0.15.0` — installed and authenticated (not needed for `juno_version` or `juno_docs`). Minimum version enforced on first call via `checkCliVersion` (`src/constants.ts` `MIN_CLI_VERSION`). Bypass with `JUNO_SKIP_VERSION_CHECK=true`.
 - Juno project with `juno.config.ts/js/json` (for config/hosting operations)
 
 ## Development
