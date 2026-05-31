@@ -477,6 +477,15 @@ npm run version      # Apply changesets → bump version
 npm run release      # Publish to npm
 ```
 
+## Architecture
+
+Key design decisions are documented as [ADRs in `docs/adr/`](./docs/adr/README.md):
+
+- [ADR-001 — Wrap the Juno CLI instead of the API](./docs/adr/001-wrap-cli-not-api.md)
+- [ADR-002 — Execution strategy pattern (simple / retry / streaming)](./docs/adr/002-execution-strategies.md)
+- [ADR-003 — Context capability system](./docs/adr/003-context-capabilities.md)
+- [ADR-004 — Docs caching strategy](./docs/adr/004-docs-caching.md)
+
 ## License
 
 MIT

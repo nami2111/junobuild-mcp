@@ -178,17 +178,16 @@
 
 ## Documentation
 
-### 19. Add Architecture Decision Records (ADRs)
-**Action:**
-- Create `docs/adr/` directory
-- Document key decisions:
-  - ADR-001: Why wrap CLI instead of direct API calls
-  - ADR-002: Execution strategy pattern (simple/retry/streaming)
-  - ADR-003: Context capability system
-  - ADR-004: Docs caching strategy
-- Use template: Context, Decision, Consequences
+### 19. Add Architecture Decision Records (ADRs) ✅
+**Status:** ✅ DONE — `docs/adr/` created with `README.md` (index + template) and ADRs 001-004:
+- ADR-001: Wrap the Juno CLI instead of the API
+- ADR-002: Execution strategy pattern (simple/retry/streaming)
+- ADR-003: Context capability system
+- ADR-004: Docs caching strategy (LRU + 1h TTL, 50 entries)
 
-**Files:** `docs/adr/*.md` (new)
+Each follows Context / Decision / Consequences template plus a "Revisit if" coda.
+
+**Files:** `docs/adr/README.md`, `docs/adr/001-wrap-cli-not-api.md`, `docs/adr/002-execution-strategies.md`, `docs/adr/003-context-capabilities.md`, `docs/adr/004-docs-caching.md`
 
 ### 20. Add Contributing Guide
 **Action:**
