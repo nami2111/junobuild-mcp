@@ -10,3 +10,5 @@ export const runScriptSchema = containerFlagsBase
   .strict();
 
 export const statusSchema = environmentFlagsBase;
+
+export const authStatusSchema = environmentFlagsBase;

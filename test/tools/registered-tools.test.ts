@@ -32,6 +32,7 @@ describe("registered Juno tools", () => {
       "juno_version",
       "juno_run",
       "juno_status",
+      "juno_auth_status",
       "juno_config_init",
       "juno_config_apply",
       "juno_hosting_deploy",

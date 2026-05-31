@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { NETWORK_TIMEOUT } from "../../src/constants.js";
 import {
+  handleAuthStatus,
   handleRunScript,
   handleStatus,
   handleVersion,
@@ -77,6 +78,37 @@ describe("handleStatus", () => {
       "status",
       [],
       {
+        containerUrl: "https://container.example.com",
+        consoleUrl: "https://console.example.com",
+      },
+      NETWORK_TIMEOUT
+    );
+  });
+});
+
+describe("handleAuthStatus", () => {
+  it("calls execCli with whoami command", async () => {
+    await handleAuthStatus({});
+    expect(mockExecCli).toHaveBeenCalledWith("whoami", [], {}, NETWORK_TIMEOUT);
+    expect(mockFormatResponse).toHaveBeenCalledWith(
+      { stdout: "ok", stderr: "", exitCode: 0 },
+      "Auth Status"
+    );
+  });
+
+  it("passes mode, profile, and url overrides", async () => {
+    await handleAuthStatus({
+      mode: "production",
+      profile: "main",
+      containerUrl: "https://container.example.com",
+      consoleUrl: "https://console.example.com",
+    });
+    expect(mockExecCli).toHaveBeenCalledWith(
+      "whoami",
+      [],
+      {
+        mode: "production",
+        profile: "main",
         containerUrl: "https://container.example.com",
         consoleUrl: "https://console.example.com",
       },

@@ -5,6 +5,7 @@ import {
   registerJunoTools,
 } from "../registered-tool.js";
 import {
+  authStatusSchema,
   runScriptSchema,
   statusSchema,
   versionSchema,
@@ -34,6 +35,13 @@ export const handleStatus = makeToolHandler({
   command: "status",
   subcommand: "",
   label: "Status",
+  context: environmentContext,
+});
+
+export const handleAuthStatus = makeToolHandler({
+  command: "whoami",
+  subcommand: "",
+  label: "Auth Status",
   context: environmentContext,
 });
 
@@ -79,6 +87,20 @@ export const identityTools: readonly RegisteredJunoTool[] = [
       openWorldHint: true,
     },
     handler: handleStatus,
+  },
+  {
+    name: "juno_auth_status",
+    title: "Juno Auth Status",
+    description:
+      "Display the current authenticated profile, access key, and links to your satellite. Use this to verify authentication before running operations that require credentials.",
+    inputSchema: authStatusSchema.shape,
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    handler: handleAuthStatus,
   },
 ];
 

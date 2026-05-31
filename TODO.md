@@ -12,8 +12,9 @@
 
 **Files:** `src/cli.ts`, `src/tool-handler.ts`
 
-### 2. Implement Proper LRU Cache
+### 2. Implement Proper LRU Cache ✅
 **Problem:** Naive "delete first key" eviction in `docs-catalog.ts`. Map iteration order not guaranteed in all engines.
+**Status:** ✅ DONE — `src/lru-cache.ts` with doubly-linked list, 14 tests covering eviction order/recency tracking.
 **Action:**
 - Create `src/lru-cache.ts` with doubly-linked list implementation
 - Track access order explicitly
@@ -59,7 +60,8 @@
 
 ### 6. Add Dry-Run Mode to Deploy/Clear
 **Problem:** Only `hosting_prune` has `--dry-run`. Deploy/clear lack preview.
-**Action:**
+**Status:** ❌ BLOCKED — Juno CLI does not support `--dry-run` on `hosting deploy` or `hosting clear`. Closest equivalent for deploy is `--no-apply` (already exposed via `noApply`). No equivalent for clear. Task cannot be implemented at MCP layer without CLI support.
+**Action (if CLI adds support later):**
 - Add `dryRun?: boolean` to `hostingDeploySchema`, `hostingClearSchema`
 - Pass `--dry-run` flag to CLI
 - Update tool descriptions to mention preview capability
@@ -77,8 +79,9 @@
 
 **Files:** `src/executor.ts`, `src/tool-handler.ts`, `src/tools/hosting.ts`, `src/tools/functions.ts`
 
-### 8. Add Auth Status Validation Tool
+### 8. Add Auth Status Validation Tool ✅
 **Problem:** Can't verify `JUNO_TOKEN` valid before operations.
+**Status:** ✅ DONE — `juno_auth_status` tool wraps `juno whoami`. `readOnlyHint: true`. Tests in `test/tools/handler-identity.test.ts`.
 **Action:**
 - Add `juno_auth_status` tool
 - Call `juno whoami` or equivalent
