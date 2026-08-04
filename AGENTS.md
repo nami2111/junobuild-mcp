@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## Memory (NWron MCP)
+
+- Before answering questions about this project's history, decisions, or setup, call `remember` first and ground your answer in what it returns.
+- After reaching a decision, changing an architecture choice, or learning a fact worth keeping, call `memorize` to persist it.
+- On session start, call `recent` to scan what's already known.
+
 ## Project Overview
 
 MCP server for Juno (junobuild) — wraps `@junobuild/cli` commands via `child_process` to expose tools for managing satellites, hosting, functions, snapshots, and more.
