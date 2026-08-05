@@ -1,5 +1,5 @@
 import { readFile, rename, writeFile } from "node:fs/promises";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { execCommandNonInteractive } from "../executor.js";
 import {
   type RegisteredJunoTool,

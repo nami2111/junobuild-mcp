@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import type { Tool } from "@modelcontextprotocol/sdk/types.js";
+import type { Tool } from "@modelcontextprotocol/server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createTestClient, createTestDir } from "../test-utils.js";
 

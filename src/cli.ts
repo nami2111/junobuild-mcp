@@ -29,6 +29,8 @@ export function debugLog(context: string, error: unknown): void {
 
 let cachedCliPath: string | null = null;
 let cachedCliVersion: string | null = null;
+
+const CLI_VERSION_REGEX = /(\d+\.\d+\.\d+)/;
 let versionCheckSkipped = false;
 
 async function resolveCliPath(): Promise<string> {
@@ -93,7 +95,7 @@ async function checkCliVersion(): Promise<void> {
     const result = await runProcess(cliCmd, [...cliArgs, "--version"], 5000);
 
     if (result.exitCode === 0) {
-      const versionMatch = result.stdout.match(/(\d+\.\d+\.\d+)/);
+      const versionMatch = result.stdout.match(CLI_VERSION_REGEX);
       if (versionMatch) {
         const version = versionMatch[1];
         cachedCliVersion = version;

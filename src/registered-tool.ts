@@ -1,12 +1,16 @@
 import type {
+  CallToolResult,
   McpServer,
-  ToolCallback,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShapeCompat } from "@modelcontextprotocol/sdk/server/zod-compat.js";
-import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
+  ServerContext,
+  ToolAnnotations,
+} from "@modelcontextprotocol/server";
+import { type ZodRawShape, z } from "zod";
 
-type RegisteredToolInputSchema = ZodRawShapeCompat;
-type RegisteredToolHandler = ToolCallback<ZodRawShapeCompat>;
+type RegisteredToolInputSchema = ZodRawShape;
+type RegisteredToolHandler = (
+  params: Record<string, unknown>,
+  ctx: ServerContext
+) => CallToolResult | Promise<CallToolResult>;
 
 export interface RegisteredJunoTool {
   annotations: ToolAnnotations;
@@ -27,7 +31,7 @@ export function registerJunoTools(
       {
         title: tool.title,
         description: tool.description,
-        inputSchema: tool.inputSchema,
+        inputSchema: z.object(tool.inputSchema),
         annotations: tool.annotations,
       },
       tool.handler

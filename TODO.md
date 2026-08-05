@@ -19,8 +19,10 @@ Analyzed: [spec 2026-07-28 changelog](https://modelcontextprotocol.io/specificat
 
 ## P0 — Migration to SDK v2 + 2026-07-28 wire
 
-### 1. Split-package migration
+### 1. Split-package migration ✅
 **Why:** v1 SDK never puts a 2026-07-28 byte on the wire. Everything else depends on this.
+
+**Status:** ✅ DONE — @modelcontextprotocol/sdk@1.27.1 → @modelcontextprotocol/server@2.0.0 (+ @modelcontextprotocol/client@2.0.0 in devDeps, test-only) + @modelcontextprotocol/core@2.0.0 transitively. Codemod `v1-to-v2` ran clean; grep `@mcp-codemod-error` = 0. zod ^4.4.3 installed (SDK's deprecated raw-shape overload is broken on zod ^4.4 — `ZodRawShape` is now `$ZodShape`, SDK's own `Record<string, z.ZodType>` is stale — so registerJunoTools wraps `z.object(shape)` → modern overload). Pre-existing lint failures fixed (2 regex hoists, makeToolHandler complexity → extracted `execByStrategy`). engines.node ≥20. Build clean, 345 tests pass, wire smoke test OK (initialize + tools/list via stdio, v2 SDK serializes 2020-12 JSON Schema).
 
 **Do:**
 - `package.json`: drop `@modelcontextprotocol/sdk`, add `@modelcontextprotocol/server@^2.0.0` (+ `@modelcontextprotocol/core` if we import raw `*Schema` constants — currently we only import types; add only what imports demand)

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { runProcess } from "../../src/executor.js";
 
+const PROMPT_REGEX = /User\w+:/;
+
 describe("stdin automation (prompt detection)", () => {
   it("sends answer when prompt string matches stdout", async () => {
     const script = "echo 'Enter name:'; read name; echo \"got:$name\"";
@@ -20,7 +22,7 @@ describe("stdin automation (prompt detection)", () => {
     const result = await runProcess("bash", ["-c", script], 10_000, {
       stdinConfig: {
         answers: ["bob"],
-        prompts: [/User\w+:/],
+        prompts: [PROMPT_REGEX],
         promptTimeout: 5000,
       },
     });

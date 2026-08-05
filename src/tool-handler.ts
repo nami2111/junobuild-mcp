@@ -35,6 +35,54 @@ export interface ToolHandlerConfig {
   timeout?: number;
 }
 
+async function execByStrategy(
+  config: ToolHandlerConfig,
+  params: Record<string, unknown>,
+  subArgs: string[],
+  flags: GlobalFlags | undefined,
+  timeout: number,
+  extra?: Record<string, unknown>
+): Promise<Awaited<ReturnType<typeof execCli>>> {
+  const strategy = config.getStrategy?.(params) ?? config.strategy ?? "simple";
+
+  if (strategy === "streaming") {
+    const onProgress = makeProgressCallback(extra);
+    const onLog = params.streamLogs
+      ? makeLogCallback(extra, `juno_${config.command}`)
+      : undefined;
+    if (onProgress || onLog) {
+      return await execWithStreaming(
+        config.command,
+        subArgs,
+        flags,
+        timeout,
+        onProgress,
+        onLog
+      );
+    }
+    return execCli(config.command, subArgs, flags, timeout);
+  }
+
+  if (strategy === "retry") {
+    const retryConfig = config.retryConfig ?? {
+      maxRetries: 3,
+      baseDelay: 1000,
+      maxDelay: 8000,
+    };
+    return execWithRetry(
+      config.command,
+      subArgs,
+      flags,
+      timeout,
+      retryConfig.maxRetries,
+      retryConfig.baseDelay,
+      retryConfig.maxDelay
+    );
+  }
+
+  return execCli(config.command, subArgs, flags, timeout);
+}
+
 export function makeToolHandler(config: ToolHandlerConfig) {
   return async (
     params: Record<string, unknown>,
@@ -49,48 +97,16 @@ export function makeToolHandler(config: ToolHandlerConfig) {
       : undefined;
     const args = config.argsFromParams?.(params) ?? [];
     const subArgs = config.subcommand ? [config.subcommand, ...args] : args;
-
-    const strategy =
-      config.getStrategy?.(params) ?? config.strategy ?? "simple";
     const timeout = config.timeout ?? NETWORK_TIMEOUT;
 
-    let result: Awaited<ReturnType<typeof execCli>>;
-
-    if (strategy === "streaming") {
-      const onProgress = makeProgressCallback(extra);
-      const onLog = params.streamLogs
-        ? makeLogCallback(extra, `juno_${config.command}`)
-        : undefined;
-      if (onProgress || onLog) {
-        result = await execWithStreaming(
-          config.command,
-          subArgs,
-          flags,
-          timeout,
-          onProgress,
-          onLog
-        );
-      } else {
-        result = await execCli(config.command, subArgs, flags, timeout);
-      }
-    } else if (strategy === "retry") {
-      const retryConfig = config.retryConfig ?? {
-        maxRetries: 3,
-        baseDelay: 1000,
-        maxDelay: 8000,
-      };
-      result = await execWithRetry(
-        config.command,
-        subArgs,
-        flags,
-        timeout,
-        retryConfig.maxRetries,
-        retryConfig.baseDelay,
-        retryConfig.maxDelay
-      );
-    } else {
-      result = await execCli(config.command, subArgs, flags, timeout);
-    }
+    const result = await execByStrategy(
+      config,
+      params,
+      subArgs,
+      flags,
+      timeout,
+      extra
+    );
 
     const { text, isError } = formatResponse(result, config.label);
     return { content: [{ type: "text" as const, text }], isError };

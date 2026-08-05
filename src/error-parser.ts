@@ -1,3 +1,5 @@
+const ERROR_PREFIX_REGEX = /^Error:\s*/;
+
 export interface ParsedError {
   message: string;
   suggestion: string;
@@ -91,7 +93,7 @@ function extractErrorMessage(stderr: string, stdout: string): string {
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed && !trimmed.startsWith("at ") && trimmed.length > 10) {
-      return trimmed.replace(/^Error:\s*/, "");
+      return trimmed.replace(ERROR_PREFIX_REGEX, "");
     }
   }
 

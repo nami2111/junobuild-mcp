@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
-import type { TextContent } from "@modelcontextprotocol/sdk/types.js";
+import type { TextContent } from "@modelcontextprotocol/server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createTestClient, createTestDir } from "../test-utils.js";
 
