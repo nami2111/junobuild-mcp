@@ -1,5 +1,11 @@
 # junobuild-mcp-server
 
+## 2.0.0
+
+### Major Changes
+
+- SDK v2 (2026-07-28 protocol) upgrade: stateless dual-era serving (stdio + Streamable HTTP), `server/discover`, per-request log gating, MRTR `input_required` auth flow (`juno_login`), OTel trace
+
 ## 1.5.0
 
 ### Minor Changes
