@@ -1,3 +1,4 @@
+import type { ServerContext } from "@modelcontextprotocol/server";
 import { describe, expect, it, vi } from "vitest";
 import { NETWORK_TIMEOUT } from "../../src/constants.js";
 import {
@@ -16,12 +17,10 @@ vi.mock("../../src/cli.js", () => ({
     .mockResolvedValue({ stdout: "stream ok", stderr: "", exitCode: 0 }),
   formatResponse: vi.fn().mockReturnValue({ text: "ok", isError: false }),
   makeProgressCallback: vi.fn(
-    (extra?: { _meta?: { progressToken?: unknown } }) =>
-      extra?._meta?.progressToken ? vi.fn() : undefined
+    (ctx?: { mcpReq?: { _meta?: { progressToken?: unknown } } }) =>
+      ctx?.mcpReq?._meta?.progressToken ? vi.fn() : undefined
   ),
-  makeLogCallback: vi.fn((extra?: { sendNotification?: unknown }) =>
-    typeof extra?.sendNotification === "function" ? vi.fn() : undefined
-  ),
+  makeLogCallback: vi.fn(() => vi.fn()),
 }));
 
 import {
@@ -54,10 +53,9 @@ describe("handleHostingDeploy", () => {
   });
 
   it("calls execWithStreaming when progress is true", async () => {
-    await handleHostingDeploy(
-      { batch: 50, progress: true },
-      { _meta: { progressToken: "x" } }
-    );
+    await handleHostingDeploy({ batch: 50, progress: true }, {
+      mcpReq: { _meta: { progressToken: "x" } },
+    } as unknown as ServerContext);
     expect(mockExecWithStreaming).toHaveBeenCalledWith(
       "hosting",
       ["deploy", "--batch", "50"],
@@ -83,10 +81,9 @@ describe("handleHostingDeploy", () => {
   });
 
   it("calls execWithStreaming with onLog when streamLogs is true", async () => {
-    await handleHostingDeploy(
-      { batch: 50, streamLogs: true },
-      { sendNotification: vi.fn().mockResolvedValue(undefined) }
-    );
+    await handleHostingDeploy({ batch: 50, streamLogs: true }, {
+      mcpReq: {},
+    } as unknown as ServerContext);
     expect(mockExecWithStreaming).toHaveBeenCalledWith(
       "hosting",
       ["deploy", "--batch", "50"],
@@ -99,13 +96,9 @@ describe("handleHostingDeploy", () => {
   });
 
   it("calls execWithStreaming with both onProgress and onLog when both flags set", async () => {
-    await handleHostingDeploy(
-      { batch: 50, progress: true, streamLogs: true },
-      {
-        _meta: { progressToken: "x" },
-        sendNotification: vi.fn().mockResolvedValue(undefined),
-      }
-    );
+    await handleHostingDeploy({ batch: 50, progress: true, streamLogs: true }, {
+      mcpReq: { _meta: { progressToken: "x" } },
+    } as unknown as ServerContext);
     expect(mockExecWithStreaming).toHaveBeenCalledWith(
       "hosting",
       ["deploy", "--batch", "50"],

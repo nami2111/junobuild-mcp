@@ -1,4 +1,5 @@
 import { exec } from "node:child_process";
+import type { ServerContext } from "@modelcontextprotocol/server";
 import {
   CHARACTER_LIMIT,
   CLI_PACKAGE,
@@ -199,44 +200,33 @@ export async function execWithStreaming(
 }
 
 export function makeProgressCallback(
-  extra: unknown
+  ctx: ServerContext
 ): ProgressCallback | undefined {
-  const e = extra as {
-    _meta?: Record<string, unknown>;
-    sendNotification: (n: unknown) => Promise<void>;
-  };
-  const token = e._meta?.progressToken as string | number | undefined;
+  const token = ctx.mcpReq._meta?.progressToken;
   if (!token) {
     return;
   }
 
   return (progress: number, message: string) => {
-    e.sendNotification({
-      method: "notifications/progress",
-      params: { progressToken: token, progress, total: 100, message },
-    }).catch((error) => {
-      debugLog("progress notification failed", error);
-    });
+    ctx.mcpReq
+      .notify({
+        method: "notifications/progress",
+        params: { progressToken: token, progress, total: 100, message },
+      })
+      .catch((error) => {
+        debugLog("progress notification failed", error);
+      });
   };
 }
 
 export function makeLogCallback(
-  extra: unknown,
+  ctx: ServerContext,
   logger?: string
-): LogCallback | undefined {
-  const e = extra as {
-    sendNotification?: (n: unknown) => Promise<void>;
-  };
-  if (typeof e?.sendNotification !== "function") {
-    return;
-  }
-  const send = e.sendNotification;
-
+): LogCallback {
   return (level, message) => {
-    send({
-      method: "notifications/message",
-      params: { level, data: message, logger },
-    }).catch((error) => {
+    // ctx.mcpReq.log is gated by the SDK: per-request _meta.logLevel on
+    // 2026-07-28 (absent = silently opt-out), logging/setLevel on legacy.
+    ctx.mcpReq.log(level, message, logger).catch((error) => {
       debugLog("log notification failed", error);
     });
   };

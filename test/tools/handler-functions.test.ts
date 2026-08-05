@@ -1,3 +1,4 @@
+import type { ServerContext } from "@modelcontextprotocol/server";
 import { describe, expect, it, vi } from "vitest";
 import { NETWORK_TIMEOUT } from "../../src/constants.js";
 import {
@@ -17,12 +18,10 @@ vi.mock("../../src/cli.js", () => ({
     .mockResolvedValue({ stdout: "stream ok", stderr: "", exitCode: 0 }),
   formatResponse: vi.fn().mockReturnValue({ text: "ok", isError: false }),
   makeProgressCallback: vi.fn(
-    (extra?: { _meta?: { progressToken?: unknown } }) =>
-      extra?._meta?.progressToken ? vi.fn() : undefined
+    (ctx?: { mcpReq?: { _meta?: { progressToken?: unknown } } }) =>
+      ctx?.mcpReq?._meta?.progressToken ? vi.fn() : undefined
   ),
-  makeLogCallback: vi.fn((extra?: { sendNotification?: unknown }) =>
-    typeof extra?.sendNotification === "function" ? vi.fn() : undefined
-  ),
+  makeLogCallback: vi.fn(() => vi.fn()),
 }));
 
 import {
@@ -102,10 +101,9 @@ describe("handleFunctionsPublish", () => {
   });
 
   it("calls execWithStreaming when progress is true", async () => {
-    await handleFunctionsPublish(
-      { progress: true, mode: "production" },
-      { _meta: { progressToken: "x" } }
-    );
+    await handleFunctionsPublish({ progress: true, mode: "production" }, {
+      mcpReq: { _meta: { progressToken: "x" } },
+    } as unknown as ServerContext);
     expect(mockExecWithStreaming).toHaveBeenCalledWith(
       "functions",
       ["publish"],
@@ -161,10 +159,9 @@ describe("handleFunctionsUpgrade", () => {
   });
 
   it("calls execWithStreaming when progress is true", async () => {
-    await handleFunctionsUpgrade(
-      { progress: true },
-      { _meta: { progressToken: "x" } }
-    );
+    await handleFunctionsUpgrade({ progress: true }, {
+      mcpReq: { _meta: { progressToken: "x" } },
+    } as unknown as ServerContext);
     expect(mockExecWithStreaming).toHaveBeenCalledWith(
       "functions",
       ["upgrade"],

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { ServerContext } from "@modelcontextprotocol/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildFlagArgs,
@@ -274,30 +275,28 @@ describe("parseProgress", () => {
 });
 
 describe("makeProgressCallback", () => {
+  const ctx = (meta: Record<string, unknown>, notify = vi.fn()) =>
+    ({
+      mcpReq: { _meta: meta, notify },
+    }) as unknown as ServerContext;
+
   it("returns undefined when no progressToken present", () => {
-    expect(makeProgressCallback({})).toBeUndefined();
-    expect(makeProgressCallback({ _meta: {} })).toBeUndefined();
+    expect(makeProgressCallback(ctx({}))).toBeUndefined();
   });
 
   it("returns a function when progressToken exists", () => {
-    const cb = makeProgressCallback({
-      _meta: { progressToken: "abc123" },
-      sendNotification: vi.fn().mockResolvedValue(undefined),
-    });
+    const cb = makeProgressCallback(ctx({ progressToken: "abc123" }));
     expect(typeof cb).toBe("function");
   });
 
   it("sends correct notification payload", async () => {
-    const sendNotification = vi.fn().mockResolvedValue(undefined);
-    const cb = makeProgressCallback({
-      _meta: { progressToken: 42 },
-      sendNotification,
-    });
+    const notify = vi.fn().mockResolvedValue(undefined);
+    const cb = makeProgressCallback(ctx({ progressToken: 42 }, notify));
 
     cb?.(50, "Uploading");
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(sendNotification).toHaveBeenCalledWith({
+    expect(notify).toHaveBeenCalledWith({
       method: "notifications/progress",
       params: {
         progressToken: 42,
@@ -308,12 +307,10 @@ describe("makeProgressCallback", () => {
     });
   });
 
-  it("swallows sendNotification rejection", () => {
-    const sendNotification = vi.fn().mockRejectedValue(new Error("boom"));
-    const cb = makeProgressCallback({
-      _meta: { progressToken: "x" },
-      sendNotification,
-    });
+  it("swallows notify rejection", () => {
+    const cb = makeProgressCallback(
+      ctx({ progressToken: "x" }, vi.fn().mockRejectedValue(new Error("boom")))
+    );
 
     expect(() => cb?.(10, "test")).not.toThrow();
   });
@@ -367,57 +364,44 @@ describe("debugLog", () => {
 });
 
 describe("makeLogCallback", () => {
-  it("returns undefined when no sendNotification present", () => {
-    expect(makeLogCallback({})).toBeUndefined();
-    expect(makeLogCallback({ _meta: {} })).toBeUndefined();
-  });
+  const ctx = (log = vi.fn()) =>
+    ({ mcpReq: { log } }) as unknown as ServerContext;
 
-  it("returns a function when sendNotification exists", () => {
-    const cb = makeLogCallback({
-      sendNotification: vi.fn().mockResolvedValue(undefined),
-    });
+  it("returns a function", () => {
+    const cb = makeLogCallback(ctx());
     expect(typeof cb).toBe("function");
   });
 
-  it("sends correct info notification payload", async () => {
-    const sendNotification = vi.fn().mockResolvedValue(undefined);
-    const cb = makeLogCallback({ sendNotification }, "juno_hosting");
+  it("calls ctx.mcpReq.log with info payload", async () => {
+    const log = vi.fn().mockResolvedValue(undefined);
+    const cb = makeLogCallback(ctx(log), "juno_hosting");
 
-    cb?.("info", "Uploading file foo.js");
+    cb("info", "Uploading file foo.js");
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(sendNotification).toHaveBeenCalledWith({
-      method: "notifications/message",
-      params: {
-        level: "info",
-        data: "Uploading file foo.js",
-        logger: "juno_hosting",
-      },
-    });
+    expect(log).toHaveBeenCalledWith(
+      "info",
+      "Uploading file foo.js",
+      "juno_hosting"
+    );
   });
 
-  it("sends correct error notification payload", async () => {
-    const sendNotification = vi.fn().mockResolvedValue(undefined);
-    const cb = makeLogCallback({ sendNotification });
+  it("calls ctx.mcpReq.log with error payload", async () => {
+    const log = vi.fn().mockResolvedValue(undefined);
+    const cb = makeLogCallback(ctx(log));
 
-    cb?.("error", "Build failed");
+    cb("error", "Build failed");
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(sendNotification).toHaveBeenCalledWith({
-      method: "notifications/message",
-      params: {
-        level: "error",
-        data: "Build failed",
-        logger: undefined,
-      },
-    });
+    expect(log).toHaveBeenCalledWith("error", "Build failed", undefined);
   });
 
-  it("swallows sendNotification rejection", () => {
-    const sendNotification = vi.fn().mockRejectedValue(new Error("boom"));
-    const cb = makeLogCallback({ sendNotification });
+  it("swallows log rejection", () => {
+    const cb = makeLogCallback(
+      ctx(vi.fn().mockRejectedValue(new Error("boom")))
+    );
 
-    expect(() => cb?.("info", "test")).not.toThrow();
+    expect(() => cb("info", "test")).not.toThrow();
   });
 });
 

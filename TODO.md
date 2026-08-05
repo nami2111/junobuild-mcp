@@ -58,19 +58,20 @@ Analyzed: [spec 2026-07-28 changelog](https://modelcontextprotocol.io/specificat
 
 ## P0 — Protocol compliance: log + progress notifications
 
-### 4. Gate `notifications/message` on per-request `logLevel`
+### 4. Gate `notifications/message` on per-request `logLevel` ✅
 **Why:** spec: servers MUST NOT emit `notifications/message` for requests whose `_meta` lacked `io.modelcontextprotocol/logLevel`. Current `streamLogs` emits unconditionally → violates 2026 wire.
 
-**Do:**
+**Status:** ✅ DONE — `makeLogCallback(extra, logger)` → `makeLogCallback(ctx: ServerContext, logger?)` calling `ctx.mcpReq.log(level, data, logger)` (SDK gates: per-request `_meta.logLevel` on 2026-era, absent = silently opt-out; session `logging/setLevel` on legacy). Old `sendNotification`-plumbing and manual `notifications/message` payloads deleted. BONUS: progress ported here too (P0-4/5 share the same code path) — `makeProgressCallback(ctx)` reads `ctx.mcpReq._meta?.progressToken` (still a plain `_meta` key in v2, not envoy) and sends via `ctx.mcpReq.notify({method: "notifications/progress", ...})` (request-scoped send). tool-handler now `(params, ctx: ServerContext)`.
+Tests: cli.test.ts blocks rewritten against mocked ctx (`mcpReq.log`/`mcpReq.notify`/`_meta`), handler-hosting/functions mocks + call sites updated (1 obsolete test removed: “returns undefined when no sendNotification”). 344 tests pass, build clean, ultracite green. Live client verification pending juno CLI (see P0-5).
 - Replace `makeLogCallback(extra, logger)` in `src/cli.ts` with v2 gated path: `ctx.mcpReq.log()` (auto gates on envelope `logLevel`; absent = silently opt-out) — or read `ctx.mcpReq.envelope['io.modelcontextprotocol/logLevel']` manually and skip when absent
 - `streamLogs` param keeps working on 2025-era clients (session-scoped `logging/setLevel` still honored by SDK legacy path)
 
 **Files:** `src/cli.ts`, `src/tool-handler.ts`, `test/helpers/cli.test.ts`
 
-### 5. Fix progress notifications wiring (verify against real client)
-**Why:** current `makeProgressCallback` reads `extra._meta.progressToken` + `extra.sendNotification`, but tests inject `sendNotification` manually — at runtime with a real v1 client this may never fire. Under 2026, progress is request-scoped on the response stream; must be re-done on v2 API and validated.
+### 5. Fix progress notifications wiring (verify against real client) 🚧
+**Why:** current `makeProgressCallback` read `extra._meta.progressToken` + `extra.sendNotification` — dead at runtime under real clients. Under 2026, progress is request-scoped on the response stream.
 
-**Do:**
+**Status:** 🚧 WIRING DONE, LIVE VERIFICATION PENDING — ported in P0-4 (see above): `makeProgressCallback(ctx)` reads `ctx.mcpReq._meta?.progressToken`, sends via `ctx.mcpReq.notify` (request-scoped). Remaining: run a streaming tool (deploy/functions publish) with `progress: true` / `streamLogs: true` against a real client (v2 `Client` — modern `_meta.logLevel` via `client.setLoggingLevel()`, progressToken via request meta) and confirm notifications on the wire. Requires juno CLI + a satellite (JUNO_E2E suite).
 - Port `makeProgressCallback` to v2 notify mechanism; read `progressToken` from `ctx.mcpReq.envelope._meta`
 - Integration-check with MCP Inspector (stdio + HTTP): deploy with `progress: true` sees `notifications/progress`, `streamLogs: true` sees gated `notifications/message`
 - Keep `debugLog`; add debug line with envelope `clientInfo` + protocol version for support

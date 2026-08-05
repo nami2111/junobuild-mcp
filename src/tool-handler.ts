@@ -1,3 +1,4 @@
+import type { ServerContext } from "@modelcontextprotocol/server";
 import {
   execCli,
   execWithRetry,
@@ -41,14 +42,14 @@ async function execByStrategy(
   subArgs: string[],
   flags: GlobalFlags | undefined,
   timeout: number,
-  extra?: Record<string, unknown>
+  ctx: ServerContext
 ): Promise<Awaited<ReturnType<typeof execCli>>> {
   const strategy = config.getStrategy?.(params) ?? config.strategy ?? "simple";
 
   if (strategy === "streaming") {
-    const onProgress = makeProgressCallback(extra);
+    const onProgress = makeProgressCallback(ctx);
     const onLog = params.streamLogs
-      ? makeLogCallback(extra, `juno_${config.command}`)
+      ? makeLogCallback(ctx, `juno_${config.command}`)
       : undefined;
     if (onProgress || onLog) {
       return await execWithStreaming(
@@ -84,10 +85,7 @@ async function execByStrategy(
 }
 
 export function makeToolHandler(config: ToolHandlerConfig) {
-  return async (
-    params: Record<string, unknown>,
-    extra?: Record<string, unknown>
-  ) => {
+  return async (params: Record<string, unknown>, ctx: ServerContext) => {
     const contextCapabilities =
       config.context === false || config.hasMode === false
         ? undefined
@@ -105,7 +103,7 @@ export function makeToolHandler(config: ToolHandlerConfig) {
       subArgs,
       flags,
       timeout,
-      extra
+      ctx
     );
 
     const { text, isError } = formatResponse(result, config.label);
