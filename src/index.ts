@@ -21,6 +21,9 @@ export function buildServer(): McpServer {
       version: pkg.version,
     },
     {
+      // Log gating (SEP-2577): deprecated but served through the 12-month
+      // window — 2026-era per-request _meta.logLevel, legacy logging/setLevel.
+      capabilities: { logging: {} },
       // Static toolset: allow clients/intermediaries to cache tools/list.
       cacheHints: {
         "tools/list": { ttlMs: 3_600_000, cacheScope: "public" },

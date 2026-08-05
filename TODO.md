@@ -71,7 +71,14 @@ Tests: cli.test.ts blocks rewritten against mocked ctx (`mcpReq.log`/`mcpReq.not
 ### 5. Fix progress notifications wiring (verify against real client) 🚧
 **Why:** current `makeProgressCallback` read `extra._meta.progressToken` + `extra.sendNotification` — dead at runtime under real clients. Under 2026, progress is request-scoped on the response stream.
 
-**Status:** 🚧 WIRING DONE, LIVE VERIFICATION PENDING — ported in P0-4 (see above): `makeProgressCallback(ctx)` reads `ctx.mcpReq._meta?.progressToken`, sends via `ctx.mcpReq.notify` (request-scoped). Remaining: run a streaming tool (deploy/functions publish) with `progress: true` / `streamLogs: true` against a real client (v2 `Client` — modern `_meta.logLevel` via `client.setLoggingLevel()`, progressToken via request meta) and confirm notifications on the wire. Requires juno CLI + a satellite (JUNO_E2E suite).
+**Status:** ✅ VERIFIED (2026-08-04) — real juno CLI v0.15.6 (password shim on PATH: config is password-encrypted; `printf '1212' | /home/cody/.vite-plus/bin/juno`) + real satellite `njql7-pqaaa-aaaal-asagq-cai`; v2 `Client` (pin 2026-07-28) over stdio against `dist/main.js` from `/tmp/juno-live` temp project. `juno_hosting_deploy {noApply, progress:true, streamLogs:true}`: **7 `notifications/progress` per round** (client `onprogress` callback); **0 `notifications/message` without `_meta.logLevel`** (gating negative ✓); **22 `notifications/message` with `io.modelcontextprotocol/logLevel: info`** in the per-request `_meta` (gating positive ✓). Raw request/response captures in `/tmp/juno-live/in.log`+`out.log`.
+
+Two code gaps found and fixed:
+- **`logging` capability was missing** — `ctx.mcpReq.log()` no-ops in BOTH eras when the server doesn't advertise `logging` (`if (!this._capabilities.logging) return`); fixed with `capabilities: { logging: {} }` in `buildServer()` (`src/index.ts`).
+- **2026-era opt-in is per-request `_meta`, not `setLoggingLevel()`** — the v2 client's `setLoggingLevel` issues `logging/setLevel`, which the 2026-07-28 codec rejects (`METHOD_NOT_SUPPORTED_BY_PROTOCOL_VERSION`). Opt-in = user-injected `_meta: { "io.modelcontextprotocol/logLevel": "info" }` (user keys spread last in the client envelope, so they win). The server gate already reads the envelope — no server change needed for this one.
+- Note: a naive `tools/list` global-sort check fails by design — ordering is per-domain alphabetical (state in item 6).
+
+**Files:** `src/index.ts` (capabilities), scratch probe `/tmp/juno-live` (script + tee wrapper)
 - Port `makeProgressCallback` to v2 notify mechanism; read `progressToken` from `ctx.mcpReq.envelope._meta`
 - Integration-check with MCP Inspector (stdio + HTTP): deploy with `progress: true` sees `notifications/progress`, `streamLogs: true` sees gated `notifications/message`
 - Keep `debugLog`; add debug line with envelope `clientInfo` + protocol version for support
