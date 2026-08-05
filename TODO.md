@@ -1,210 +1,172 @@
-# TODO: Actionable Improvements
+# TODO: MCP 2026-07-28 Spec Upgrade Plan
 
-## High Priority (Production Hardening)
+Analyzed: [spec 2026-07-28 changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog) vs current server (`@modelcontextprotocol/sdk@1.27.1`, v1, stdio-only).
 
-### 1. Add Retry Configuration Per-Tool
-**Problem:** Hardcoded 3 retries, 1s base delay in `execWithRetry`. Not configurable.
-**Action:**
-- Add `RetryConfig` interface with `maxRetries`, `baseDelay`, `maxDelay`
-- Pass config through `ToolHandlerConfig`
-- Allow per-tool override in tool definitions
-- Default: `{ maxRetries: 3, baseDelay: 1000, maxDelay: 8000 }`
+## Spec delta that matters here
 
-**Files:** `src/cli.ts`, `src/tool-handler.ts`
-
-### 2. Implement Proper LRU Cache ✅
-**Problem:** Naive "delete first key" eviction in `docs-catalog.ts`. Map iteration order not guaranteed in all engines.
-**Status:** ✅ DONE — `src/lru-cache.ts` with doubly-linked list, 14 tests covering eviction order/recency tracking.
-**Action:**
-- Create `src/lru-cache.ts` with doubly-linked list implementation
-- Track access order explicitly
-- Replace `docCache` Map with LRU instance
-- Add tests for eviction order
-
-**Files:** `src/lru-cache.ts` (new), `src/docs-catalog.ts`, `test/helpers/lru-cache.test.ts` (new)
-
-### 3. Add SIGKILL Fallback After SIGTERM Timeout
-**Problem:** `child.kill('SIGTERM')` in `executor.ts` but no SIGKILL if process hangs.
-**Action:**
-- After SIGTERM, wait 5s
-- If process still alive, send SIGKILL
-- Log warning when SIGKILL needed
-- Add test with mock hanging process
-
-**Files:** `src/executor.ts`, `test/helpers/executor.test.ts` (new)
-
-### 4. Version Compatibility Checks for Juno CLI
-**Problem:** No validation that installed Juno CLI supports called flags/commands.
-**Action:**
-- Add `getCliVersion()` function that parses `juno --version`
-- Define minimum supported version (e.g., `0.0.50`)
-- Check version on first CLI call, cache result
-- Throw clear error if version too old
-- Add `--skip-version-check` flag for CI
-
-**Files:** `src/cli.ts`, `src/constants.ts`, `test/helpers/cli.test.ts`
-
-### 5. Parse Common CLI Errors for Better Messages
-**Problem:** Generic `formatResponse` just shows exit code + stderr.
-**Action:**
-- Create `src/error-parser.ts` with pattern matching
-- Detect: auth failures, network errors, config missing, satellite not found
-- Return structured error with suggestion
-- Example: "Authentication failed. Run `juno login` or set JUNO_TOKEN."
-
-**Files:** `src/error-parser.ts` (new), `src/cli.ts`, `test/helpers/error-parser.test.ts` (new)
+| Spec change | Impact on this server |
+|---|---|
+| Stateless protocol: `initialize` handshake removed; every request carries version + capabilities + identity in `_meta`; `server/discover` added (MUST implement) | Need SDK v2 wire. Server has zero session state (all state in tool params) → migration is free |
+| `notifications/message` gated by per-request `_meta.logLevel` (absent = MUST NOT emit); Logging feature deprecated | Current `streamLogs` emits unconditionally → protocol violation on 2026 wire |
+| `resultType: "complete"` / `"input_required"` on all results; MRTR pattern replaces server→client requests (roots/sampling/elicitation); `requestState` for multi-step flows | Candidate to replace fragile stdin automation; SDK shims MRTR to 2025-era clients |
+| CacheableResult: `ttlMs` + `cacheScope` required on list results; tools/list should be deterministic order | Tools list is static → cheap wins: stable order + cache hints |
+| Streamable HTTP is the headline transport; reqs: `Mcp-Method`/`Mcp-Name` headers, stateless serving | Server is stdio-only. Biggest capability gap |
+| SDK v2 = package split: `@modelcontextprotocol/server`, `@modelcontextprotocol/client`, `@modelcontextprotocol/core`, `@modelcontextprotocol/node`; Node 20+; zod ^4.2 (have 4.3.6 ✅) | Renames + import path changes across src/ and test/ |
+| OTel `_meta` trace context (`traceparent`/`tracestate`/`baggage`) | Optional: forward to juno CLI child env |
+| Not relevant: `subscriptions/listen` (no resources/prompts, static toolset), tasks extension, error-code renumbering (SDK-level), `x-mcp-header` (HTTP-mode, SDK-level), OAuth auth opt-ins (only if HTTP-mode), SSE transport deprecation (unused) | — |
 
 ---
 
-## Medium Priority (Feature Gaps)
+## P0 — Migration to SDK v2 + 2026-07-28 wire
 
-### 6. Add Dry-Run Mode to Deploy/Clear
-**Problem:** Only `hosting_prune` has `--dry-run`. Deploy/clear lack preview.
-**Status:** ❌ BLOCKED — Juno CLI does not support `--dry-run` on `hosting deploy` or `hosting clear`. Closest equivalent for deploy is `--no-apply` (already exposed via `noApply`). No equivalent for clear. Task cannot be implemented at MCP layer without CLI support.
-**Action (if CLI adds support later):**
-- Add `dryRun?: boolean` to `hostingDeploySchema`, `hostingClearSchema`
-- Pass `--dry-run` flag to CLI
-- Update tool descriptions to mention preview capability
-- Add tests for dry-run output parsing
+### 1. Split-package migration
+**Why:** v1 SDK never puts a 2026-07-28 byte on the wire. Everything else depends on this.
 
-**Files:** `src/schemas/hosting.ts`, `src/tools/hosting.ts`, `test/tools/hosting.test.ts`
+**Do:**
+- `package.json`: drop `@modelcontextprotocol/sdk`, add `@modelcontextprotocol/server@^2.0.0` (+ `@modelcontextprotocol/core` if we import raw `*Schema` constants — currently we only import types; add only what imports demand)
+- Run `npx @modelcontextprotocol/codemod@latest v1-to-v2 .` at repo root; then `grep -rn '@mcp-codemod-error' .` and fix markers by hand
+- Run `npm exec -- ultracite fix` after codemod (it rewrites AST without reformatting)
+- Update test files: mocked v1 imports (`@modelcontextprotocol/sdk/server/mcp.js` etc.) → v2 packages; `test/test-utils.ts` mock server rewire
 
-### 7. Add Streaming Log Support ✅
-**Problem:** Progress updates but not full log streaming.
-**Status:** ✅ DONE — `streamLogs?: boolean` on hosting deploy, functions publish/upgrade. Stdout → `notifications/message` level=info; stderr → level=error. Independent of progress. `makeLogCallback(extra, logger)` helper in `cli.ts`. Tests cover callback creation, payload shape, rejection swallowing, streaming-strategy trigger.
-**Action:**
-- Add `streamLogs?: boolean` param to long-running tools
-- Stream stdout/stderr lines as MCP log notifications
-- Use `notifications/message` with `level: "info"/"error"`
-- Keep existing progress notifications separate
+**Files:** `package.json`, `package-lock.json`, `src/**`, `test/**`
 
-**Files:** `src/executor.ts`, `src/tool-handler.ts`, `src/tools/hosting.ts`, `src/tools/functions.ts`
+### 2. Swap stdio entry for `serveStdio` factory
+**Why:** a hand-constructed `Server`/`McpServer` + `StdioServerTransport` serves only 2025-era. `serveStdio(() => buildServer())` negotiates era per connection.
 
-### 8. Add Auth Status Validation Tool ✅
-**Problem:** Can't verify `JUNO_TOKEN` valid before operations.
-**Status:** ✅ DONE — `juno_auth_status` tool wraps `juno whoami`. `readOnlyHint: true`. Tests in `test/tools/handler-identity.test.ts`.
-**Action:**
-- Add `juno_auth_status` tool
-- Call `juno whoami` or equivalent
-- Return: authenticated user, token expiry, permissions
-- Mark as `readOnlyHint: true`
+**Do:**
+- `src/index.ts`: replace `server.connect(new StdioServerTransport())` with `serveStdio(() => buildServer())` from `@modelcontextprotocol/server/stdio`
+- Refactor index.js to export `buildServer()` (register all tools, return `McpServer`) — same factory reused for HTTP mode (P1-1)
+- Keep dual-era default (`legacy: 'stateless'`) so existing 2025-era clients (Claude Desktop etc.) keep working; `{ legacy: 'reject' }` only later
+- Server identity: SDK stamps `_meta['io.modelcontextprotocol/serverInfo']` on every 2026 response from `McpServer` options — name/version already set, nothing to do; verify with MCP Inspector
+- `engines.node`: `>=18` → `>=20`; update README prerequisites
 
-**Files:** `src/tools/identity.ts`, `src/schemas/identity.ts`, `test/tools/identity.test.ts`
+**Files:** `src/index.ts`, `package.json`, `README.md`
 
-### 10. Add Test Coverage Reporting ✅
-**Problem:** 289 tests pass but coverage percentage unknown.
-**Status:** ✅ DONE — `vitest.config.ts` configured with v8 provider, reporters `text/html/json/lcov`, includes `src/**/*.ts`, excludes `*.d.ts`/`index.ts`/`types.ts`/`schemas/**`. Thresholds enforced: 80% lines/funcs/statements, 75% branches. `npm run test:coverage` script added. `@vitest/coverage-v8@^4.1.7` devDep. `coverage/` in `.gitignore`. README "Coverage thresholds" section. Current run: 90.04% stmts / 86.55% branch / 87.9% funcs / 90.08% lines.
+### 3. Handler callback signature (v1 `(params, extra)` → v2 `(args, ctx)`)
+**Why:** codemod renames `RequestHandlerExtra`→`ServerContext`, `extra`→`ctx`; v1-typed helpers won't compile after.
 
-**Files:** `vitest.config.ts`, `package.json`, `.gitignore`, `README.md`
+**Do:**
+- `src/tool-handler.ts`: `makeToolHandler` returns a v2 handler; `(params, extra)` → `(args, ctx)`; drop now-unused `extra` plumbing
+- `src/registered-tool.ts`: `RegisteredToolHandler`/`ToolCallback` reimport from v2; `ZodRawShapeCompat` import from `@modelcontextprotocol/sdk/server/zod-compat.js` is dropped by codemod → retype `inputSchema` per v2 `registerTool` signature (codemod wraps raw shapes with `z.object()`)
+- No `extra.sessionId` state anywhere (verified) → stateless migration is free; double-check with `grep -rn 'sessionId\|extra\.' src/`
+
+**Files:** `src/tool-handler.ts`, `src/registered-tool.ts`, `src/tools/*.ts`, `src/cli.ts`
 
 ---
 
-## Low Priority (Polish)
+## P0 — Protocol compliance: log + progress notifications
 
-### 11. Make Timeouts/Limits Configurable ✅
-**Problem:** Hardcoded `CHARACTER_LIMIT = 25000`, `DEFAULT_TIMEOUT = 120000`, `NETWORK_TIMEOUT = 300000`.
-**Status:** ✅ DONE — `parseEnvNumber(name, fallback)` in `src/constants.ts`. Env vars: `JUNO_MCP_CHAR_LIMIT`, `JUNO_MCP_TIMEOUT`, `JUNO_MCP_NETWORK_TIMEOUT`. Invalid values (non-numeric, zero, negative) fall back to defaults. Documented in README under "Server Tuning". 7 new tests covering parsing edge cases.
+### 4. Gate `notifications/message` on per-request `logLevel`
+**Why:** spec: servers MUST NOT emit `notifications/message` for requests whose `_meta` lacked `io.modelcontextprotocol/logLevel`. Current `streamLogs` emits unconditionally → violates 2026 wire.
 
-**Files:** `src/constants.ts`, `test/helpers/constants.test.ts`, `README.md`
+**Do:**
+- Replace `makeLogCallback(extra, logger)` in `src/cli.ts` with v2 gated path: `ctx.mcpReq.log()` (auto gates on envelope `logLevel`; absent = silently opt-out) — or read `ctx.mcpReq.envelope['io.modelcontextprotocol/logLevel']` manually and skip when absent
+- `streamLogs` param keeps working on 2025-era clients (session-scoped `logging/setLevel` still honored by SDK legacy path)
 
-### 12. Batch Size Auto-Tuning Based on File Count
-**Problem:** User sets `batch=200` for 5 files. Wasteful.
-**Action:**
-- In `buildHostingDeployArgs`, cap batch at file count
-- Requires reading source directory before CLI call
-- Log: "Adjusted batch size from 200 to 5 (file count)"
-- Add `--no-auto-batch` flag to disable
+**Files:** `src/cli.ts`, `src/tool-handler.ts`, `test/helpers/cli.test.ts`
 
-**Files:** `src/tools/hosting.ts`, `test/tools/hosting.test.ts`
+### 5. Fix progress notifications wiring (verify against real client)
+**Why:** current `makeProgressCallback` reads `extra._meta.progressToken` + `extra.sendNotification`, but tests inject `sendNotification` manually — at runtime with a real v1 client this may never fire. Under 2026, progress is request-scoped on the response stream; must be re-done on v2 API and validated.
 
-### 13. Progress Parsing Version Detection
-**Problem:** Hardcoded phase names, regex patterns. Breaks if CLI output changes.
-**Action:**
-- Detect Juno CLI version (see #4)
-- Load progress patterns from version-specific config
-- Fallback to generic pattern if version unknown
-- Add `src/progress-patterns.ts` with version map
+**Do:**
+- Port `makeProgressCallback` to v2 notify mechanism; read `progressToken` from `ctx.mcpReq.envelope._meta`
+- Integration-check with MCP Inspector (stdio + HTTP): deploy with `progress: true` sees `notifications/progress`, `streamLogs: true` sees gated `notifications/message`
+- Keep `debugLog`; add debug line with envelope `clientInfo` + protocol version for support
 
-**Files:** `src/progress-patterns.ts` (new), `src/executor.ts`
-
-### 14. Docs Catalog Auto-Generation from Repo
-**Problem:** 159 hardcoded topic mappings. Manual sync with Juno docs repo.
-**Action:**
-- Add `scripts/generate-docs-catalog.ts`
-- Fetch Juno docs repo file tree via GitHub API
-- Generate `src/schemas/docs.ts` TOPICS map automatically
-- Run in CI on schedule, open PR if changes detected
-- Add `npm run generate:docs` script
-
-**Files:** `scripts/generate-docs-catalog.ts` (new), `package.json`, `.github/workflows/sync-docs.yml` (new)
+**Files:** `src/cli.ts`, `src/tool-handler.ts`, `test/helpers/cli.test.ts`
 
 ---
 
-## Bug Fixes
+## P0 — Deterministic tools/list + cache hints
 
-### 15. Fix Failing Test: handleVersion ✅
-**Problem:** Test expects `"version"` but code calls `"--version"`.
-**Status:** ✅ DONE — `test/tools/handler-identity.test.ts:24` updated to `"--version"`. Commit `428fb1c`.
+### 6. Stable tool order + CacheableResult
+**Why:** spec: tools/list SHOULD be deterministic (client caching, LLM prompt-cache hit rate); list results require `ttlMs` + `cacheScope`.
 
-**Files:** `test/tools/handler-identity.test.ts`
+**Do:**
+- `src/registered-tool.ts` `registerJunoTools`: sort by `name` (alphabetical) before registering — stable across file/registration refactors
+- Add cache hints: toolset is static → `ttlMs` high (e.g. 3_600_000), `cacheScope: 'public'`. Check v2 `McpServer`/`registerTool` options for cacheable-result support; wire whatever the SDK exposes
+- Verify `server/discover` advertises `tools: {}` capability (SDK handles; confirm in Inspector)
 
-### 16. Fix Stdin Automation Timing ✅
-**Problem:** Hardcoded 5s initial delay, 3s between answers. Fragile.
-**Status:** ✅ DONE — `StdinConfig` interface in `src/executor.ts` with `answers`, `prompts?: (string | RegExp)[]`, `initialDelay`, `answerDelay`, `promptTimeout`. `setupStdinAutomation()` listens for prompt patterns on stdout/stderr; sends next answer when match detected; falls back to `promptTimeout` (default 10s) if pattern never appears. Backward-compat: `stdinAnswers?: string[]` still works (maps to default config). Reuses last prompt pattern when `prompts.length < answers.length`. 7 tests in `test/helpers/executor-stdin.test.ts` cover string/regex match, fallback timeout, multi-prompt sequencing, configurable delays, backward-compat.
-
-**Files:** `src/executor.ts`, `test/helpers/executor-stdin.test.ts`
+**Files:** `src/registered-tool.ts`, `src/index.ts`, `test/tools/**`
 
 ---
 
-## Technical Debt
+## P1 — Streamable HTTP transport (headline feature)
 
-### 17. Remove Type Assertions in registered-tool.ts ✅
-**Problem:** `as Parameters<McpServer["registerTool"]>[2]` indicates SDK type mismatch.
-**Status:** ✅ DONE — Imported `ToolCallback` from MCP SDK and typed `RegisteredToolHandler = ToolCallback<ZodRawShapeCompat>`. Narrowed `RegisteredToolInputSchema` from `ZodRawShapeCompat | AnySchema | undefined` to `ZodRawShapeCompat` (all current tools use `.shape`, so AnySchema/undefined unused). Type assertion removed. Build clean, 345 tests pass.
+### 7. Optional HTTP mode
+**Why:** biggest capability jump this spec unlocks: stateless request/response, load-balancable, works from web clients (ChatGPT, Claude web). Server is stdio-only today.
 
-**Files:** `src/registered-tool.ts`
+**Do:**
+- Add `@modelcontextprotocol/node` dep; `toNodeHandler` + `createMcpHandler(() => buildServer())` (default `legacy: 'stateless'` serves both eras with same factory as stdio)
+- Env config: `JUNO_MCP_TRANSPORT=http` (+ `JUNO_MCP_PORT` default 3000, bind `127.0.0.1`)
+- Stateless fits: all state already in params (mode/profile/satellite per call); no `Mcp-Session-Id`, no session keying needed
+- README: HTTP section, curl example, security note
+- Tests: drive `handler.fetch` in-process (docs: `StreamableHTTPClientTransport` against `handler.fetch(new Request(...))`, no sockets); stdio-era coverage via child-process spawn of `serveStdio`
 
-### 18. Add Logging for Silent Error Catches ✅
-**Problem:** Progress notification errors silently consumed in `cli.ts:136`.
-**Status:** ✅ DONE — `debugLog(context, error)` helper. Gated on `JUNO_MCP_DEBUG=true` or `DEBUG=true`. Wired into 4 silent catches: resolveCliPath fallback, checkCliVersion catch, progress notification catch, log notification catch. 5 tests cover env gating + payload format.
-**Action:**
-- Add debug logging: `console.error('[DEBUG] Progress notification failed:', error)`
-- Only log if `DEBUG=true` or `JUNO_MCP_DEBUG=true`
-- Helps diagnose MCP client issues
+**Files:** `src/index.ts` (new `src/http.ts`), `package.json`, `README.md`, `test/**`
 
-**Files:** `src/cli.ts`
+### 8. Auth posture (follow-up)
+**Why:** spec 2026 has real authorization requirements (RFC 9207 `iss` validation, SEP-2352 credential isolation, DCR/TLS). Auto-binding OAuth into the SDK is available but nonzero work.
 
----
+**Do (later, not now):**
+- Default: localhost-only HTTP mode, documented as unauth dev mode
+- Then: enable v2 SDK OAuth opt-ins (`iss` pass-through, `discoveryState()`, issuer-stamped credentials)
 
-## Documentation
-
-### 19. Add Architecture Decision Records (ADRs) ✅
-**Status:** ✅ DONE — `docs/adr/` created with `README.md` (index + template) and ADRs 001-004:
-- ADR-001: Wrap the Juno CLI instead of the API
-- ADR-002: Execution strategy pattern (simple/retry/streaming)
-- ADR-003: Context capability system
-- ADR-004: Docs caching strategy (LRU + 1h TTL, 50 entries)
-
-Each follows Context / Decision / Consequences template plus a "Revisit if" coda.
-
-**Files:** `docs/adr/README.md`, `docs/adr/001-wrap-cli-not-api.md`, `docs/adr/002-execution-strategies.md`, `docs/adr/003-context-capabilities.md`, `docs/adr/004-docs-caching.md`
-
-### 20. Add Contributing Guide
-**Action:**
-- Create `CONTRIBUTING.md`
-- Cover: setup, running tests, adding new tools, schema patterns
-- Link to ADRs for architecture context
-- Add PR checklist: tests, schemas, tool annotations
-
-**Files:** `CONTRIBUTING.md` (new)
+**Files:** `src/http.ts`, `README.md`
 
 ---
 
-## Priority Order for Implementation
+## P1 — MRTR pilot (`input_required`)
 
-**Week 1:** #15 (fix test), #5 (error parsing), #4 (version check)
-**Week 2:** #1 (retry config), #3 (SIGKILL fallback), #10 (coverage)
-**Week 3:** #2 (LRU cache), #6 (dry-run), #9 (auth status)
-**Week 4:** #7 (telemetry), #8 (log streaming), #11 (config env vars)
+### 9. Replace fragile stdin automation with MRTR (pilot one flow)
+**Why:** interactive juno prompts (login email/password, destructive confirmations) are currently handled by timing-based stdin injection (`setupStdinAutomation`, `StdinConfig`) — fragile, invisible to the model. MRTR asks the client for exactly the missing input and the model can answer.
 
-Low priority items: implement as needed or when user requests.
+**Do:**
+- Pilot ONE flow, e.g. `juno login` credential prompt or a destructive-op confirm
+- v2 shape: handler returns `inputRequired({ inputRequests, requestState })`; state threaded via `ctx.mcpReq.requestState()` + `createRequestStateCodec({ key })` (HMAC; `ServerOptions.requestState.verify`); SDK shims MRTR to 2025-era clients over elicitation/sampling/roots — legacy clients keep working
+- Keep stdin automation as fallback for prompts that are positional (not nameable inputs) and for non-MRTR clients where the shim can't show input types
+- Scope guard: MRTR needs a nameable input + a juno prompt that maps to it; many juno prompts are positional sequences → don't force it
+
+**Files:** new `src/mrtr/` (codec, flows), `src/tool-handler.ts`, `src/tools/identity.ts` (login), tests
+
+---
+
+## P2 — Polish
+
+### 10. OTel trace context propagation
+**Why:** spec documents `_meta` `traceparent`/`tracestate`/`baggage` (SEP-414). Forwarding the trace into the juno CLI child env makes CLI API calls join the client's trace — real value in HTTP-mode support debugging.
+
+**Do:** read keys from `ctx.mcpReq.envelope._meta`; set `traceparent` (+ `tracestate`/`baggage`) on `child_process` env in `executor.ts`; debug-log when present.
+
+**Files:** `src/executor.ts`, `src/cli.ts`
+
+### 11. ADR + README
+- `docs/adr/005-sdk-v2-stateless.md`: Context / Decision / Consequences / "Revisit if" coda
+- README: Node 20+ requirement, HTTP mode, protocol-version compatibility note (dual-era serving)
+- Explicitly note features we deliberately don't adopt (deprecated): Roots, Sampling, `logging/setLevel`, HTTP+SSE
+
+**Files:** `docs/adr/005-sdk-v2-stateless.md`, `README.md`
+
+---
+
+## Carry-over backlog (still open from previous TODO)
+
+- Per-tool retry config (`RetryConfig` plumbed through `ToolHandlerConfig`)
+- SIGKILL fallback after SIGTERM timeout in `executor.ts`
+- Juno CLI min-version check (`getCliVersion`, cached, `--skip-version-check`)
+- Batch-size auto-tuning capped at source-file count (`hosting deploy`)
+- Version-aware progress patterns (`src/progress-patterns.ts`)
+- Docs-catalog auto-generation from Juno docs repo (`scripts/generate-docs-catalog.ts`)
+- `CONTRIBUTING.md`
+
+## Suggested execution order
+
+1. P0-1 codemod + package swap + build green → 2. P0-2/P0-3 (sendNotification, gating, sort order) → 3. P0 verify with MCP Inspector (stdio, both eras) → 4. P1-1 HTTP mode → 5. P1-2 MRTR pilot → 6. P2 items.
+
+## Verify checklist (after P0)
+
+- `serveStdio` spawn works; 2025-era client (current Claude Desktop) still connects
+- 2026-era probe (`client versionNegotiation: 'auto'`) discovers server, `_meta.serverInfo` stamped
+- Progress + log notifications reach client only when allowed (logLevel gating)
+- `tools/list` alphabetical + cache hints present
+- Full test suite + `npm exec -- ultracite check` green
