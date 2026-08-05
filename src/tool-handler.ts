@@ -73,12 +73,16 @@ async function execByStrategy(
       baseDelay: 1000,
       maxDelay: 8000,
     };
+    const maxRetries =
+      typeof params.maxRetries === "number"
+        ? params.maxRetries
+        : retryConfig.maxRetries;
     return execWithRetry(
       config.command,
       subArgs,
       flags,
       timeout,
-      retryConfig.maxRetries,
+      maxRetries,
       retryConfig.baseDelay,
       retryConfig.maxDelay,
       trace

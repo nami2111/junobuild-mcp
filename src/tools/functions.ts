@@ -138,6 +138,7 @@ export const handleFunctionsPublish = makeToolHandler({
     }
     return "simple";
   },
+  retryConfig: { maxRetries: 3, baseDelay: 1000, maxDelay: 10_000 },
 });
 
 export const handleFunctionsUpgrade = makeToolHandler({
@@ -167,6 +168,7 @@ export const handleFunctionsUpgrade = makeToolHandler({
     }
     return "simple";
   },
+  retryConfig: { maxRetries: 3, baseDelay: 1000, maxDelay: 10_000 },
 });
 
 export const functionsTools: readonly RegisteredJunoTool[] = [

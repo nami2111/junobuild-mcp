@@ -79,7 +79,21 @@ describe("handleHostingDeploy", () => {
       NETWORK_TIMEOUT,
       3,
       1000,
-      8000,
+      10_000,
+      undefined
+    );
+  });
+
+  it("overrides maxRetries from params", async () => {
+    await handleHostingDeploy({ batch: 50, retry: true, maxRetries: 5 });
+    expect(mockExecWithRetry).toHaveBeenCalledWith(
+      "hosting",
+      ["deploy", "--batch", "50"],
+      {},
+      NETWORK_TIMEOUT,
+      5,
+      1000,
+      10_000,
       undefined
     );
   });

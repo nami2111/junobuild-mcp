@@ -1,3 +1,5 @@
+import { type Dirent, existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/server";
 import { buildInstantChangeArgs } from "../change-workflow.js";
 import { environmentContext } from "../juno-context.js";
@@ -11,6 +13,78 @@ import {
   hostingPruneSchema,
 } from "../schemas/hosting.js";
 import { makeToolHandler } from "../tool-handler.js";
+
+const JUNO_CONFIG_NAMES = [
+  "juno.config.ts",
+  "juno.config.json",
+  "juno.config.js",
+];
+const SOURCE_PATTERN = /["']?source["']?\s*[:=]\s*["']([^"']+)["']/;
+
+/**
+ * Cap the upload batch at the number of source files when the project's
+ * `source` dir (from juno.config) is detectable — a batch above the file
+ * count wastes nothing but batching a 5-file dist into 50-way parallelism is
+ * pure overhead. Falls back to the given batch when the config or dir can't
+ * be read (scanning is best-effort, never fatal).
+ */
+export function tuneBatch(batch: number, cwd = process.cwd()): number {
+  try {
+    const sourceDir = sourceDirFromConfig(cwd);
+    if (!(sourceDir && existsSync(sourceDir))) {
+      return batch;
+    }
+    const files = countFiles(sourceDir);
+    if (files === 0) {
+      return batch;
+    }
+    return Math.max(1, Math.min(batch, files));
+  } catch {
+    return batch;
+  }
+}
+
+function sourceDirFromConfig(cwd: string): string | undefined {
+  for (const name of JUNO_CONFIG_NAMES) {
+    const path = join(cwd, name);
+    if (!existsSync(path)) {
+      continue;
+    }
+    const match = readFileSync(path, "utf-8").match(SOURCE_PATTERN);
+    if (match?.[1]) {
+      return join(cwd, match[1]);
+    }
+  }
+  return;
+}
+
+function countFiles(dir: string): number {
+  let count = 0;
+  const stack = [dir];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current) {
+      continue;
+    }
+    let entries: Dirent[];
+    try {
+      entries = readdirSync(current, { withFileTypes: true });
+    } catch {
+      return count;
+    }
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        if (entry.name === "node_modules" || entry.name.startsWith(".")) {
+          continue;
+        }
+        stack.push(join(current, entry.name));
+      } else if (entry.isFile()) {
+        count++;
+      }
+    }
+  }
+  return count;
+}
 
 export function buildHostingDeployArgs(params: {
   batch: number;
@@ -63,20 +137,21 @@ export const handleHostingDeploy = makeToolHandler({
   subcommand: "deploy",
   label: "Hosting Deploy",
   context: environmentContext,
-  argsFromParams: (p) =>
-    buildHostingDeployArgs(
-      p as {
-        batch: number;
-        clear?: boolean;
-        prune?: boolean;
-        immediate?: boolean;
-        keepStaged?: boolean;
-        noApply?: boolean;
-        config?: boolean;
-        retry?: boolean;
-        progress?: boolean;
-      }
-    ),
+  argsFromParams: (p) => {
+    const { batch, ...rest } = p as {
+      batch: number;
+      clear?: boolean;
+      prune?: boolean;
+      immediate?: boolean;
+      keepStaged?: boolean;
+      noApply?: boolean;
+      config?: boolean;
+      retry?: boolean;
+      progress?: boolean;
+    };
+    return buildHostingDeployArgs({ batch: tuneBatch(batch), ...rest });
+  },
+  retryConfig: { maxRetries: 3, baseDelay: 1000, maxDelay: 10_000 },
   getStrategy: (p) => {
     if (p.progress || p.streamLogs) {
       return "streaming";

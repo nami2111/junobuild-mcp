@@ -156,11 +156,11 @@ Verification: `test/http.test.ts` (3 tests) — in-process 2026-07-28 client (ve
 
 ## Carry-over backlog (still open from previous TODO)
 
-- Per-tool retry config (`RetryConfig` plumbed through `ToolHandlerConfig`)
+- ~~Per-tool retry config~~ — ✅ DONE (2026-08-04): `RetryConfig` plumbed through `ToolHandlerConfig`; `maxRetries` param (0-10, default 3) on `juno_hosting_deploy` / `juno_functions_publish` / `juno_functions_upgrade` overrides per-tool config when `retry: true`; retryConfig set on all three handlers (maxDelay 10s)
 - ~~SIGKILL fallback after SIGTERM timeout in `executor.ts`~~ — already implemented (2 s grace in `runProcess` and the MRTR login watcher; verified during P1-2)
-- Juno CLI min-version check (`getCliVersion`, cached, `--skip-version-check`)
-- Batch-size auto-tuning capped at source-file count (`hosting deploy`)
-- Version-aware progress patterns (`src/progress-patterns.ts`)
+- Juno CLI min-version check (implemented as env knob `JUNO_SKIP_VERSION_CHECK=true`; no CLI-side `--skip-version-check` flag)
+- ~~Batch-size auto-tuning capped at source-file count~~ — ✅ DONE: `tuneBatch()` in `src/tools/hosting.ts` reads `source` from `juno.config.ts/.json/.js` (regex, quoted-keys safe), counts files (skips node_modules/dotdirs), caps `batch` at the count; falls back unchanged when config/dir unreadable
+- ~~Version-aware progress patterns~~ — ✅ DONE: `src/progress-patterns.ts` (batchPattern + phases sets, `getProgressPatterns(version)` seam with empty divergence map, `parseProgressLine`); executor consumes `RunProcessOptions.patterns`; `execWithStreaming` now also runs the CLI min-version check (previously skipped) and passes the cached version
 - Docs-catalog auto-generation from Juno docs repo (`scripts/generate-docs-catalog.ts`)
 - `CONTRIBUTING.md`
 

@@ -1,6 +1,11 @@
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { DEFAULT_TIMEOUT } from "./constants.js";
+import {
+  getProgressPatterns,
+  type ProgressPatterns,
+  parseProgressLine,
+} from "./progress-patterns.js";
 import type { TraceContext } from "./trace.js";
 import { traceEnv } from "./trace.js";
 import type { CliResult } from "./types.js";
@@ -42,6 +47,7 @@ export interface RunProcessOptions {
   cwd?: string;
   onLog?: LogCallback;
   onProgress?: ProgressCallback;
+  patterns?: ProgressPatterns;
   stdinAnswers?: string[];
   stdinConfig?: StdinConfig;
   trace?: TraceContext;
@@ -266,45 +272,11 @@ export function runProcess(
   });
 }
 
-const BATCH_PHASES = ["Initializing", "Uploading", "Committing"];
-
-const BATCH_PATTERN = /\[(\d+)\/(\d+)\]/;
-
-function findPhase(line: string): string | undefined {
-  return BATCH_PHASES.find((p) => new RegExp(`\\b${p}\\b`).test(line));
-}
-
 export function parseProgress(
-  line: string
+  line: string,
+  patterns?: ProgressPatterns
 ): { progress: number; message: string } | null {
-  const batchMatch = line.match(BATCH_PATTERN);
-  if (!batchMatch) {
-    return null;
-  }
-
-  const current = Number.parseInt(batchMatch[1], 10);
-  const total = Number.parseInt(batchMatch[2], 10);
-  if (total === 0) {
-    return null;
-  }
-
-  let phaseOffset = 1;
-  for (let i = 0; i < BATCH_PHASES.length; i++) {
-    if (new RegExp(`\\b${BATCH_PHASES[i]}\\b`).test(line)) {
-      phaseOffset = i + 1;
-      break;
-    }
-  }
-
-  const totalSteps = total * BATCH_PHASES.length;
-  const completedSteps = (current - 1) * BATCH_PHASES.length + phaseOffset;
-  const progress = Math.min(
-    Math.round((completedSteps / totalSteps) * 100),
-    99
-  );
-
-  const phase = findPhase(line) ?? "Processing";
-  return { progress, message: `${phase} batch ${current}/${total}` };
+  return parseProgressLine(line, patterns ?? getProgressPatterns());
 }
 
 const TRANSIENT_PATTERNS = [

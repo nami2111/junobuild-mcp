@@ -131,7 +131,7 @@ describe("handleFunctionsPublish", () => {
       NETWORK_TIMEOUT,
       3,
       1000,
-      8000,
+      10_000,
       undefined
     );
   });
@@ -192,7 +192,7 @@ describe("handleFunctionsUpgrade", () => {
       NETWORK_TIMEOUT,
       3,
       1000,
-      8000,
+      10_000,
       undefined
     );
   });

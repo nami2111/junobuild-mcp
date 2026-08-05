@@ -10,6 +10,7 @@ import { parseCliError } from "./error-parser.js";
 import type { LogCallback, ProgressCallback } from "./executor.js";
 import { isTransientError, runProcess, sleep, stripAnsi } from "./executor.js";
 import { buildJunoContextArgs } from "./juno-context.js";
+import { getProgressPatterns } from "./progress-patterns.js";
 import { extractTraceContext, type TraceContext } from "./trace.js";
 import type { CliResult, GlobalFlags } from "./types.js";
 
@@ -200,10 +201,16 @@ export async function execWithStreaming(
   onLog?: LogCallback,
   trace?: TraceContext
 ): Promise<CliResult> {
+  await checkCliVersion();
   const { cmd: cliCmd, args: cliArgs } = await resolveCliParts();
   const flagArgs = buildFlagArgs(flags);
   const allArgs = [...cliArgs, command, ...flagArgs, ...args];
-  return runProcess(cliCmd, allArgs, timeout, { onProgress, onLog, trace });
+  return runProcess(cliCmd, allArgs, timeout, {
+    onProgress,
+    onLog,
+    patterns: getProgressPatterns(cachedCliVersion ?? undefined),
+    trace,
+  });
 }
 
 export function makeTraceLogger(ctx: ServerContext): TraceContext | undefined {

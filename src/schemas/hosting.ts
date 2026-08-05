@@ -9,7 +9,9 @@ export const hostingDeploySchema = environmentFlagsBase
       .min(1)
       .max(200)
       .default(50)
-      .describe("Number of files to upload in parallel per batch (1-200)"),
+      .describe(
+        "Number of files to upload in parallel per batch (1-200); capped at the detected source-file count when the project has a `source` dir"
+      ),
     clear: z
       .boolean()
       .default(false)
@@ -39,6 +41,15 @@ export const hostingDeploySchema = environmentFlagsBase
       .default(false)
       .describe(
         "Automatically retry on transient network failures (up to 3 attempts with exponential backoff)"
+      ),
+    maxRetries: z
+      .number()
+      .int()
+      .min(0)
+      .max(10)
+      .default(3)
+      .describe(
+        "Maximum retry attempts when retry is enabled (0-10, default 3)"
       ),
     progress: z
       .boolean()

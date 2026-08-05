@@ -475,12 +475,14 @@ Topic keys use underscore naming matching folder hierarchy: `build_<feature>`, `
 
 Several tools support optional parameters for enhanced reliability and UX:
 
-| Parameter   | Type      | Tools                    | Description                                                                                                 |
-| ----------- | --------- | ------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `retry`     | `boolean` | deploy, publish, upgrade | Automatically retry on transient network failures (up to 3 attempts with exponential backoff: 1s → 2s → 4s) |
-| `progress`  | `boolean` | deploy, publish, upgrade | Stream real-time progress updates during long-running operations (build status + upload batch progress)     |
-| `streamLogs`| `boolean` | deploy, publish, upgrade | Stream raw stdout/stderr lines as MCP `notifications/message` events. Independent from `progress`           |
-| `writeFile` | `boolean` | `juno_config_init`       | Write the config file directly to disk instead of returning text for preview                                |
+| Parameter   | Type     | Tools                    | Description                                                                                                                                       |
+| ----------- | -------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `retry`     | `boolean` | deploy, publish, upgrade | Retry on transient network failures with exponential backoff when enabled. Attempts are set by `maxRetries`                                       |
+| `maxRetries`| `number` | deploy, publish, upgrade | Maximum retry attempts when `retry` is enabled (0-10, default 3; backoff 1s → 2s → 4s capped at 10s)                                            |
+| `batch`     | `number` | deploy, prune           | Files processed per batch (deploy default 50, prune default 100). For `deploy`, capped at the detected `source`-dir file count when found (juno.config `source`), so small projects don't waste 50-way parallelism |
+| `progress`  | `boolean` | deploy, publish, upgrade | Stream real-time progress updates during long-running operations (build status + upload batch progress)                                            |
+| `streamLogs`| `boolean` | deploy, publish, upgrade | Stream raw stdout/stderr lines as MCP `notifications/message` events. Independent from `progress`                                                  |
+| `writeFile` | `boolean` | `juno_config_init`       | Write the config file directly to disk instead of returning text for preview                                                                      |
 
 ## Prerequisites
 
