@@ -6,7 +6,7 @@ Manage satellites, hosting, serverless functions, changes and more through any M
 
 ## Features
 
-- **18 tools** across 6 domains — CLI coverage for identity, config, hosting, functions, changes, and documentation
+- **19 tools** across 6 domains — CLI coverage for identity, config, hosting, functions, changes, and documentation
 - **Progress streaming** — long-running operations (deploy, publish, upgrade) emit real-time progress updates via MCP `notifications/progress`
 - **Log streaming** — `streamLogs: true` mirrors raw stdout/stderr lines as MCP `notifications/message` events, independent of progress
 - **Automatic retry** — network-dependent operations can retry on transient failures with exponential backoff
@@ -464,7 +464,7 @@ Topic keys use underscore naming matching folder hierarchy: `build_<feature>`, `
 
 | Domain        | Tools                                                                                              |
 | ------------- | -------------------------------------------------------------------------------------------------- |
-| **Identity**  | `juno_version`, `juno_run`, `juno_status`, `juno_auth_status`                                      |
+| **Identity**  | `juno_version`, `juno_login`, `juno_run`, `juno_status`, `juno_auth_status`                        |
 | **Config**    | `juno_config_init`, `juno_config_apply`, `juno_create_project`                                     |
 | **Hosting**   | `juno_hosting_deploy`, `juno_hosting_clear`, `juno_hosting_prune`                                  |
 | **Functions** | `juno_functions_build`, `juno_functions_eject`, `juno_functions_publish`, `juno_functions_upgrade` |
@@ -495,7 +495,7 @@ Several tools support optional parameters for enhanced reliability and UX:
 ```bash
 npm run build           # Compile TypeScript to dist/
 npm run dev             # Watch mode (development)
-npm run start           # Run compiled dist/index.js
+npm run start           # Run compiled dist/main.js
 npm run clean           # Remove dist/
 npm test                # Run unit tests
 npm run test:coverage   # Run tests with coverage report (v8 provider)
