@@ -69,8 +69,18 @@ describe("registered Juno tools", () => {
     registerHostingTools(server);
 
     expect(registerTool).toHaveBeenCalledTimes(3);
+    // registerJunoTools sorts by name: clear, deploy, prune
     expect(registerTool).toHaveBeenNthCalledWith(
       1,
+      "juno_hosting_clear",
+      expect.objectContaining({
+        title: "Juno Hosting Clear",
+        inputSchema: expect.any(Object),
+      }),
+      handleHostingClear
+    );
+    expect(registerTool).toHaveBeenNthCalledWith(
+      2,
       "juno_hosting_deploy",
       expect.objectContaining({
         title: "Juno Hosting Deploy",

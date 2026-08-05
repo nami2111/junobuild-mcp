@@ -81,10 +81,10 @@ Analyzed: [spec 2026-07-28 changelog](https://modelcontextprotocol.io/specificat
 
 ## P0 — Deterministic tools/list + cache hints
 
-### 6. Stable tool order + CacheableResult
+### 6. Stable tool order + CacheableResult ✅
 **Why:** spec: tools/list SHOULD be deterministic (client caching, LLM prompt-cache hit rate); list results require `ttlMs` + `cacheScope`.
 
-**Do:**
+**Status:** ✅ DONE — registerJunoTools sorts by name (localeCompare) per domain array (domain call order fixed in buildServer → deterministic global order; spec asks deterministic, not global alphabetical). Cache hints: `McpServer` 2nd options arg `cacheHints: { "tools/list": { ttlMs: 3_600_000, cacheScope: "public" } }` (ServerOptions type). SDK auto-fills required ttlMs/cacheScope (default 0/private) so wire was already conformant; hint overrides. Verified on raw 2026 wire: `"ttlMs":3600000, "cacheScope":"public"` present; 2025-era response has NO ttlMs (codec never-stamp guarantee). Note: SDK typed results StripWireOnly-hide cache fields (client response-cache consumes them internally). Also learned: 2026-era raw requests carry the envelope at `params._meta` (NOT top-level `_meta`) — client `_envelopeOutbound` spreads it into params.
 - `src/registered-tool.ts` `registerJunoTools`: sort by `name` (alphabetical) before registering — stable across file/registration refactors
 - Add cache hints: toolset is static → `ttlMs` high (e.g. 3_600_000), `cacheScope: 'public'`. Check v2 `McpServer`/`registerTool` options for cacheable-result support; wire whatever the SDK exposes
 - Verify `server/discover` advertises `tools: {}` capability (SDK handles; confirm in Inspector)

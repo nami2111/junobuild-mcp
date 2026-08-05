@@ -25,7 +25,9 @@ export function registerJunoTools(
   server: McpServer,
   tools: readonly RegisteredJunoTool[]
 ): void {
-  for (const tool of tools) {
+  // Deterministic order for client caching + LLM prompt-cache hit rate.
+  const sorted = [...tools].sort((a, b) => a.name.localeCompare(b.name));
+  for (const tool of sorted) {
     server.registerTool(
       tool.name,
       {

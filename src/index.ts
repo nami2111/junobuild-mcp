@@ -15,10 +15,18 @@ const pkgPath = fileURLToPath(new URL("../package.json", import.meta.url));
 const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as { version: string };
 
 export function buildServer(): McpServer {
-  const server = new McpServer({
-    name: "junobuild-mcp-server",
-    version: pkg.version,
-  });
+  const server = new McpServer(
+    {
+      name: "junobuild-mcp-server",
+      version: pkg.version,
+    },
+    {
+      // Static toolset: allow clients/intermediaries to cache tools/list.
+      cacheHints: {
+        "tools/list": { ttlMs: 3_600_000, cacheScope: "public" },
+      },
+    }
+  );
 
   registerIdentityTools(server);
   registerConfigTools(server);
