@@ -133,12 +133,12 @@ Verification: `test/http.test.ts` (3 tests) — in-process 2026-07-28 client (ve
 
 ## P2 — Polish
 
-### 10. OTel trace context propagation
+### 10. OTel trace context propagation ✅
 **Why:** spec documents `_meta` `traceparent`/`tracestate`/`baggage` (SEP-414). Forwarding the trace into the juno CLI child env makes CLI API calls join the client's trace — real value in HTTP-mode support debugging.
 
-**Do:** read keys from `ctx.mcpReq.envelope._meta`; set `traceparent` (+ `tracestate`/`baggage`) on `child_process` env in `executor.ts`; debug-log when present.
+**Status:** ✅ DONE — `src/trace.ts`: `TraceContext` type, `extractTraceContext(ctx)` (reads plain `_meta` keys — NOT io.* envelope keys; defensive on non-strings; undefined when absent), `traceEnv(trace)`. `RunProcessOptions.trace` merged into child env in `src/executor.ts`. Single extraction point `makeTraceLogger(ctx)` in `src/cli.ts` (debug-logs when present) — used in `execByStrategy` (all 3 strategies) and both `handleLogin` rounds. `execCli`/`execWithRetry`/`execWithStreaming` gain trailing optional `trace` param (trace survives retry legs). 8 new tests (`test/trace.test.ts`: extraction inclusion/ignores, env mapping, runProcess child-env propagation). 358 tests green. Note: SDK v2 client does NOT emit traceparent by default — only forwarded when the client supplies it.
 
-**Files:** `src/executor.ts`, `src/cli.ts`
+**Files:** `src/trace.ts`, `src/executor.ts`, `src/cli.ts`, `src/tool-handler.ts`, `src/mrtr/login.ts`
 
 ### 11. ADR + README
 - `docs/adr/005-sdk-v2-stateless.md`: Context / Decision / Consequences / "Revisit if" coda

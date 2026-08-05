@@ -1,8 +1,14 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { Client } from "@modelcontextprotocol/client";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
-import { createHttpHandler, startHttpServer } from "../src/http.js";
 import type { Server } from "node:http";
+import {
+  Client,
+  StreamableHTTPClientTransport,
+} from "@modelcontextprotocol/client";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createHttpHandler, startHttpServer } from "../src/http.js";
+
+const SSE_LINE_SPLIT = /\r?\n/;
+const DATA_PREFIX = /^data: /;
+const matchesDataLine = (line: string): boolean => DATA_PREFIX.test(line);
 
 const handler = createHttpHandler();
 
@@ -35,7 +41,11 @@ describe("HTTP mode (createMcpHandler)", () => {
     });
     expect(names).toHaveLength(19);
     // Deterministic per-domain ordering across requests.
-    expect(await listTools({ versionNegotiation: { mode: "pin", pin: "2026-07-28" } })).toEqual(names);
+    expect(
+      await listTools({
+        versionNegotiation: { mode: "pin", pin: "2026-07-28" },
+      })
+    ).toEqual(names);
   });
 
   it("serves 2025-era clients statelessly (legacy: 'stateless')", async () => {
@@ -84,9 +94,7 @@ describe("HTTP mode (toNodeHandler over a real socket)", () => {
     });
     expect(response.status).toBe(200);
     const text = await response.text();
-    const dataLine = text
-      .split(/\r?\n/)
-      .find((line) => line.startsWith("data: "));
+    const dataLine = text.split(SSE_LINE_SPLIT).find(matchesDataLine);
     expect(dataLine).toBeDefined();
     const body = JSON.parse(dataLine.slice(6)) as {
       result?: { protocolVersion?: string; serverInfo?: { name?: string } };

@@ -22,6 +22,7 @@ vi.mock("../../src/cli.js", () => ({
       ctx?.mcpReq?._meta?.progressToken ? vi.fn() : undefined
   ),
   makeLogCallback: vi.fn(() => vi.fn()),
+  makeTraceLogger: vi.fn().mockReturnValue(undefined),
 }));
 
 import {
@@ -44,7 +45,8 @@ describe("handleFunctionsBuild", () => {
       "functions",
       ["build"],
       undefined,
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
     expect(mockFormatResponse).toHaveBeenCalledWith(
       { stdout: "ok", stderr: "", exitCode: 0 },
@@ -58,7 +60,8 @@ describe("handleFunctionsBuild", () => {
       "functions",
       ["build", "-l", "rust", "--watch"],
       undefined,
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });
@@ -70,7 +73,8 @@ describe("handleFunctionsEject", () => {
       "functions",
       ["eject"],
       undefined,
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 
@@ -80,7 +84,8 @@ describe("handleFunctionsEject", () => {
       "functions",
       ["eject", "-l", "typescript"],
       undefined,
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });
@@ -92,7 +97,8 @@ describe("handleFunctionsPublish", () => {
       "functions",
       ["publish"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
     expect(mockFormatResponse).toHaveBeenCalledWith(
       { stdout: "ok", stderr: "", exitCode: 0 },
@@ -110,6 +116,7 @@ describe("handleFunctionsPublish", () => {
       { mode: "production" },
       NETWORK_TIMEOUT,
       expect.any(Function),
+      undefined,
       undefined
     );
     expect(makeProgressCallback).toHaveBeenCalled();
@@ -124,7 +131,8 @@ describe("handleFunctionsPublish", () => {
       NETWORK_TIMEOUT,
       3,
       1000,
-      8000
+      8000,
+      undefined
     );
   });
 
@@ -138,7 +146,8 @@ describe("handleFunctionsPublish", () => {
       "functions",
       ["publish", "-s", "./out.wasm.gz", "--no-apply"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });
@@ -150,7 +159,8 @@ describe("handleFunctionsUpgrade", () => {
       "functions",
       ["upgrade"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
     expect(mockFormatResponse).toHaveBeenCalledWith(
       { stdout: "ok", stderr: "", exitCode: 0 },
@@ -168,6 +178,7 @@ describe("handleFunctionsUpgrade", () => {
       {},
       NETWORK_TIMEOUT,
       expect.any(Function),
+      undefined,
       undefined
     );
   });
@@ -181,7 +192,8 @@ describe("handleFunctionsUpgrade", () => {
       NETWORK_TIMEOUT,
       3,
       1000,
-      8000
+      8000,
+      undefined
     );
   });
 
@@ -208,7 +220,8 @@ describe("handleFunctionsUpgrade", () => {
         "-r",
       ],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });

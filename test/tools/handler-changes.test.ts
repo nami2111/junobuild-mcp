@@ -9,6 +9,7 @@ import {
 vi.mock("../../src/cli.js", () => ({
   execCli: vi.fn().mockResolvedValue({ stdout: "ok", stderr: "", exitCode: 0 }),
   formatResponse: vi.fn().mockReturnValue({ text: "ok", isError: false }),
+  makeTraceLogger: vi.fn().mockReturnValue(undefined),
 }));
 
 import { execCli, formatResponse } from "../../src/cli.js";
@@ -23,7 +24,8 @@ describe("handleChangesList", () => {
       "changes",
       ["list"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
     expect(mockFormatResponse).toHaveBeenCalledWith(
       { stdout: "ok", stderr: "", exitCode: 0 },
@@ -41,7 +43,8 @@ describe("handleChangesList", () => {
       "changes",
       ["list"],
       { mode: "staging", profile: "test" },
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 
@@ -51,7 +54,8 @@ describe("handleChangesList", () => {
       "changes",
       ["list", "-a", "-e"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });
@@ -63,7 +67,8 @@ describe("handleChangesApply", () => {
       "changes",
       ["apply", "-i", "abc-123"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 
@@ -78,7 +83,8 @@ describe("handleChangesApply", () => {
       "changes",
       ["apply", "-i", "abc", "--snapshot", "--hash", "0x123", "-k"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });
@@ -90,7 +96,8 @@ describe("handleChangesReject", () => {
       "changes",
       ["reject", "-i", "abc-123"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 
@@ -100,7 +107,8 @@ describe("handleChangesReject", () => {
       "changes",
       ["reject", "-i", "abc", "--hash", "0x456", "-k"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });

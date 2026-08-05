@@ -1,9 +1,9 @@
-import { createServer } from "node:http";
 import type { Server } from "node:http";
-import { createMcpHandler } from "@modelcontextprotocol/server";
-import type { McpHttpHandler } from "@modelcontextprotocol/server";
-import { toNodeHandler } from "@modelcontextprotocol/node";
+import { createServer } from "node:http";
 import type { NodeMcpRequestHandler } from "@modelcontextprotocol/node";
+import { toNodeHandler } from "@modelcontextprotocol/node";
+import type { McpHttpHandler } from "@modelcontextprotocol/server";
+import { createMcpHandler } from "@modelcontextprotocol/server";
 import { buildServer } from "./index.js";
 
 export const DEFAULT_HTTP_PORT = 3000;
@@ -23,7 +23,9 @@ export function createNodeHandler(): NodeMcpRequestHandler {
   return toNodeHandler(createHttpHandler(), { onerror });
 }
 
-export async function startHttpServer(port = DEFAULT_HTTP_PORT): Promise<Server> {
+export async function startHttpServer(
+  port = DEFAULT_HTTP_PORT
+): Promise<Server> {
   const server = createServer(createNodeHandler());
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);

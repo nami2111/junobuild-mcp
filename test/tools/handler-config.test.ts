@@ -8,6 +8,7 @@ vi.mock("../../src/cli.js", () => ({
     .fn()
     .mockResolvedValue({ stdout: "apply ok", stderr: "", exitCode: 0 }),
   formatResponse: vi.fn().mockReturnValue({ text: "apply ok", isError: false }),
+  makeTraceLogger: vi.fn().mockReturnValue(undefined),
 }));
 
 vi.mock("../../src/executor.js", () => ({
@@ -94,7 +95,8 @@ describe("handleConfigApply", () => {
       "config",
       ["apply"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
     expect(mockFormatResponse).toHaveBeenCalledWith(
       { stdout: "apply ok", stderr: "", exitCode: 0 },
@@ -108,7 +110,8 @@ describe("handleConfigApply", () => {
       "config",
       ["apply", "--force"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 
@@ -128,7 +131,8 @@ describe("handleConfigApply", () => {
         containerUrl: "https://container.example.com",
         consoleUrl: "https://console.example.com",
       },
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });

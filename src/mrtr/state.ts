@@ -17,15 +17,13 @@ const secret =
 
 const codec = createRequestStateCodec<LoginFlowState>({ key: secret });
 
-export async function mintLoginState(
-  state: LoginFlowState
-): Promise<string> {
+export async function mintLoginState(state: LoginFlowState): Promise<string> {
   return await codec.mint(state);
 }
 
 // Drop-in for ServerOptions.requestState.verify. Throwing on tamper/expiry is
 // what the seam wants: the request is refused with -32602.
-export async function verifyRequestState(
+export function verifyRequestState(
   state: string,
   ctx: ServerContext
 ): Promise<LoginFlowState | undefined> {

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -26,7 +26,6 @@ describe("MRTR pilot (juno_login passphrase flow)", () => {
       {
         capabilities: { elicitation: {} },
         versionNegotiation: { mode: "pin", pin: "2026-07-28" },
-
       },
       withFakeJunoEnv(passFile)
     );
@@ -39,7 +38,10 @@ describe("MRTR pilot (juno_login passphrase flow)", () => {
         content: { passphrase: TEST_PASS },
       }));
 
-      const result = await client.callTool({ name: "juno_login", arguments: {} });
+      const result = await client.callTool({
+        name: "juno_login",
+        arguments: {},
+      });
       const text = result.content
         .map((block) => ("text" in block ? block.text : ""))
         .join("");
@@ -67,7 +69,10 @@ describe("MRTR pilot (juno_login passphrase flow)", () => {
         content: { passphrase: TEST_PASS },
       }));
 
-      const result = await client.callTool({ name: "juno_login", arguments: {} });
+      const result = await client.callTool({
+        name: "juno_login",
+        arguments: {},
+      });
       const text = result.content
         .map((block) => ("text" in block ? block.text : ""))
         .join("");
@@ -87,7 +92,6 @@ describe("MRTR pilot (juno_login passphrase flow)", () => {
       {
         capabilities: { elicitation: {} },
         versionNegotiation: { mode: "pin", pin: "2026-07-28" },
-
       },
       withFakeJunoEnv(passFile)
     );
@@ -98,7 +102,10 @@ describe("MRTR pilot (juno_login passphrase flow)", () => {
         content: { passphrase: "wrong-passphrase" },
       }));
 
-      const result = await client.callTool({ name: "juno_login", arguments: {} });
+      const result = await client.callTool({
+        name: "juno_login",
+        arguments: {},
+      });
       const text = result.content
         .map((block) => ("text" in block ? block.text : ""))
         .join("");

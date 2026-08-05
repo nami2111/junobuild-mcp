@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { DEFAULT_TIMEOUT } from "./constants.js";
+import type { TraceContext } from "./trace.js";
+import { traceEnv } from "./trace.js";
 import type { CliResult } from "./types.js";
 
 // biome-ignore lint/suspicious/noControlCharactersInRegex: Intentional - matches ANSI escape codes for stripping
@@ -42,6 +44,7 @@ export interface RunProcessOptions {
   onProgress?: ProgressCallback;
   stdinAnswers?: string[];
   stdinConfig?: StdinConfig;
+  trace?: TraceContext;
 }
 
 function matchesPrompt(line: string, pattern: string | RegExp): boolean {
@@ -172,7 +175,12 @@ export function runProcess(
     const child = spawn(cmd, args, {
       timeout,
       cwd: options?.cwd,
-      env: { ...process.env, FORCE_COLOR: "0", CI: "1" },
+      env: {
+        ...process.env,
+        FORCE_COLOR: "0",
+        CI: "1",
+        ...traceEnv(options?.trace),
+      },
     });
 
     let stdout = "";

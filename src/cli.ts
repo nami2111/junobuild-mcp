@@ -10,6 +10,7 @@ import { parseCliError } from "./error-parser.js";
 import type { LogCallback, ProgressCallback } from "./executor.js";
 import { isTransientError, runProcess, sleep, stripAnsi } from "./executor.js";
 import { buildJunoContextArgs } from "./juno-context.js";
+import { extractTraceContext, type TraceContext } from "./trace.js";
 import type { CliResult, GlobalFlags } from "./types.js";
 
 export function buildFlagArgs(flags?: GlobalFlags): string[] {
@@ -117,7 +118,10 @@ async function checkCliVersion(): Promise<void> {
   }
 }
 
-export async function resolveCliParts(): Promise<{ cmd: string; args: string[] }> {
+export async function resolveCliParts(): Promise<{
+  cmd: string;
+  args: string[];
+}> {
   const path = await resolveCliPath();
   if (path.includes(" ")) {
     const [cmd, ...args] = path.split(" ");
@@ -130,13 +134,14 @@ export async function execCli(
   command: string,
   args: string[] = [],
   flags?: GlobalFlags,
-  timeout: number = DEFAULT_TIMEOUT
+  timeout: number = DEFAULT_TIMEOUT,
+  trace?: TraceContext
 ): Promise<CliResult> {
   await checkCliVersion();
   const { cmd: cliCmd, args: cliArgs } = await resolveCliParts();
   const flagArgs = buildFlagArgs(flags);
   const allArgs = [...cliArgs, command, ...flagArgs, ...args];
-  return runProcess(cliCmd, allArgs, timeout);
+  return runProcess(cliCmd, allArgs, timeout, { trace });
 }
 
 export function execCommand(
@@ -165,7 +170,8 @@ export async function execWithRetry(
   timeout: number = DEFAULT_TIMEOUT,
   maxRetries = 3,
   baseDelay = 1000,
-  maxDelay = 8000
+  maxDelay = 8000,
+  trace?: TraceContext
 ): Promise<CliResult> {
   let lastResult: CliResult | null = null;
 
@@ -175,7 +181,7 @@ export async function execWithRetry(
       await sleep(delay);
     }
 
-    lastResult = await execCli(command, args, flags, timeout);
+    lastResult = await execCli(command, args, flags, timeout, trace);
 
     if (lastResult.exitCode === 0 || !isTransientError(lastResult)) {
       return lastResult;
@@ -191,12 +197,21 @@ export async function execWithStreaming(
   flags?: GlobalFlags,
   timeout: number = DEFAULT_TIMEOUT,
   onProgress?: ProgressCallback,
-  onLog?: LogCallback
+  onLog?: LogCallback,
+  trace?: TraceContext
 ): Promise<CliResult> {
   const { cmd: cliCmd, args: cliArgs } = await resolveCliParts();
   const flagArgs = buildFlagArgs(flags);
   const allArgs = [...cliArgs, command, ...flagArgs, ...args];
-  return runProcess(cliCmd, allArgs, timeout, { onProgress, onLog });
+  return runProcess(cliCmd, allArgs, timeout, { onProgress, onLog, trace });
+}
+
+export function makeTraceLogger(ctx: ServerContext): TraceContext | undefined {
+  const trace = extractTraceContext(ctx);
+  if (trace) {
+    debugLog("forwarding trace context to juno CLI", trace);
+  }
+  return trace;
 }
 
 export function makeProgressCallback(

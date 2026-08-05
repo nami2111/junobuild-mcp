@@ -21,6 +21,7 @@ vi.mock("../../src/cli.js", () => ({
       ctx?.mcpReq?._meta?.progressToken ? vi.fn() : undefined
   ),
   makeLogCallback: vi.fn(() => vi.fn()),
+  makeTraceLogger: vi.fn().mockReturnValue(undefined),
 }));
 
 import {
@@ -44,7 +45,8 @@ describe("handleHostingDeploy", () => {
       "hosting",
       ["deploy", "--batch", "50"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
     expect(mockFormatResponse).toHaveBeenCalledWith(
       { stdout: "ok", stderr: "", exitCode: 0 },
@@ -62,6 +64,7 @@ describe("handleHostingDeploy", () => {
       {},
       NETWORK_TIMEOUT,
       expect.any(Function),
+      undefined,
       undefined
     );
     expect(makeProgressCallback).toHaveBeenCalled();
@@ -76,7 +79,8 @@ describe("handleHostingDeploy", () => {
       NETWORK_TIMEOUT,
       3,
       1000,
-      8000
+      8000,
+      undefined
     );
   });
 
@@ -90,7 +94,8 @@ describe("handleHostingDeploy", () => {
       {},
       NETWORK_TIMEOUT,
       undefined,
-      expect.any(Function)
+      expect.any(Function),
+      undefined
     );
     expect(makeLogCallback).toHaveBeenCalled();
   });
@@ -105,7 +110,8 @@ describe("handleHostingDeploy", () => {
       {},
       NETWORK_TIMEOUT,
       expect.any(Function),
-      expect.any(Function)
+      expect.any(Function),
+      undefined
     );
   });
 
@@ -132,7 +138,8 @@ describe("handleHostingDeploy", () => {
         "--config",
       ],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 
@@ -153,7 +160,8 @@ describe("handleHostingDeploy", () => {
         containerUrl: "https://container.example.com",
         consoleUrl: "https://console.example.com",
       },
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });
@@ -165,7 +173,8 @@ describe("handleHostingClear", () => {
       "hosting",
       ["clear", "-f", "/index.html"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 
@@ -175,7 +184,8 @@ describe("handleHostingClear", () => {
       "hosting",
       ["clear"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });
@@ -187,7 +197,8 @@ describe("handleHostingPrune", () => {
       "hosting",
       ["prune", "--batch", "100"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 
@@ -197,7 +208,8 @@ describe("handleHostingPrune", () => {
       "hosting",
       ["prune", "--batch", "50", "--dry-run"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });

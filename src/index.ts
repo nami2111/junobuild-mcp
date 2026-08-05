@@ -43,4 +43,3 @@ export function buildServer(): McpServer {
 
   return server;
 }
-

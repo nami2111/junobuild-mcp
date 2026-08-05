@@ -10,6 +10,7 @@ import {
 vi.mock("../../src/cli.js", () => ({
   execCli: vi.fn().mockResolvedValue({ stdout: "ok", stderr: "", exitCode: 0 }),
   formatResponse: vi.fn().mockReturnValue({ text: "ok", isError: false }),
+  makeTraceLogger: vi.fn().mockReturnValue(undefined),
 }));
 
 import { execCli, formatResponse } from "../../src/cli.js";
@@ -24,7 +25,8 @@ describe("handleVersion", () => {
       "--version",
       [],
       undefined,
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
     expect(mockFormatResponse).toHaveBeenCalledWith(
       { stdout: "ok", stderr: "", exitCode: 0 },
@@ -44,7 +46,8 @@ describe("handleRunScript", () => {
       "run",
       ["-s", "deploy.ts"],
       {},
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 
@@ -58,7 +61,8 @@ describe("handleRunScript", () => {
       "run",
       ["-s", "test.js"],
       { mode: "development", profile: "dev" },
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });
@@ -66,7 +70,13 @@ describe("handleRunScript", () => {
 describe("handleStatus", () => {
   it("calls execCli with status command", async () => {
     await handleStatus({});
-    expect(mockExecCli).toHaveBeenCalledWith("status", [], {}, NETWORK_TIMEOUT);
+    expect(mockExecCli).toHaveBeenCalledWith(
+      "status",
+      [],
+      {},
+      NETWORK_TIMEOUT,
+      undefined
+    );
   });
 
   it("passes container-url and console-url", async () => {
@@ -81,7 +91,8 @@ describe("handleStatus", () => {
         containerUrl: "https://container.example.com",
         consoleUrl: "https://console.example.com",
       },
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });
@@ -89,7 +100,13 @@ describe("handleStatus", () => {
 describe("handleAuthStatus", () => {
   it("calls execCli with whoami command", async () => {
     await handleAuthStatus({});
-    expect(mockExecCli).toHaveBeenCalledWith("whoami", [], {}, NETWORK_TIMEOUT);
+    expect(mockExecCli).toHaveBeenCalledWith(
+      "whoami",
+      [],
+      {},
+      NETWORK_TIMEOUT,
+      undefined
+    );
     expect(mockFormatResponse).toHaveBeenCalledWith(
       { stdout: "ok", stderr: "", exitCode: 0 },
       "Auth Status"
@@ -112,7 +129,8 @@ describe("handleAuthStatus", () => {
         containerUrl: "https://container.example.com",
         consoleUrl: "https://console.example.com",
       },
-      NETWORK_TIMEOUT
+      NETWORK_TIMEOUT,
+      undefined
     );
   });
 });

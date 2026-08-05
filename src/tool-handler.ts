@@ -6,6 +6,7 @@ import {
   formatResponse,
   makeLogCallback,
   makeProgressCallback,
+  makeTraceLogger,
 } from "./cli.js";
 import { NETWORK_TIMEOUT } from "./constants.js";
 import {
@@ -45,6 +46,7 @@ async function execByStrategy(
   ctx: ServerContext
 ): Promise<Awaited<ReturnType<typeof execCli>>> {
   const strategy = config.getStrategy?.(params) ?? config.strategy ?? "simple";
+  const trace = makeTraceLogger(ctx);
 
   if (strategy === "streaming") {
     const onProgress = makeProgressCallback(ctx);
@@ -58,10 +60,11 @@ async function execByStrategy(
         flags,
         timeout,
         onProgress,
-        onLog
+        onLog,
+        trace
       );
     }
-    return execCli(config.command, subArgs, flags, timeout);
+    return execCli(config.command, subArgs, flags, timeout, trace);
   }
 
   if (strategy === "retry") {
@@ -77,11 +80,12 @@ async function execByStrategy(
       timeout,
       retryConfig.maxRetries,
       retryConfig.baseDelay,
-      retryConfig.maxDelay
+      retryConfig.maxDelay,
+      trace
     );
   }
 
-  return execCli(config.command, subArgs, flags, timeout);
+  return execCli(config.command, subArgs, flags, timeout, trace);
 }
 
 export function makeToolHandler(config: ToolHandlerConfig) {

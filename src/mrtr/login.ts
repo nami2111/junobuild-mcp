@@ -2,15 +2,22 @@ import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import {
   acceptedContent,
-  inputRequired,
   type CallToolResult,
   type InputRequiredResult,
+  inputRequired,
   type ServerContext,
 } from "@modelcontextprotocol/server";
 import { z } from "zod";
-import { buildFlagArgs, formatResponse, resolveCliParts } from "../cli.js";
+import {
+  buildFlagArgs,
+  formatResponse,
+  makeTraceLogger,
+  resolveCliParts,
+} from "../cli.js";
 import { NETWORK_TIMEOUT } from "../constants.js";
 import { runProcess, stripAnsi, stripProgressChars } from "../executor.js";
+import type { TraceContext } from "../trace.js";
+import { traceEnv } from "../trace.js";
 import type { GlobalFlags } from "../types.js";
 import { mintLoginState } from "./state.js";
 
@@ -47,10 +54,15 @@ interface PromptWatcher {
 
 function runLoginWatchingForPrompt(
   cmd: string,
-  args: string[]
+  args: string[],
+  trace?: TraceContext
 ): PromptWatcher {
   const child = spawn(cmd, args, {
-    env: { ...process.env, FORCE_COLOR: "0" },
+    env: {
+      ...process.env,
+      FORCE_COLOR: "0",
+      ...traceEnv(trace),
+    },
   });
 
   let output = "";
@@ -58,7 +70,7 @@ function runLoginWatchingForPrompt(
   let processExited = false;
 
   const promptTimeout = setTimeout(() => {
-    if (!processExited && !prompted) {
+    if (!(processExited || prompted)) {
       child.kill("SIGTERM");
     }
   }, PROMPT_WAIT_TIMEOUT_MS);
@@ -119,6 +131,7 @@ export async function handleLogin(
   };
   const { cmd: cliCmd, args: cliArgs } = await resolveCliParts();
   const loginArgs = [...cliArgs, "login", ...buildFlagArgs(flags)];
+  const trace = makeTraceLogger(ctx);
 
   // Retry round: the client carried our requestState (verified by the
   // ServerOptions.requestState hook) and, hopefully, the passphrase.
@@ -149,13 +162,14 @@ export async function handleLogin(
         answerDelay: 0,
         promptTimeout: PASS_PROMPT_TIMEOUT_MS,
       },
+      trace,
     });
     const { text, isError } = formatResponse(result, "Login");
     return { content: [{ type: "text" as const, text }], isError };
   }
 
   // First round: run and watch for the passphrase prompt.
-  const watcher = runLoginWatchingForPrompt(cliCmd, loginArgs);
+  const watcher = runLoginWatchingForPrompt(cliCmd, loginArgs, trace);
   const outcome = await watcher.promise;
 
   if (outcome.kind === "completed") {
