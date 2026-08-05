@@ -140,10 +140,8 @@ Verification: `test/http.test.ts` (3 tests) — in-process 2026-07-28 client (ve
 
 **Files:** `src/trace.ts`, `src/executor.ts`, `src/cli.ts`, `src/tool-handler.ts`, `src/mrtr/login.ts`
 
-### 11. ADR + README
-- `docs/adr/005-sdk-v2-stateless.md`: Context / Decision / Consequences / "Revisit if" coda
-- README: Node 20+ requirement, HTTP mode, protocol-version compatibility note (dual-era serving)
-- Explicitly note features we deliberately don't adopt (deprecated): Roots, Sampling, `logging/setLevel`, HTTP+SSE
+### 11. ADR + README ✅
+**Status:** ✅ DONE — `docs/adr/005-sdk-v2-stateless.md` (Context / Decision table / Consequences tert / Revisit-if coda; envelope-wire shape documented). README: new **Protocol Versions** section (dual-era serving, auto-detection; explicit non-adopted list: Roots, Sampling, 2026-era `logging/setLevel`, HTTP+SSE endpoint; MRTR note) + Prerequisites **Node.js >= 20**. 358 tests green, build/ultracite/audit clean.
 
 **Files:** `docs/adr/005-sdk-v2-stateless.md`, `README.md`
 

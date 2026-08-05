@@ -374,6 +374,18 @@ amp mcp add junobuild -- npx -y junobuild-mcp-server
 
 ---
 
+## Protocol Versions
+
+The server builds against the **2026-07-28** protocol revision (`@modelcontextprotocol/server@2`) and serves **both protocol eras from one toolset**: 2025-era clients (e.g. Claude Desktop mid-2026) still negotiate via `initialize`; 2026-07-28 clients via `server/discover`. No flag needed — era detection is automatic per request.
+
+Features we deliberately **do not** adopt (deprecated or out of scope for a CLI wrapper):
+
+- **Roots** and **Sampling** — the server is a tool runner; input is explicit tool parameters and MRTR (`input_required`) elicitation, not implicit sampling.
+- **`logging/setLevel`** (2026-era) — log gating is per-request `_meta.logLevel`; 2025-era sessions still get `logging/setLevel` via the SDK.
+- **HTTP+SSE endpoint** — the transport is Streamable HTTP with JSON responses; the deprecated SSE-across-connections mode is not served.
+
+MRTR: `juno_login` asks for the credentials-encryption passphrase via `input_required` (the model answers the embedded form); 2025-era clients get the same flow via the SDK's legacy shim.
+
 ## Authenticate the Juno CLI
 
 The server wraps [`@junobuild/cli`](https://juno.build/docs/reference/cli), which must be installed and authenticated:
@@ -472,7 +484,7 @@ Several tools support optional parameters for enhanced reliability and UX:
 
 ## Prerequisites
 
-- **Node.js** >= 18
+- **Node.js** >= 20
 - **@junobuild/cli** `>= 0.15.0` — installed and authenticated (not needed for `juno_version` or `juno_docs`). Minimum version enforced on first call via `checkCliVersion` (`src/constants.ts` `MIN_CLI_VERSION`). Bypass with `JUNO_SKIP_VERSION_CHECK=true`.
 - Juno project with `juno.config.ts/js/json` (for config/hosting operations)
 
