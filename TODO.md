@@ -32,10 +32,10 @@ Analyzed: [spec 2026-07-28 changelog](https://modelcontextprotocol.io/specificat
 
 **Files:** `package.json`, `package-lock.json`, `src/**`, `test/**`
 
-### 2. Swap stdio entry for `serveStdio` factory
+### 2. Swap stdio entry for `serveStdio` factory ✅
 **Why:** a hand-constructed `Server`/`McpServer` + `StdioServerTransport` serves only 2025-era. `serveStdio(() => buildServer())` negotiates era per connection.
 
-**Do:**
+**Status:** ✅ DONE — src/index.ts exports `buildServer(): McpServer` (all 7 tool groups registered) and calls `serveStdio(buildServer, { onerror })`. Dual-era default `legacy: 'serve'` kept (comment marks `{ legacy: 'reject' }` for later). Verified both eras with real v2 client: (a) legacy — e2e listTools via default Client connect passes; (b) modern — `versionNegotiation: { mode: 'pin', pin: '2026-07-28' }` → `getProtocolEra() === 'modern'`, `getServerVersion()` reads stamped `_meta['io.modelcontextprotocol/serverInfo']`, 18 tools listed. Raw-wire probe: 2025 `initialize` still answers correctly on claim-less connections.
 - `src/index.ts`: replace `server.connect(new StdioServerTransport())` with `serveStdio(() => buildServer())` from `@modelcontextprotocol/server/stdio`
 - Refactor index.js to export `buildServer()` (register all tools, return `McpServer`) — same factory reused for HTTP mode (P1-1)
 - Keep dual-era default (`legacy: 'stateless'`) so existing 2025-era clients (Claude Desktop etc.) keep working; `{ legacy: 'reject' }` only later
