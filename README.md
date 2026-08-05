@@ -522,12 +522,30 @@ npm run release      # Publish to npm
 
 ## Architecture
 
+The server is a thin wrapper around the Juno CLI (`@junobuild/cli`): every tool
+builds a command + flags, spawns the CLI via `child_process`, and formats the
+result. Long-running tools (deploy, publish, upgrade) support three execution
+strategies — simple, retry, and streaming (progress + log notifications).
+
+**Transports** (chosen at startup via `JUNO_MCP_TRANSPORT`):
+
+- **stdio** (default) — one process per client over stdin/stdout
+- **Streamable HTTP** (`JUNO_MCP_TRANSPORT=http`, port 3000 / `JUNO_MCP_PORT`,
+  127.0.0.1) — Streamable HTTP endpoint, many clients per process
+
+Both serve both protocol eras from the same code: 2025-era clients via
+`initialize`, 2026-07-28 clients via `server/discover`. Build file is
+`src/main.ts` (entry, transport pick); `src/index.ts` is a side-effect-free
+`buildServer()` factory. Auth via `juno_login` (MRTR passphrase flow) uses
+HMAC-signed request state.
+
 Key design decisions are documented as [ADRs in `docs/adr/`](./docs/adr/README.md):
 
 - [ADR-001 — Wrap the Juno CLI instead of the API](./docs/adr/001-wrap-cli-not-api.md)
 - [ADR-002 — Execution strategy pattern (simple / retry / streaming)](./docs/adr/002-execution-strategies.md)
 - [ADR-003 — Context capability system](./docs/adr/003-context-capabilities.md)
 - [ADR-004 — Docs caching strategy](./docs/adr/004-docs-caching.md)
+- [ADR-005 — SDK v2 stateless migration (2026-07-28 spec)](./docs/adr/005-sdk-v2-stateless.md)
 
 ## License
 
