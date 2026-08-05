@@ -6,7 +6,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { vi } from "vitest";
 import type { CliResult } from "../src/types.js";
 
-export const MCP_SERVER = join(process.cwd(), "dist/index.js");
+export const MCP_SERVER = join(process.cwd(), "dist/main.js");
 
 export async function createTestClient(cwd?: string) {
   const transport = new StdioClientTransport({

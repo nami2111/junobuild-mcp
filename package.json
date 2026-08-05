@@ -1,12 +1,13 @@
 {
   "dependencies": {
-    "zod": "^4.3.6",
-    "@modelcontextprotocol/server": "^2.0.0"
+    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@modelcontextprotocol/client": "^2.0.0",
     "@biomejs/biome": "^2.4.15",
     "@changesets/cli": "^2.27.12",
+    "@modelcontextprotocol/client": "^2.0.0",
     "@types/node": "^25.5.0",
     "@vitest/coverage-v8": "^4.1.7",
     "tsx": "^4.23.5",
@@ -16,7 +17,7 @@
   },
   "name": "junobuild-mcp-server",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "node dist/main.js",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "clean": "rm -rf dist",
@@ -46,7 +47,7 @@
     }
   },
   "bin": {
-    "junobuild-mcp-server": "dist/index.js"
+    "junobuild-mcp-server": "dist/main.js"
   },
   "files": [
     "dist",
@@ -73,6 +74,9 @@
   ],
   "engines": {
     "node": ">=20"
+  },
+  "overrides": {
+    "@hono/node-server": "^2.0.5"
   },
   "packageManager": "npm@11.16.0",
   "allowScripts": {

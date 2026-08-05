@@ -96,17 +96,12 @@ Tests: cli.test.ts blocks rewritten against mocked ctx (`mcpReq.log`/`mcpReq.not
 
 ## P1 — Streamable HTTP transport (headline feature)
 
-### 7. Optional HTTP mode
-**Why:** biggest capability jump this spec unlocks: stateless request/response, load-balancable, works from web clients (ChatGPT, Claude web). Server is stdio-only today.
+### 7. Optional HTTP mode ✅
+**Why:** biggest capability jump this spec unlocks: stateless request/response, load-balancable, works from web clients (ChatGPT, Claude web). Server was stdio-only.
 
-**Do:**
-- Add `@modelcontextprotocol/node` dep; `toNodeHandler` + `createMcpHandler(() => buildServer())` (default `legacy: 'stateless'` serves both eras with same factory as stdio)
-- Env config: `JUNO_MCP_TRANSPORT=http` (+ `JUNO_MCP_PORT` default 3000, bind `127.0.0.1`)
-- Stateless fits: all state already in params (mode/profile/satellite per call); no `Mcp-Session-Id`, no session keying needed
-- README: HTTP section, curl example, security note
-- Tests: drive `handler.fetch` in-process (docs: `StreamableHTTPClientTransport` against `handler.fetch(new Request(...))`, no sockets); stdio-era coverage via child-process spawn of `serveStdio`
-
-**Files:** `src/index.ts` (new `src/http.ts`), `package.json`, `README.md`, `test/**`
+**Status:** ✅ DONE — added `@modelcontextprotocol/node@^2.0.0` (dep). New `src/http.ts`: `createHttpHandler()` = `createMcpHandler(() => buildServer(), { onerror })`, default legacy `'stateless'` (2025-era served per-request; 2026-07-28 via `server/discover`); `createNodeHandler()` → `toNodeHandler(...)`; `startHttpServer(port)` binds `127.0.0.1` (default 3000, `JUNO_MCP_PORT`). Entry split: new `src/main.ts` (bin → `dist/main.js`) does transport switch on `JUNO_MCP_TRANSPORT` (default stdio dual-era); `src/index.ts` is now a pure `buildServer()` factory (no side effects) — also resolved a latent index↔http circular import.
+Security: audit-override `@hono/node-server ^2.0.5` (transitive of `@modelcontextprotocol/node` pinned vulnerable 1.19.17; Windows path-traversal GHSA-frvp-7c67-39w9; fixed by override, 0 vulns).
+Verification: `test/http.test.ts` (3 tests) — in-process 2026-07-28 client (versionNegotiation pin + injected fetch → `handler.fetch`) lists 18 tools deterministically; legacy client (no negotiation) works over same handler; raw legacy `initialize` over real socket (`startHttpServer(0)`) answers 200 SSE. Live probe: modern `server/discover` over actual HTTP with `Mcp-Method`/`Mcp-Name` headers → `supportedVersions:["2026-07-28"]`. README: HTTP mode section + curl example + localhost security note.
 
 ### 8. Auth posture (follow-up)
 **Why:** spec 2026 has real authorization requirements (RFC 9207 `iss` validation, SEP-2352 credential isolation, DCR/TLS). Auto-binding OAuth into the SDK is available but nonzero work.

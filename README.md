@@ -393,6 +393,29 @@ For non-interactive environments (CI, headless), authenticate using environment 
 export JUNO_TOKEN="your-juno-token"
 ```
 
+### HTTP Mode
+
+The server defaults to stdio. Set `JUNO_MCP_TRANSPORT=http` to serve over Streamable HTTP instead (default port `3000`, bound to `127.0.0.1`; override with `JUNO_MCP_PORT`):
+
+```bash
+JUNO_MCP_TRANSPORT=http JUNO_MCP_PORT=3100 node dist/main.js
+```
+
+The HTTP mode is stateless and serves both protocol eras from the same toolset as stdio: 2026-07-28 clients negotiate via `server/discover` (modern requests must send the `Mcp-Method`/`Mcp-Name` headers), 2025-era clients via `initialize`. Portable to any web client or load balancer.
+
+Smoke test with curl:
+
+```bash
+curl -X POST http://127.0.0.1:3000/mcp \
+  -H "Mcp-Method: server/discover" \
+  -H "Mcp-Name: curl" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{},"io.modelcontextprotocol/clientInfo":{"name":"curl","version":"0"}}}}'
+```
+
+> **Security:** HTTP mode binds to localhost only and is unauthenticated — a local dev mode. Do not expose it to the network or pair it with a public tunnel without adding an auth layer (OAuth / reverse-proxy auth).
+
 ### Server Tuning
 
 Override defaults to tune resource limits without rebuilding. Values must be positive integers; invalid values fall back to defaults.
