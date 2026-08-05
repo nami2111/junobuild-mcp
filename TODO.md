@@ -150,7 +150,7 @@ Verification: `test/http.test.ts` (3 tests) — in-process 2026-07-28 client (ve
 ## Carry-over backlog (still open from previous TODO)
 
 - Per-tool retry config (`RetryConfig` plumbed through `ToolHandlerConfig`)
-- SIGKILL fallback after SIGTERM timeout in `executor.ts`
+- ~~SIGKILL fallback after SIGTERM timeout in `executor.ts`~~ — already implemented (2 s grace in `runProcess` and the MRTR login watcher; verified during P1-2)
 - Juno CLI min-version check (`getCliVersion`, cached, `--skip-version-check`)
 - Batch-size auto-tuning capped at source-file count (`hosting deploy`)
 - Version-aware progress patterns (`src/progress-patterns.ts`)
