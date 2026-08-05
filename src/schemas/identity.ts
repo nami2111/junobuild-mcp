@@ -12,3 +12,5 @@ export const runScriptSchema = containerFlagsBase
 export const statusSchema = environmentFlagsBase;
 
 export const authStatusSchema = environmentFlagsBase;
+
+export const loginSchema = environmentFlagsBase;

@@ -116,16 +116,18 @@ Verification: `test/http.test.ts` (3 tests) — in-process 2026-07-28 client (ve
 
 ## P1 — MRTR pilot (`input_required`)
 
-### 9. Replace fragile stdin automation with MRTR (pilot one flow)
-**Why:** interactive juno prompts (login email/password, destructive confirmations) are currently handled by timing-based stdin injection (`setupStdinAutomation`, `StdinConfig`) — fragile, invisible to the model. MRTR asks the client for exactly the missing input and the model can answer.
+### 9. Replace fragile stdin automation with MRTR (pilot one flow) ✅
+**Why:** interactive juno prompts are currently handled by timing-based stdin injection (`setupStdinAutomation`, `StdinConfig`) — fragile, invisible to the model. MRTR asks the client for exactly the missing input and the model can answer.
 
-**Do:**
-- Pilot ONE flow, e.g. `juno login` credential prompt or a destructive-op confirm
-- v2 shape: handler returns `inputRequired({ inputRequests, requestState })`; state threaded via `ctx.mcpReq.requestState()` + `createRequestStateCodec({ key })` (HMAC; `ServerOptions.requestState.verify`); SDK shims MRTR to 2025-era clients over elicitation/sampling/roots — legacy clients keep working
-- Keep stdin automation as fallback for prompts that are positional (not nameable inputs) and for non-MRTR clients where the shim can't show input types
-- Scope guard: MRTR needs a nameable input + a juno prompt that maps to it; many juno prompts are positional sequences → don't force it
+**Status:** ✅ DONE — pilot flow: `juno_login` credentials-encryption passphrase prompt (nameable input; scope guard respected — no forced mapping of positional prompt sequences).
+- `src/mrtr/state.ts`: `createRequestStateCodec` (HMAC, key `JUNO_MCP_STATE_SECRET` or per-process random; signed-not-encrypted — payload carries flow bookkeeping only); `verifyRequestState` wired as `ServerOptions.requestState.verify` (tampered/expired state → `-32602` before the handler runs).
+- `src/mrtr/login.ts`: round A spawns `juno login`, watches stdout for the passphrase prompt, kills the child and returns `inputRequired` (embedded form elicitation over `z.object({passphrase: z.string().min(4)})` + minted state); round B verifies state, reads `acceptedContent(ctx.mcpReq.inputResponses, PASSWORD_INPUT_KEY, schema)`, re-runs login feeding the passphrase via prompt-mode stdin automation. Non-interactive runs (JUNO_TOKEN/--headless) complete in one trip.
+- `juno_login` tool registered (identity, env flags); `RegisteredToolHandler` widened to `CallToolResult | InputRequiredResult`. Legacy 2025-era clients keep working via the SDK's default `inputRequired.legacyShim`.
+- Stdin automation KEPT as fallback (still the executor's generic mechanism; MRTR is not forced on other prompts).
 
-**Files:** new `src/mrtr/` (codec, flows), `src/tool-handler.ts`, `src/tools/identity.ts` (login), tests
+**Findings (SDK v2):** `callTool` takes the OBJECT form `{name, arguments}` — the v1 `(name, args)` pair string-spreads the name on the wire (`params:{"0":"j",...}` → server `-32602 params.name`). Modern retry carries `inputResponses` + `requestState` TOP-LEVEL in `params` (sibling of `_meta`); client must advertise `capabilities.elicitation` or the server refuses `input_required` with `-32021`. Client auto-fulfilment dispatches embedded elicitation to `setRequestHandler("elicitation/create")`. `ElicitInputParams` wants `message` + `requestedSchema` (title/name not in the type). Codec is async (`await mint/verify`); key ≥32 bytes.
+
+**Tests:** fake juno CLI fixture (`test/fixtures/fake-juno/juno`; extension-less scripts inherit repo `"type": "module"` → ESM imports), `createTestClient` env/PATH overrides; 3 e2e stdio tests (modern auto-fulfil round-trip, legacy shim round-trip, wrong passphrase → isError) + 3 codec unit tests. 353 tests green, build/ultracite/audit clean. `ponytail:` prompt contract is "juno asks once for a passphrase"; a future y/N or confirmation gate fails loudly → run `juno login` in a terminal.
 
 ---
 

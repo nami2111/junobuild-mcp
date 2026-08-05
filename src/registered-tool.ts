@@ -1,5 +1,6 @@
 import type {
   CallToolResult,
+  InputRequiredResult,
   McpServer,
   ServerContext,
   ToolAnnotations,
@@ -10,7 +11,10 @@ type RegisteredToolInputSchema = ZodRawShape;
 type RegisteredToolHandler = (
   params: Record<string, unknown>,
   ctx: ServerContext
-) => CallToolResult | Promise<CallToolResult>;
+) =>
+  | CallToolResult
+  | InputRequiredResult
+  | Promise<CallToolResult | InputRequiredResult>;
 
 export interface RegisteredJunoTool {
   annotations: ToolAnnotations;

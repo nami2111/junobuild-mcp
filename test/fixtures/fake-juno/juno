@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+// Fake `juno` CLI used by the MRTR tests: prints a login banner, then asks for
+// the credentials-encryption passphrase, reads one line from stdin, and
+// succeeds only when it matches JUNO_FAKE_EXPECTED_PASS.
+import { writeFileSync } from "node:fs";
+
+const expected = process.env.JUNO_FAKE_EXPECTED_PASS;
+const received = process.env.JUNO_FAKE_PASS_FILE;
+
+process.stdout.write("Checking current authentication...\n");
+
+setTimeout(() => {
+  process.stdout.write("Set a password to encrypt your credentials file:\n");
+  process.stdin.once("data", (data) => {
+    const pass = String(data).trim();
+    if (received) {
+      writeFileSync(received, pass);
+    }
+    if (pass === expected) {
+      process.stdout.write("Credentials saved (encrypted).\n");
+      process.exit(0);
+    }
+    process.stdout.write(`Passphrase mismatch, canceling login.\n`);
+    process.exit(1);
+  });
+}, 100);

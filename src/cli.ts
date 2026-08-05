@@ -117,7 +117,7 @@ async function checkCliVersion(): Promise<void> {
   }
 }
 
-async function resolveCliParts(): Promise<{ cmd: string; args: string[] }> {
+export async function resolveCliParts(): Promise<{ cmd: string; args: string[] }> {
   const path = await resolveCliPath();
   if (path.includes(" ")) {
     const [cmd, ...args] = path.split(" ");

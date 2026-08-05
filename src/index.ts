@@ -2,6 +2,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/server";
+import { verifyRequestState } from "./mrtr/state.js";
 import { registerChangesTools } from "./tools/changes.js";
 import { registerConfigTools } from "./tools/config.js";
 import { registerDocsTools } from "./tools/docs.js";
@@ -23,6 +24,11 @@ export function buildServer(): McpServer {
       // Static toolset: allow clients/intermediaries to cache tools/list.
       cacheHints: {
         "tools/list": { ttlMs: 3_600_000, cacheScope: "public" },
+      },
+      // MRTR requestState (juno_login passphrase flow): HMAC-verified;
+      // tampered/expired state is refused before the handler runs (-32602).
+      requestState: {
+        verify: (state, ctx) => verifyRequestState(state, ctx),
       },
     }
   );

@@ -8,17 +8,21 @@ import type { CliResult } from "../src/types.js";
 
 export const MCP_SERVER = join(process.cwd(), "dist/main.js");
 
-export async function createTestClient(cwd?: string) {
+export async function createTestClient(
+  cwd?: string,
+  options?: ConstructorParameters<typeof Client>[1],
+  env?: Record<string, string>
+) {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [MCP_SERVER],
-    env: { ...process.env, FORCE_COLOR: "0" },
+    env: { ...process.env, FORCE_COLOR: "0", ...env },
     cwd,
   });
 
   const client = new Client(
     { name: "test-client", version: "1.0.0" },
-    { capabilities: {} }
+    { capabilities: {}, ...options }
   );
 
   await client.connect(transport);

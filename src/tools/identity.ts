@@ -1,11 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { containerContext, environmentContext } from "../juno-context.js";
+import { handleLogin } from "../mrtr/login.js";
 import {
   type RegisteredJunoTool,
   registerJunoTools,
 } from "../registered-tool.js";
 import {
   authStatusSchema,
+  loginSchema,
   runScriptSchema,
   statusSchema,
   versionSchema,
@@ -101,6 +103,20 @@ export const identityTools: readonly RegisteredJunoTool[] = [
       openWorldHint: true,
     },
     handler: handleAuthStatus,
+  },
+  {
+    name: "juno_login",
+    title: "Juno Login",
+    description:
+      "Authenticate with Juno (browser-based). In non-interactive setups (JUNO_TOKEN, --headless) the CLI completes without prompts; when the CLI asks for a credentials-encryption passphrase, the server requests it from you via a protocol input round-trip instead of failing. Args: - mode (string): environment (production default) - profile (string): alternative identity",
+    inputSchema: loginSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    handler: handleLogin,
   },
 ];
 

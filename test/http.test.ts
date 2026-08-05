@@ -33,14 +33,14 @@ describe("HTTP mode (createMcpHandler)", () => {
     const names = await listTools({
       versionNegotiation: { mode: "pin", pin: "2026-07-28" },
     });
-    expect(names).toHaveLength(18);
+    expect(names).toHaveLength(19);
     // Deterministic per-domain ordering across requests.
     expect(await listTools({ versionNegotiation: { mode: "pin", pin: "2026-07-28" } })).toEqual(names);
   });
 
   it("serves 2025-era clients statelessly (legacy: 'stateless')", async () => {
     const names = await listTools();
-    expect(names).toHaveLength(18);
+    expect(names).toHaveLength(19);
     expect(names).toContain("juno_hosting_deploy");
   });
 });

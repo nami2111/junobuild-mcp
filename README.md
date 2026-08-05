@@ -426,6 +426,7 @@ Override defaults to tune resource limits without rebuilding. Values must be pos
 | `JUNO_MCP_TIMEOUT`         | `120000`  | Default subprocess timeout in milliseconds                           |
 | `JUNO_MCP_NETWORK_TIMEOUT` | `300000`  | Timeout for network-bound operations (deploy, publish, upgrade) in ms |
 | `JUNO_MCP_DEBUG`           | `false`   | When `true`, logs internal errors to stderr (silent catches, notifications) |
+| `JUNO_MCP_STATE_SECRET`    | random    | HMAC key (>=32 bytes) for MRTR `requestState`; set to survive restarts (default per-process random invalidates in-flight flows) |
 
 **Note:** The `juno_create_project` tool does NOT use the interactive `create-juno` CLI. Instead it:
 
